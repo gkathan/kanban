@@ -63,6 +63,10 @@ var releaseData;
 var laneTextData;
 
 var itemData;
+// nest -level
+var ITEMDATA_NEST = ["theme","lane","sublane"];
+var ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
+
 
 var pieData =[{"type":"sustainable","percentage":63.5},{"type":"notsustainable","percentage":26.5}];
 
@@ -100,6 +104,10 @@ setWIP();
 
 var KANBAN_START = new Date("2013-09-01");
 var KANBAN_END = new Date("2015-01-31");
+
+//domain for y-axis => i am using percentage as domain => meaning "100"%
+var Y_MAX =100; 
+var Y_MIN=0;
 
 var METRIC_BASLINE = new Date("2013-12-31");
 var METRIC_PROJECTION = new Date("2015-12-31");
@@ -242,7 +250,7 @@ function init(){
 
 	y = d3.scale.linear()
 		// changed 20140104 => from [0,100]
-		.domain([100,0])
+		.domain([Y_MAX,Y_MIN])
 		.range([height, 0]);
 
 	x = d3.time.scale()
@@ -2009,10 +2017,10 @@ function getConfigByName(name){
 function createLaneHierarchy(){
 	// create hierarchical base data from list
 	
-	itemData = _.nest(initiativeData,["theme","lane","sublane"]);
+	itemData = _.nest(initiativeData,ITEMDATA_NEST);
 	
-	//depth = 3
-	createCoordinates(itemData,0,3);
+	//depth = ITEMDATA_DEPTH_LEVEL
+	createRelativeCoordinates(itemData,0,ITEMDATA_DEPTH_LEVEL);
 	
 	transposeCoordinates();
 }
@@ -2022,16 +2030,14 @@ function createLaneHierarchy(){
 
 /** recursive traversion to enrich the itemData structure with y coordinates
  * y1,y2 = local relative distribution per depth level
- * yt1,yt2 = transposed absolute y coordinates
  */
-function createCoordinates(_itemData,_start,_stop){
+function createRelativeCoordinates(_itemData,_start,_stop){
 	// root
 	if (_start==0){
-		_itemData.y1 = 0;
-		_itemData.y2 = 100;
+		_itemData.y1 = Y_MIN;
+		_itemData.y2 = Y_MAX;
 		_itemData.name="root";
 		_itemData.depth=0;
-		_parent=_itemData;
 	}
 	
 	if (_itemData.children){
@@ -2051,7 +2057,7 @@ function createCoordinates(_itemData,_start,_stop){
 
 			if (_itemData.children[i].children && _stop >_start){
 				//recurse deeper
-				createCoordinates(_itemData.children[i],_start,_stop);
+				createRelativeCoordinates(_itemData.children[i],_start,_stop);
 			}
 			else {
 				console.log("end of recursion");
@@ -2172,8 +2178,55 @@ function checkDistributionOverride(override){
 }
 
 
+/**
+ * and here comes another magic ;-)
+ * we are transposing now 
+ * taking upper distribution as 100% 
+ * e.g. if we are in the root.topline lane (71%)
+ * the 71% becomes the new 100% in this context
+*/
+function transposeCoordinates(){
+	
+	for (count=1;count<=ITEMDATA_DEPTH_LEVEL;count++){
+		console.log("i: "+count);
+		createAbsoluteCoordinates(itemData,0,count,1);
+	}
+}
 
 
+/** yt1,yt2 = transposed absolute y coordinates
+*/
+function createAbsoluteCoordinates(_itemData,_start,_stop,base){
+	//zero-level
+	if (_start==0){
+		_itemData.yt1 = _itemData.y1;
+		_itemData.yt2 = _itemData.y2;
+	}
+	console.log("enter depth: "+_start);
+	if (_itemData.children){
+		var _base = base*((_itemData.y2-_itemData.y1)/itemData.y2);
+		
+		_start++;
+		for (i in _itemData.children){
+			
+			if (_itemData.children[i].children && _stop >_start){
+				//recursion
+				createAbsoluteCoordinates(_itemData.children[i],_start,_stop,_base);
+			}
+			else {
+				console.log("depth: "+_start+" STOP level");
+				_itemData.children[i].yt1 = _itemData.yt1+(_itemData.children[i].y1*_base);
+				_itemData.children[i].yt2 = _itemData.yt1+(_itemData.children[i].y2*_base);
+				
+			}
+		}
+	}
+	else{
+		console.log("....no more children found..");
+	}
+}
+
+/* DELETE
 function transposeCoordinates(){
       //depth=0
 		itemData.yt1 = itemData.y1;
@@ -2228,6 +2281,7 @@ function transposeCoordinates(){
 	}
 	
 }
+*/
 
 /**
 calculates the offset to center elements / text per sublane 
