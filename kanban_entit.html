@@ -1,0 +1,79 @@
+<!DOCTYPE html> 
+<meta charset="utf-8">
+<head>
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<script type="text/javascript" src="js/date.min.js"></script>
+
+<script src="js/jquery-2.0.3.min.js"></script>
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script src="js/kanban.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/underscore.nest.min.js"></script>
+
+
+<link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+
+<link rel="stylesheet" type="text/css" href="css/kanban.css">
+<link rel="stylesheet" type="text/css" href="css/kanban_b2c_entit.css">
+
+</head>
+
+<!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
+
+<script>
+
+	CONTEXT="BPTY->B2C ONLINE GAMING->SHARED -> ENTERPRISE IT";
+	HEIGHT =500;
+	KANBAN_START=new Date("2013-12-01");
+	WIDTH=900;
+	themeDistOverride = {"level":"theme","dist":
+								[
+									{"name":"theme1","value"	:50},
+									{"name":"theme2","value"	:25},
+									{"name":"theme3","value"	:25},
+									
+								]};				
+	laneDistOverride=null;
+
+	render("initiatives_entit.txt",0,"releases.txt","external.svg");
+
+</script>
+
+
+<!-- ---------------------------------------------- BODY ------------------------------------------------------------->
+
+<body>
+shared-> enterprise IT drill-in<br>
+<div style="margin-left:10px;margin-top:10px">
+
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_width" type="text" class="form-control">
+      <span class="input-group-btn">
+        <button id="b11" class="btn btn-default" type="button">set WIDTH</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_height" type="text" class="form-control">
+      <span class="input-group-btn">
+        <button id="b12" class="btn btn-default" type="button">set HEIGHT</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div class="btn-group-xs">
+	  <button id="b1" type="button" class="btn btn-default">Queues</button>
+	  <button id="b2" type="button" class="btn btn-default">Items</button>
+	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
+	  <button id="b4" type="button" class="btn btn-default">Grid</button>
+	  <button id="b5" type="button" class="btn btn-default">Metrics</button>
+	  <button id="b8" type="button" class="btn btn-default">Releases</button>
+	  <button id="b9" type="button" class="btn btn-default">Sizings</button>
+	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
+	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
+	</div>
+
+</div>
+
+</body>
+</html>

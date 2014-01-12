@@ -1,0 +1,65 @@
+<style>
+
+@import url(../style.css?aea6f0a);
+
+#chart {
+  width: 960px;
+  height: 500px;
+  background: #ddd;
+}
+
+text {
+  pointer-events: none;
+}
+
+.grandparent text {
+  font-weight: bold;
+  fill:white;
+}
+
+
+
+.children text {
+  font-weight: bold;
+  fill:#666;
+}
+
+.children:hover text {
+  font-weight: bold;
+  fill:black;
+}
+
+
+rect {
+  fill: #eee;
+  stroke: #fff;
+}
+
+rect.parent,
+.grandparent rect {
+  stroke-width: 2px;
+}
+
+.grandparent rect {
+  fill: grey;
+}
+
+.grandparent:hover rect {
+  fill: black;
+}
+
+.children rect.parent,
+.grandparent rect {
+  cursor: pointer;
+}
+
+.children rect.parent {
+  fill: #bbb;
+  fill-opacity: .5;
+}
+
+.children:hover rect.child {
+  fill: #bbb;
+}
+
+</style>

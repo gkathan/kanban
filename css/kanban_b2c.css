@@ -1,0 +1,88 @@
+
+
+.lanebox.bwin{
+	fill:black;
+	stroke: white;
+	stroke-width: 5px;
+	
+}
+
+.lanebox.pp{
+	fill:orange;
+	stroke:white;
+	opacity:0.1;
+	stroke-width: 5px;
+
+}
+
+.lanebox.foxy{
+	fill:pink;
+	stroke:white;
+	opacity:0.5;
+	stroke-width: 5px;
+}
+
+.lanebox.premium{
+	fill:#333333;
+	stroke:white;
+	stroke-width: 5px;
+}
+.lanebox.casino{
+	fill:#dddddd;
+	stroke:white;
+	stroke-width: 5px;
+}
+
+.lanebox.agile{
+	fill:#aaaaaa;
+	stroke:white;
+	stroke-width: 5px;
+}
+.lanebox.techdebt{
+	fill:#bbbbbb;
+	stroke:white;
+	stroke-width: 5px;
+}
+.lanebox.shared{
+	fill:#eeeeee;
+	stroke:white;
+	stroke-width: 5px;
+}
+
+
+.sizings.bwin{
+	fill:black;
+	stroke:white;
+}
+
+.sizings.pp{
+	fill:salmon;
+	stroke:white;
+}
+
+.sizings.foxy{
+	fill:pink;
+	stroke:white;
+}
+
+.sizings.premium{
+	fill:#333333;
+	stroke:white;
+}
+.sizings.casino{
+	fill:#dddddd;
+	stroke:white;
+}
+
+.sizings.agile{
+	fill:#aaaaaa;
+	stroke:white;
+}
+.sizings.techdebt{
+	fill:#bbbbbb;
+	stroke:white;
+}
+.sizings.shared{
+	fill:#eeeeee;
+	stroke:white;
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html> 
+<meta charset="utf-8">
+<head>
+
+<!--
+<link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban.css">
+<link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban_b2c.css">
+-->
+
+<link rel="stylesheet" type="text/css" href="css/kanban.css">
+<link rel="stylesheet" type="text/css" href="css/kanban_b2c.css">
+
+
+<script src="js/d3.v3.min.js"></script>
+<script src="js/date.min.js"></script>
+<script src="js/jquery-2.0.3.min.js"></script>
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script src="js/vkbeautify.0.99.00.beta.js"></script>
+
+<script src="js/underscore-min.js"></script>
+<script src="js/underscore.nest.min.js"></script>
+
+
+
+<script src="js/kanban.js"></script>
+
+<link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300italic,700' rel='stylesheet' type='text/css'>
+
+</head>
+
+<!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
+<script>
+	CONTEXT="BPTY.B2C ONLINE GAMING";
+	//percentages is for override => if not specified it uses mode to auto layout
+	itemDataConfig = [	
+						{"depth":1, "mode": "auto","percentages":
+								[
+									{"name":"root.topline","value"		:64},
+									{"name":"root.enabling","value"		:36}
+								]
+						},
+						{"depth":2,"mode": "auto","percentages":
+								[
+									{"name":"root.topline.bwin","value"		:28},
+									{"name":"root.topline.pp","value"		:22},
+									{"name":"root.topline.foxy","value"		:16},
+									{"name":"root.topline.premium","value"	:14},
+									{"name":"root.topline.casino","value"	:20},
+									{"name":"root.enabling.techdebt","value":45},
+									{"name":"root.enabling.shared","value"	:55}
+								]
+						},
+						// selective override only for one sublane works too ;-)
+						{"depth":3,"mode":"equal","percentages":
+								[
+									{"name":"root.topline.bwin.touch","value"	:40},
+									{"name":"root.topline.bwin.market","value"	:20},
+									{"name":"root.topline.bwin.product","value"	:20},
+									{"name":"root.topline.bwin.enabling","value":20}
+								]
+						}];				
+	WIDTH=1500;
+	HEIGHT = 1100;
+	render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
+	//render("initiatives_v20.txt","metrics.csv","releases.txt","external.svg","lanes.csv");
+
+</script>
+
+<!-- ---------------------------------------------- BODY ------------------------------------------------------------->
+
+<body>
+
+<!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
+     The form is populated and submitted by the JavaScript below. -->
+     
+<!-- production transcoder (tomcat6): http://www.kathan.at/transcode/--> 
+<!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
+
+<form id="svgform" method="post" action="http://localhost:8080/transcode/">
+ <input type="hidden" id="format" name="format" value="">
+ <input type="hidden" id="data" name="data" value="">
+ <input type="hidden" id="context" name="context" value="">
+ <input type="hidden" id="svg_width" name="svg_width" value="">
+ <input type="hidden" id="svg_height" name="svg_height" value="">
+ <input type="hidden" id="png_scale" name="png_scale" value="">
+ 
+</form>
+
+<pre class="prettyprint lang-xml" style="font-size:8px" id="svg_code">
+</pre>
+<script>
+
+
+/*
+   Utility function: populates the <FORM> with the SVG data
+   and the requested output format, and submits the form.
+*/
+function submit_download_form(output_format)
+{
+	//dirty hack for the CSS declaration
+	// last css is for bootstrap => exclude !
+	
+	var declaration ="";
+	for (var i=0;i<(document.styleSheets.length-2);i++){
+		console.log("***"+i);
+		declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
+	}
+	// Get the d3js SVG element
+	var svg = document.getElementsByTagName("svg")[0];
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+	var form = document.getElementById("svgform");
+	
+	//console.log(declaration+svg_xml);
+
+	form["format"].value = output_format;
+	form["data"].value = declaration+svg_xml ;
+	form["context"].value = CONTEXT ;
+	form["svg_width"].value = WIDTH ;
+	form["svg_height"].value = HEIGHT ;
+	//high res scale
+	form["png_scale"].value = 3 ;
+	console.log("*going to submit");
+
+	form.submit();
+}
+
+function show_svg_code()
+{
+	console.log("*****show_svg_code");
+	
+	// Get the d3js SVG element
+	var svg = document.getElementsByTagName("svg")[0];
+
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+
+	//Optional: prettify the XML with proper indentations
+	svg_xml = vkbeautify.xml(svg_xml);
+	// Set the content of the <pre> element with the XML
+	$("#svg_code").text(svg_xml);
+
+}
+
+</script>
+
+
+
+<div style="margin-left:10px;margin-top:10px">
+     
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_width" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b11" class="btn btn-default input-sm" type="button">set WIDTH</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_height" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b12" class="btn btn-default input-sm" type="button">set HEIGHT</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div class="btn-group-xs">
+	  <button id="b1" type="button" class="btn btn-default">Queues</button>
+	  <button id="b2" type="button" class="btn btn-default">Items</button>
+	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
+	  <button id="b4" type="button" class="btn btn-default">Grid</button>
+	  <button id="b5" type="button" class="btn btn-default">Metrics</button>
+	  <button id="b8" type="button" class="btn btn-default">Releases</button>
+	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
+	  <button id="b9" type="button" class="btn btn-default">Swag</button>
+	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
+	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
+	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
+	  
+
+	</div>
+
+
+	<!-- ########### The Export Section ####### -->
+	<div>
+			<button class="btn btn-primary btn-xs" id="save_as_svg" value="">
+				Save as SVG</button>
+			<button class="btn btn-primary btn-xs" id="save_as_pdf" value="">
+				Save as PDF</button>
+			<button class="btn btn-primary btn-xs" id="save_as_png" value="">
+				Save as PNG</button>
+			&nbsp;<button class="btn btn-warning btn-xs" id="show_svg_code" value="">
+				Show SVG</button>
+			<br>
+			<br>
+	</div>
+
+<script>
+	// Attached actions to the buttons
+	$("#show_svg_code").click(function() { show_svg_code(); });
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
+	$("#save_as_png").click(function() { submit_download_form("png"); });
+</script>
+
+
+
+
+	<div class="btn-group-xs">
+	  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
+	  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
+	  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
+	</div>
+
+	  <div class="control-zoom">
+			  <a class="control-zoom-in" href="#" title="Zoom in"></a>
+			  <a class="control-zoom-out" href="#" title="Zoom out"></a>
+	  </div>
+		
+
+
+</body>
+</html>

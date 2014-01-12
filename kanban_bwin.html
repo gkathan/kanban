@@ -1,0 +1,72 @@
+<!DOCTYPE html> 
+<meta charset="utf-8">
+<head>
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<script type="text/javascript" src="js/date.min.js"></script>
+
+<script src="js/jquery-2.0.3.min.js"></script>
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script src="js/underscore-min.js"></script>
+<script src="js/underscore.nest.min.js"></script>
+
+
+<script src="js/kanban.js"></script>
+
+
+<link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+
+<link rel="stylesheet" type="text/css" href="css/kanban.css">
+<link rel="stylesheet" type="text/css" href="css/kanban_b2c_bwin.css">
+
+</head>
+<!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
+<script>
+	CONTEXT="BPTY->B2C ONLINE GAMING->BWIN";
+	themeDistOverride = {"level":"theme","dist":
+								[
+									{"name":"topline","value"	:65},
+									{"name":"enabling","value"	:35}
+								]};				
+	laneDistOverride=null;
+	render("initiatives_bwin.txt",0,"releases.txt","external.svg",0);
+</script>
+
+
+
+<!-- ---------------------------------------------- BODY ------------------------------------------------------------->
+
+<body>
+bwin drill-in<br>
+<div style="margin-left:10px;margin-top:10px">
+
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_width" type="text" class="form-control">
+      <span class="input-group-btn">
+        <button id="b11" class="btn btn-default" type="button">set WIDTH</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div style="width:200px" class="input-group input-group-sm">
+      <input id="input_height" type="text" class="form-control">
+      <span class="input-group-btn">
+        <button id="b12" class="btn btn-default" type="button">set HEIGHT</button>
+      </span>
+    </div><!-- /input-group -->
+
+	<div class="btn-group-xs">
+	  <button id="b1" type="button" class="btn btn-default">Queues</button>
+	  <button id="b2" type="button" class="btn btn-default">Items</button>
+	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
+	  <button id="b4" type="button" class="btn btn-default">Grid</button>
+	  <button id="b5" type="button" class="btn btn-default">Metrics</button>
+	  <button id="b8" type="button" class="btn btn-default">Releases</button>
+	  <button id="b9" type="button" class="btn btn-default">Swag</button>
+	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
+	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
+	</div>
+
+</div>
+
+</body>
+</html>

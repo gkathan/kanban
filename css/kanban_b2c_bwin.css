@@ -1,0 +1,35 @@
+
+
+.lanebox.touch{
+	fill:black;
+	stroke:white;
+	
+}
+
+.lanebox.click{
+	fill:black;
+	stroke:white;
+}
+
+.lanebox.startup{
+	fill:#black;
+	stroke:white;
+}
+
+.lanebox.crosssell{
+	fill:#black;
+	stroke:white;
+}
+
+
+.lanebox.b2b{
+	fill:#333333;
+	stroke:white;
+	opacity:1;
+}
+.lanebox.shared{
+	fill:grey;
+	stroke:white;
+	opacity:0.1;
+}
+
