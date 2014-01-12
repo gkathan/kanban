@@ -1,10 +1,10 @@
 /**
- * @version: 0.1
+ * @version: 0.2
  * @author: Gerold Kathan (www.kathan.at)
- * @date: 2013-12-20
+ * @date: 2014-01-12
  * @copyright: 
  * @license: 
- * @website: 
+ * @website: www.kathan.at
  */
 
 
@@ -63,12 +63,32 @@ var releaseData;
 var laneTextData;
 
 var itemData;
+
+//top root parent of nested item hierarchy
+var NEST_ROOT="root";
 // nest -level
 var ITEMDATA_NEST = ["theme","lane","sublane"];
+//depth level 
 var ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
 
 
-var pieData =[{"type":"sustainable","percentage":63.5},{"type":"notsustainable","percentage":26.5}];
+
+var PIE_BASELINE;
+var PIE_TARGET; 
+
+// percentage 
+var MARKETSHARE_BASELINE;
+var MARKETSHARE_TARGET;
+
+//cx metrics
+var RECOMMENDATION_BASELINE; 
+var RECOMMENDATION_TARGET;
+	
+var LOYALTYINDEX_BASELINE;
+var LOYALTYINDEX_TARGET; 
+	
+
+
 
 /**
  * the values in the override mean % of space the lanes will get => has to sum to 100% 
@@ -102,8 +122,13 @@ var WIP_END;
 
 setWIP();
 
+// equals 1377993600000 in ticks (date.getTime()
 var KANBAN_START = new Date("2013-09-01");
+// equals 1422662400000 in ticks
 var KANBAN_END = new Date("2015-01-31");
+
+// diff = 44.668.800.000
+// 1 pixel (WIDTH = 1500) would be 29.779.200 units
 
 //domain for y-axis => i am using percentage as domain => meaning "100"%
 var Y_MAX =100; 
@@ -522,7 +547,7 @@ function drawLaneText(svg,lane,side)
 	var i=0;
 	
 	var _color = "black";
-	if (lane == "root.topline.bwin" || lane=="root.topline.premium") _color="white";
+	if (lane.indexOf("bwin") !=-1 || lane.indexOf("premium") !=-1) _color="white";
 	
 	var _yBase = y((getLaneByNameNEW(lane).yt1))+35;
 	
@@ -816,10 +841,12 @@ function drawPostits(){
 		var _itemXPlanned = x(new Date(d.planDate));
 		var _itemXActual = x(new Date(d.actualDate));
 		var _itemXStart = x(new Date(d.startDate));
-		var _yOffset = getSublaneCenterOffset("root."+d.theme+"."+d.lane+"."+d.sublane);
+		var _yOffset = getSublaneCenterOffset(getFQName(d));
+
+
 		
 		//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
-		var _itemY = y(getSublaneByNameNEW("root."+d.theme+"."+d.lane+"."+d.sublane).yt1-_yOffset)+getInt(d.sublaneOffset);
+		var _itemY = y(getSublaneByNameNEW(getFQName(d)).yt1-_yOffset)+getInt(d.sublaneOffset);
 		
 		
 		// ------------  postits --------------
@@ -908,11 +935,11 @@ function drawItems(){
 						d.actualDate = yearFormat(TODAY);
 					}
 					
-					var _yOffset = getSublaneCenterOffset("root."+d.theme+"."+d.lane+"."+d.sublane);
+					var _yOffset = getSublaneCenterOffset(getFQName(d));
 					
 					//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
 					
-					var _itemY = y(getSublaneByNameNEW("root."+d.theme+"."+d.lane+"."+d.sublane).yt1-_yOffset)+getInt(d.sublaneOffset);
+					var _itemY = y(getSublaneByNameNEW(getFQName(d)).yt1-_yOffset)+getInt(d.sublaneOffset);
 
 					
 					// ------------  line if delayed  before plan--------------
@@ -1027,7 +1054,7 @@ function drawItems(){
 							var _dependingItem = getItemByID(initiativeData,_d);
 							//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
 							var _toX = x(new Date(_dependingItem.planDate))	
-							var _toY = y(getSublaneByNameNEW("root."+_dependingItem.theme+"."+_dependingItem.lane+"."+_dependingItem.sublane).yt1-_yOffset)+getInt(_dependingItem.sublaneOffset);
+							var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_yOffset)+getInt(_dependingItem.sublaneOffset);
 							// put lines in one layer to turn on off globally
 							dep.append("line")
 								.attr("x1", _itemXPlanned)
@@ -1376,14 +1403,18 @@ function drawMetrics(){
 	
 
 	//pie baseline
-	var pieBaselineData =[{"type":"sustainable","percentage":65},{"type":"notsustainable","percentage":35}];
 	var _primaryXOffsetPie = LANE_LABELBOX_WIDTH +130;
 	var _yPie = -80;
-	_drawPie(gMetrics,"baseline",pieBaselineData,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
+	_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
 
+	// cx baseline 
+	
+	var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
+	_drawCX(gMetrics,_cxBase,x(KANBAN_START.getTime()-7000000000),-y(12));
+	
 	
 	//market share
-	var _share = {"number":8 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
 	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,-120,10);
 	
 	
@@ -1475,14 +1506,15 @@ function drawMetrics(){
 
 
 	//pie target
-	var pieTargetData =[{"type":"sustainable","percentage":75},{"type":"notsustainable","percentage":25}];
-	_drawPie(gMetrics,"target",pieTargetData,x(KANBAN_END)+_primaryXOffsetPie,_yPie);
+	_drawPie(gMetrics,"target",PIE_TARGET,x(KANBAN_END)+_primaryXOffsetPie,_yPie);
 
 
-
+	// cx target 
+	var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
+	_drawCX(gMetrics,_cxTarget,x(KANBAN_END.getTime()+6000000000),-y(12));
 	
 	//market share
-	var _share = {"number":9 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
 	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,-118,10);
 	
 	
@@ -1645,8 +1677,6 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
 /** helper function
  * */
 function _drawPie(svg,id,data,x,y){
-
-
 	var radius =40;
 
 	var arc = d3.svg.arc()
@@ -1660,8 +1690,6 @@ function _drawPie(svg,id,data,x,y){
 	var gPies = svg.select("#metrics")
 		.append("g")
 		.attr("id","pies");
-
-
 
 	var gPieTarget = svg.append("g")
 			.attr("id",id)
@@ -1684,8 +1712,52 @@ function _drawPie(svg,id,data,x,y){
 	  .style("font-weight", "bold")
 	  .style("font-size", function(d) { return (5+d.data.percentage/10)+"px";})
 	  .text(function(d) { return d.data.percentage+"%"; });
-	
 }
+
+function _drawCX	(svg,data,x,y){
+		svg.append("use").attr("xlink:href","#customer")
+		.attr("transform","translate ("+x+","+y+") scale(.5)");
+	
+		svg.append("text")
+		.text(data.recommendation)
+		.style("font-size","8px")
+		.style("font-weight","bold")
+		.style("fill","white")
+		.style("text-anchor","middle")
+		.attr("x",x+11)
+		.attr("y",y+12);
+		
+		svg.append("text")
+		.text("%")
+		.style("font-size","4px")
+		.style("font-weight","normal")
+		.style("fill","white")
+		.style("text-anchor","end")
+		.attr("x",x+19)
+		.attr("y",y+12);
+		
+		
+		
+		svg.append("text")
+		.text(data.loyalty)
+		.style("font-size","12px")
+		.style("font-weight","bold")
+		.style("fill","white")
+		.style("text-anchor","middle")
+		.attr("x",x+11)
+		.attr("y",y+38);
+		
+		svg.append("text")
+		.text("%")
+		.style("font-size","4px")
+		.style("font-weight","normal")
+		.style("fill","white")
+		.style("text-anchor","end")
+		.attr("x",x+21)
+		.attr("y",y+38);
+		
+}
+
 
 /**
 
@@ -2499,6 +2571,16 @@ function timeFormat(formats) {
   };
 }
 
+/** helper to return fully qualified (FQ) name over all nest levels
+ */
+function getFQName(d){
+	var _fq= NEST_ROOT;
+	for (var i=0;i<ITEMDATA_NEST.length;i++){
+		_fq=_fq+"."+d[ITEMDATA_NEST[i]];
+	}
+	return _fq;
+}
+
 
 
 
@@ -2557,3 +2639,4 @@ function calculateQueueMetrics(){
 var PACKAGE_VERSION="20140105_1132";
 var PACKAGE_VERSION="20140105_1225";
 var PACKAGE_VERSION="20140107_1602";
+var PACKAGE_VERSION="20140112_1144";
