@@ -58,7 +58,11 @@
 var CONTEXT="CONTEXT";
 
 var initiativeData;
+
 var metricData;
+//current metric data is on 
+var METRIC_LEVEL="lane";
+
 var releaseData;
 var laneTextData;
 
@@ -67,7 +71,9 @@ var itemData;
 //top root parent of nested item hierarchy
 var NEST_ROOT="root";
 // nest -level
+//var ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 var ITEMDATA_NEST = ["theme","lane","sublane"];
+
 //depth level 
 var ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
 
@@ -523,10 +529,10 @@ function drawLanes(){
 		// => this needs first refactoring of in-memory datastructure !!!
 		// HAHAAAA :-)) [20140104] did it !!!!
 		for (t in getThemesNEW()){
-			var _t = y(getThemesNEW()[t].y2);
+			var _t = y(getThemesNEW()[t].yt2);
 			
 			// no demarcation line in the end ;-)
-			if (t<=getThemesNEW.length){
+			if (t<getThemesNEW().length-1){
 				d3.select(this).append("line")
 				.attr("x1", x(KANBAN_START)-LANE_LABELBOX_WIDTH-200)
 				.attr("y1", _t)
@@ -1293,7 +1299,10 @@ function onTooltipOutHandler(d,tooltip,highlight){
 */
 function handleMetrics(data){
 	metricData=data;
-	drawMetrics();
+	
+	//current hack to show current lane metrics only when NESTLEVEL=3  (e.g. not in a businessmodel view)
+	if (ITEMDATA_NEST.indexOf(METRIC_LEVEL)==1)
+		drawMetrics();
 }
 
 function drawMetrics(){
@@ -2202,6 +2211,7 @@ function traversePrint(_itemData,_start,_stop){
 
 /**
  * prints current setup of lanes to console
+ * WORKS ONLY IN NEST=3 LEVEL CONTEXT !!!
  */
 function printItemData(depth){
 	console.log("itemdata:");
@@ -2357,6 +2367,7 @@ function transposeCoordinates(){
 
 /**
 calculates the offset to center elements / text per sublane 
+* WORKS ONLY IN NEST=3 LEVEL CONTEXT !!!
 */
 function getSublaneCenterOffset(sublane){
 	var _sublane = getSublaneByNameNEW(sublane);
@@ -2380,7 +2391,7 @@ function getItemByID(data,id){
 /** return object array of lanes
 */
 function getLanesNEW(){
-	return getElementsByDepth(2);
+	return getElementsByDepth(1+ITEMDATA_NEST.indexOf("lane"));
 }
 
 /** returns lane object by name
@@ -2398,7 +2409,7 @@ function getSublanesNEW(lane){
 	if (lane) 
 		return getLaneByNameNEW(lane).children;
 	else
-		return getElementsByDepth(3);
+		return getElementsByDepth(1+ITEMDATA_NEST.indexOf("sublane"));
 }
 
 function getSublaneByNameNEW(name){
@@ -2410,7 +2421,7 @@ function getSublaneByNameNEW(name){
 }
 
 function getThemesNEW(){
-	return getElementsByDepth(1);
+	return getElementsByDepth(1+ITEMDATA_NEST.indexOf("theme"));
 }
 
 function getElementsByDepth(depth){
