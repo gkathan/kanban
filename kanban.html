@@ -62,6 +62,24 @@
 									{"name":"root.topline.bwin.enabling","value":20}
 								]
 						}];				
+	
+	// pie chart sustainable vs. uusustainable business
+	PIE_BASELINE =[{"type":"sustainable","percentage":65},{"type":"notsustainable","percentage":35}];
+	PIE_TARGET =[{"type":"sustainable","percentage":75},{"type":"notsustainable","percentage":25}];
+	
+	// percentage 
+	MARKETSHARE_BASELINE=8;
+	MARKETSHARE_TARGET=9;
+	
+	//cx metrics
+	RECOMMENDATION_BASELINE = -1;
+	RECOMMENDATION_TARGET = 30;
+		
+	LOYALTYINDEX_BASELINE = 67
+	LOYALTYINDEX_TARGET = 75;
+	
+	
+	
 	WIDTH=1500;
 	HEIGHT = 1100;
 	render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
