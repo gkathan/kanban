@@ -1,0 +1,50 @@
+<project name="Kanban" default="dist" basedir=".">
+    <description>
+        simple example build file
+    </description>
+  <!-- set global properties for this build -->
+  <property name="src" location="."/>
+  <property name="dist"  location="dist"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${dist}"/>
+  </target>
+
+  
+  <target name="dist" depends="init"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}"/>
+	
+	<delete>
+		<fileset dir="." includes="*.version"/>
+	</delete>
+	
+	<touch file="${DSTAMP}_${TSTAMP}.version"/>
+	
+	<echo file="js/kanban.js" append="true">var PACKAGE_VERSION="${DSTAMP}_${TSTAMP}";
+</echo>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <zip destfile="${dist}/zip/Kanban-${DSTAMP}_${TSTAMP}.zip">
+		<fileset dir="${src}" includes="bootstrap/**"/>
+		<fileset dir="${src}" includes="css/*.css"/>
+		<fileset dir="${src}" includes="js/*.js" />
+		<fileset dir="${src}" includes="data/*"/>
+		<fileset dir="${src}" includes="img/*"/>
+		
+		<fileset dir="${src}/" includes="*.html"/>
+		<fileset dir="${src}/" includes="*.version"/>
+		
+	</zip>	
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees
+    <delete dir="${dist}"/> -->
+  </target>
+</project>
