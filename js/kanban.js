@@ -69,19 +69,12 @@ var pieData =[{"type":"sustainable","percentage":63.5},{"type":"notsustainable",
 /**
  * the values in the override mean % of space the lanes will get => has to sum to 100% 
  */
-var themeDistOverride=null;
-
-var laneDistOverride=null;
-
-var sublaneDistOverride=null;
-
-
+var itemDataConfig;
 /**
  * "auto": takes the sum of subitems as basline and calculates the distribution accordingly - the more items the more space
  * "equal": takes the parent length of elements and calculates the equal distributed space (e.g. lane "bwin" has 4 sublanes => each sublane gets 1/4 (0.25) for its distribution
  * "override": takes specified values and overrides the distribution with those values => not implemented yet ;-)
  */
-var SUBLANE_STRATEGY ="equal";
 
 var WIDTH =1200;
 var HEIGHT = 1200;
@@ -189,6 +182,17 @@ function setTODAY(){
 	if (TIMEMACHINE) TODAY = new Date(TIMEMACHINE);
 	else TODAY = new Date();
 }
+
+
+
+function drawAll(){
+	createLaneHierarchy();
+	drawInitiatives();
+	drawReleases();
+	drawMetrics();
+	drawVersion();
+}
+
 
 
 /** main entry from data load
@@ -433,10 +437,10 @@ function drawLanes(){
 	//.style("opacity",function(d){return d.accuracy/10})
 	//.on("mouseover",animateScaleUp)
 	.each(function(d){
-		var _lane = d.lane;
+		var _lane = d.name;
 		// [changed 20140104]
-		var _y = y(d.y1);
-		var _height = y(d.y2-d.y1);
+		var _y = y(d.yt1);
+		var _height = y(d.yt2-d.yt1);
 		var _x_offset = 5;
 		var _y_offset = 4;
 		var _laneOpacity;
@@ -464,8 +468,8 @@ function drawLanes(){
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
 		for (var s in _sublanes){
-			var _y = y(_sublanes[s].y1);
-			var _h = y(_sublanes[s].y2-_sublanes[s].y1); 
+			var _y = y(_sublanes[s].yt1);
+			var _h = y(_sublanes[s].yt2-_sublanes[s].yt1); 
 			
 			// strip only the sublane name if name is fully qualified like "topline.bwin.touch"
 			var _sublane = _.last((_sublanes[s].name).split("."))
@@ -500,21 +504,8 @@ function drawLanes(){
 				//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_WIDTH-10,_t,"5px","middle");
 			}
 		}
-		
-	
-		
 		i++;
 	});
-	
-	
-			/* [TODO]  TEXT should come from a lane config file
-				
-				labels.append("text")
-				.text("EUROPE")
-				.attr("x",-LANE_LABELBOX_WIDTH+10)
-				.attr("y",50)
-				.style("fill","white");
-			*/
 }
 
 
@@ -523,9 +514,9 @@ function drawLaneText(svg,lane,side)
 	var i=0;
 	
 	var _color = "black";
-	if (lane == "topline.bwin" || lane=="topline.premium") _color="white";
+	if (lane == "root.topline.bwin" || lane=="root.topline.premium") _color="white";
 	
-	var _yBase = y((getLaneDistByNameNEW(lane).y1))+35;
+	var _yBase = y((getLaneByNameNEW(lane).yt1))+35;
 	
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_WIDTH+10
@@ -737,7 +728,7 @@ function drawQueues(){
 				.attr("y",(y+3));
 
 			svg.append("text")
-				.text(WIP_START.toString("d-MMM-yyyy"))
+				.text(date.toString("d-MMM-yyyy"))
 				.attr("class",css+"Text")
 				.style("text-anchor","start")
 				.style("font-weigth","bold")
@@ -817,10 +808,10 @@ function drawPostits(){
 		var _itemXPlanned = x(new Date(d.planDate));
 		var _itemXActual = x(new Date(d.actualDate));
 		var _itemXStart = x(new Date(d.startDate));
-		var _yOffset = getSublaneCenterOffset(d.theme+"."+d.lane+"."+d.sublane);
+		var _yOffset = getSublaneCenterOffset("root."+d.theme+"."+d.lane+"."+d.sublane);
 		
 		//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
-		var _itemY = y(getSublaneByNameNEW(d.theme+"."+d.lane+"."+d.sublane).y1-_yOffset)+getInt(d.sublaneOffset);
+		var _itemY = y(getSublaneByNameNEW("root."+d.theme+"."+d.lane+"."+d.sublane).yt1-_yOffset)+getInt(d.sublaneOffset);
 		
 		
 		// ------------  postits --------------
@@ -909,11 +900,11 @@ function drawItems(){
 						d.actualDate = yearFormat(TODAY);
 					}
 					
-					var _yOffset = getSublaneCenterOffset(d.theme+"."+d.lane+"."+d.sublane);
+					var _yOffset = getSublaneCenterOffset("root."+d.theme+"."+d.lane+"."+d.sublane);
 					
 					//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
 					
-					var _itemY = y(getSublaneByNameNEW(d.theme+"."+d.lane+"."+d.sublane).y1-_yOffset)+getInt(d.sublaneOffset);
+					var _itemY = y(getSublaneByNameNEW("root."+d.theme+"."+d.lane+"."+d.sublane).yt1-_yOffset)+getInt(d.sublaneOffset);
 
 					
 					// ------------  line if delayed  before plan--------------
@@ -1028,7 +1019,7 @@ function drawItems(){
 							var _dependingItem = getItemByID(initiativeData,_d);
 							//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
 							var _toX = x(new Date(_dependingItem.planDate))	
-							var _toY = y(getSublaneByNameNEW(_dependingItem.theme+"."+_dependingItem.lane+"."+_dependingItem.sublane).y1-_yOffset)+getInt(_dependingItem.sublaneOffset);
+							var _toY = y(getSublaneByNameNEW("root."+_dependingItem.theme+"."+_dependingItem.lane+"."+_dependingItem.sublane).yt1-_yOffset)+getInt(_dependingItem.sublaneOffset);
 							// put lines in one layer to turn on off globally
 							dep.append("line")
 								.attr("x1", _itemXPlanned)
@@ -1297,8 +1288,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//primary metrics
 		var _primTextYOffset = _height/2;
@@ -1333,8 +1324,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//secondary metrics
 		var _secTextYOffset = _height/2;
@@ -1356,8 +1347,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//tertiary metrics
 		var _tertTextYOffset = (_height/2)+20;
@@ -1401,8 +1392,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//primary metrics
 		var _primTextYOffset = _height/2;
@@ -1435,8 +1426,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//secondary metrics
 		var _primTextYOffset = _height/2;
@@ -1458,8 +1449,8 @@ function drawMetrics(){
 		var _lane = d.lane;
 		
 		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
+		var _y = y(_l.yt1);
+		var _height = y(_l.yt2-_l.yt1);
 		
 		//tertiary metrics
 		var _tertTextYOffset = (_height/2)+20;
@@ -1488,7 +1479,7 @@ function drawMetrics(){
 	
 	
 /* ----------------------------------------- risks ------------------------------------------------ */
- 	var _yRisk = y(getLaneDistByNameNEW("topline.foxy").y2)-30;
+ 	var _yRisk = y(getLaneByNameNEW("root.topline.foxy").yt2)-30;
  	var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
  	
  	_drawRisks(gMetrics,0,_xRisk,_yRisk);
@@ -1604,7 +1595,7 @@ function _drawTextMetric(svg,metric,css,x,y,space){
  * class: <baseline> or <target>
  * type: <primary>, <secondary> or <tertiary>
  */
-/*
+/* _drawMetricBlock TRY
 function _drawMetricBlock(svg,side,type,yTextOffset){
 	
 	var _bracket; 
@@ -1742,16 +1733,6 @@ function drawReleases(){
 	});
 			
 }
-
-function drawAll(){
-	createLaneHierarchy();
-	drawInitiatives();
-	drawReleases();
-	drawMetrics();
-	drawPies();
-	drawVersion();
-}
-
 
 
 function drawVersion(){
@@ -2003,41 +1984,24 @@ function customAxis(g) {
 }
 
 
-/** Calculate the difference of two dates in total days
-*/
-function diffDays(d1, d2)
-{
-	date1_unixtime = parseInt(new Date(d1).getTime() / 1000);
-	date2_unixtime = parseInt(new Date(d2).getTime() / 1000);
-
-	// This is the calculated difference in seconds
-	var timeDifference = date2_unixtime - date1_unixtime;
-
-	// in Hours
-	var timeDifferenceInHours = timeDifference / 60 / 60;
-
-	// and finaly, in days :)
-	var timeDifferenceInDays = timeDifferenceInHours  / 24;
-
-	return timeDifferenceInDays;
-}	
-
-/**
-* helper method
-*/
-function getInt(_value){
-	var _int =0;
-	if (parseInt(_value)) _int = parseInt(_value); 
-	return _int;				
+/** config (former override)
+ * */
+function getConfigModeByDepth(depth){
+	for (var i in itemDataConfig){
+		if (itemDataConfig[i].depth==depth) return itemDataConfig[i].mode;
+	}
+	return null;
 }
 
-function timeFormat(formats) {
-  return function(date) {
-    var i = formats.length - 1, f = formats[i];
-    while (!f[1](date)) f = formats[--i];
-    return f[0](date);
-  };
+function getConfigByName(name){
+	for (var i in itemDataConfig){
+		for (p in itemDataConfig[i].percentages){
+			if (itemDataConfig[i].percentages[p].name==name) return itemDataConfig[i].percentages[p].value;
+		}
+	}
+	return null;
 }
+
 
 /**
  * create hierarchical data structure from flat import table
@@ -2047,209 +2011,144 @@ function createLaneHierarchy(){
 	
 	itemData = _.nest(initiativeData,["theme","lane","sublane"]);
 	
-	//var _data = _.nest(initiativeData,["businessmodel","theme","lane","sublane"]);
+	//depth = 3
+	createCoordinates(itemData,0,3);
 	
-	/*
-	// when we load the fully monty v20 data we just take the first businessmodel below holding root
-	itemData = {};
-	itemData.children=_data.children;
-	*/
-
-	// and here comes the magic to tag the y-values to each level and element of the hierarchy
-	// remember structure (data domain) is always like
-	//
-	// |			- y min = 0
-	// |
-	// |
-	// |
-	// |
-	// ------------ -y max = 100
-	
-	
-	itemData.y1 = 0;
-	itemData.y2 = 100;
-	itemData.name="itemData root";
-
-	
-	var _dist0=[];
-				
-	//calculate sum of all children
-	var _sum1=0;
-	for (var i in itemData.children){
-		_sum1=_sum1+itemData.children[i].children.length;
-	}
-	console.log("//// _count of lanes in root= "+_sum1);
-	console.log("//// _count of themes in root= "+itemData.children.length);
-	
-	for (var i0 in itemData.children){
-			console.log("* level-0 [\"themes\"] children found: size="+itemData.children.length);
-			console.log("* level-0 [\"themes\"] start traversing: "+itemData.children[i0].name);
-			var c0 = itemData.children[i0];
-			itemData.type="root";
-
-			if (c0.children){
-				console.log("  * level-1 children found: size="+c0.children.length);
-				c0.level="theme";
-				
-				var _dist1=[];
-				
-				//calculate sum of all children
-				var _sum2=0;
-				for (var i in c0.children){
-					_sum2=_sum2+c0.children[i].children.length;
-				}
-				console.log("/////////////// _count of sublanes "+c0.name+" = "+_sum2);
-				console.log("/////////////// _count of lanes "+c0.name+" = "+c0.children.length);
-					
-				for (var i1 in c0.children){
-					console.log("    * level-1 [\"lanes\"]start traversing: "+c0.children[i1].name);
-					c1 = c0.children[i1];
-					c1.level="lane";
-					c1.name=c0.name+"."+c1.name;
-							
-					if (c1.children){
-						console.log("      * level-2 children found");
-						var _dist2=[];
-						
-						//calculate sum of all childs in children
-						var _sum3=0;
-						for (var i in c1.children){
-							_sum3=_sum3+c1.children[i].children.length;
-						}
-						console.log("/////////////////////// _count of subitems ["+c1.name+"]= "+_sum3);
-						console.log("/////////////////////// _count of sublanes ["+c1.name+"]= "+c1.children.length);
-					
-						for (var i2 in c1.children){
-							console.log("        * level-2 [\"sublanes\"]: "+c1.children[i2].name+" start traversing");
-							c2 = c1.children[i2];
-							c2.level="sublane";
-							c2.name=c1.name+"."+c2.name;
-						
-							if (c2.children){
-								console.log("          * level-3 children found");
-				
-								//calculate sum of all children
-								var _sum4=0;
-								for (var i3 in c2.children){
-									console.log("              * level-3 start [\"items\"] traversing: "+c2.children[i3].name);
-									c3 = c2.children[i3];
-									c3.level="item";
-									
-									if (c3.children){
-										// end of recursion
-										console.log("                  * level-4 children found");
-									}
-									else{
-										// go one step deeper in recusrion
-										console.log("                   [\"items\"]=> on leaf nodes: #"+c3.Title);
-										c3.type="item";
-									}
-								} // END ITEMS LOOP
-							} //end if(c2.children)
-							
-							
-							var _v1,_v2;
-							if (i2==0) _v1 = 0;
-							else _v1 = parseFloat(_dist2[parseInt(i2)-1].y2);
-								
-								
-							
-							if (SUBLANE_STRATEGY=="equal" ||!SUBLANE_STRATEGY) _v2 = itemData.y2/itemData.children[i0].children[i1].children.length;
-							else if (SUBLANE_STRATEGY =="auto")_v2 = itemData.y2*(itemData.children[i0].children[i1].children[i2].children.length/_sum3);
-		
-							// override
-							if (sublaneDistOverride  && sublaneDistOverride[i1]){
-								if (itemData.children[i0].children[i1].children[i2].name==sublaneDistOverride[i1].dist[i2].name)
-									_v2=sublaneDistOverride[i1].dist[i2].value;
-							}
-
-							
-							_v2 = _v2+_v1;
-							
-							// fully qualified name "theme.lane.sublane"
-							_dist2[i2]={"name":itemData.children[i0].children[i1].children[i2].name,"y1":_v1,"y2":_v2};
-						} // END SUBLANE LOOP
-
-						c1.dist=_dist2;
-					}
-					console.log("OUT of loop: [i1]  ======== sum of all sublanes below theme ["+c0.name+"]= "+_sum2);
-				
-					var _v1,_v2;
-										
-					if (i1==0) _v1 = 0;
-					else _v1 = parseFloat(_dist1[parseInt(i1)-1].y2);
-	
-					_v2 = itemData.y2*(itemData.children[i0].children[i1].children.length/_sum2);
-
-					// override
-					if (laneDistOverride  && laneDistOverride[i0]){
-						if (itemData.children[i0].children[i1].name==laneDistOverride[i0].dist[i1].name)
-								_v2=laneDistOverride[i0].dist[i1].value;
-					}
-
-					_v2 = _v2+_v1;
-					
-					_dist1[i1]={"name":itemData.children[i0].children[i1].name,"y1":_v1,"y2":_v2};
-					
-				} //END LANE LEVEL
-				c0.dist=_dist1;
-			}
-			//checkDistributionOverride(distOverride);
-			
-			var _v1,_v2;
-
-			if (i0==0) _v1 = 0;
-			else _v1 = parseFloat(_dist0[parseInt(i0)-1].y2);
-			
-			_v2 = itemData.y2*(itemData.children[i0].children.length/_sum1);
-			
-			//override
-			if (themeDistOverride  && themeDistOverride.level == itemData.children[i0].level){
-				_v2=(themeDistOverride.dist[i0].value);
-			}
-			//override end
-			_v2 = _v2+_v1;
-			
-			_dist0[i0]={"name":itemData.children[i0].name,"y1":_v1,"y2":_v2};
-			
-	} //END LOOP itemData
-	
-	console.log("===== sum of all lanes below root ["+itemData.name+"]= "+_sum1);
-				
-	itemData.dist=_dist0;
-
-
-	transposeDistribution();
+	transposeCoordinates();
 }
 
+
+
+
+/** recursive traversion to enrich the itemData structure with y coordinates
+ * y1,y2 = local relative distribution per depth level
+ * yt1,yt2 = transposed absolute y coordinates
+ */
+function createCoordinates(_itemData,_start,_stop){
+	// root
+	if (_start==0){
+		_itemData.y1 = 0;
+		_itemData.y2 = 100;
+		_itemData.name="root";
+		_itemData.depth=0;
+		_parent=_itemData;
+	}
+	
+	if (_itemData.children){
+		_start++;
+
+		//calculate sum of all children
+			var _sum=0;
+			for (var i in _itemData.children){
+				_sum=_sum+_itemData.children[i].children.length;
+			}
+			_itemData.childsum=_sum;
+		//calculate sum end
+		
+		for (i in _itemData.children){
+			_itemData.children[i].depth=_start;
+			_itemData.children[i].name=_itemData.name+"."+_itemData.children[i].name;
+
+			if (_itemData.children[i].children && _stop >_start){
+				//recurse deeper
+				createCoordinates(_itemData.children[i],_start,_stop);
+			}
+			else {
+				console.log("end of recursion");
+			}
+			// calculate coordinates
+			var _y1,_y2;
+			if (i==0) {
+				_y1 = 0;
+			}
+			else {
+				_y1 = parseFloat(_itemData.children[parseInt(i-1)].y2);
+			}	
+			
+			//default mode ="auto"
+			_y2 = itemData.y2*(_itemData.children[i].children.length/_itemData.childsum);
+
+			//check if mode is set to "equal"
+			if (getConfigModeByDepth(_itemData.children[i].depth)=="equal"){
+				_y2 = itemData.y2/_itemData.children.length;
+			}
+			
+			// check manual percentage override
+			var _config = getConfigByName(_itemData.children[i].name);
+			if (_config){
+				console.log("config for: "+_itemData.children[i].name+" :"+_config);
+				_y2= _config;
+			}
+			// end override check 
+						
+			_y2 = _y2+_y1;
+			
+			_itemData.children[i].y1=_y1;
+			_itemData.children[i].y2=_y2;
+		}
+		// after loop stuff
+	}
+	else{
+		//console.log("....no more children found..");
+	}
+}
+	
+
+/** prints current lane config
+ */
+function traversePrint(_itemData,_start,_stop){
+	
+	console.log("level: "+_itemData.depth+" "+_itemData.name+" coordinates [y1,y2]: "+_itemData.y1+","+_itemData.y2+ " -- coordinates transposed [yt1,yt2]: "+_itemData.yt1+","+_itemData.yt2);
+	
+	if (_itemData.children){
+		_start++;
+		for (i in _itemData.children){
+			
+			// do in-level stuff 
+			
+			if (_itemData.children[i].children && _stop >=_start){
+				//console.log(" recurse deeper...");
+				traversePrint(_itemData.children[i],_start,_stop);
+			}
+			else {
+				// do whtever needs to be don on the stop-level
+				//console.log("...end of recursion");
+			}
+		}
+		// after loop stuff
+	}
+	else{
+		//console.log("....no more children found..");
+	}
+}
 
 /**
  * prints current setup of lanes to console
  */
-function printItemData(level){
-	console.log("print lanes:");
-	console.log("------------");
+function printItemData(depth){
+	console.log("itemdata:");
+	console.log("---------");
 
 	//themes
 	for (var i0 in itemData.children){
-		var _y01=(itemData.dist[i0].y1).toFixed(2);
-		var _y02=(itemData.dist[i0].y2).toFixed(2);
+		var _y01=(itemData.children[i0].y1).toFixed(2);
+		var _y02=(itemData.children[i0].y2).toFixed(2);
 		
-		if (level=="theme" ||!level) console.log("+ theme: "+itemData.children[i0].name+" [y1: "+_y01+" y2: "+_y02+"] height: "+(_y02-_y01).toFixed(2));
+		if (depth==1 ||!depth) console.log("+ theme: "+itemData.children[i0].name+" [yt1: "+_y01+" yt2: "+_y02+"] height: "+(_y02-_y01).toFixed(2));
 		//lanes
 		for (var i1 in itemData.children[i0].children){
-			var _y11=(itemData.children[i0].distTransposed[i1].y1).toFixed(2);
-			var _y12=(itemData.children[i0].distTransposed[i1].y2).toFixed(2);
-			var _p1 = (itemData.children[i0].dist[i1].y2-itemData.children[i0].dist[i1].y1).toFixed(2);
+			var _y11=(itemData.children[i0].children[i1].yt1).toFixed(2);
+			var _y12=(itemData.children[i0].children[i1].yt2).toFixed(2);
+			var _p1 = (itemData.children[i0].children[i1].y2-itemData.children[i0].children[i1].y1).toFixed(2);
 		
-			if (level=="lane" ||!level) console.log("    + lane: "+itemData.children[i0].distTransposed[i1].name+" [y1: "+_y11+" y2: "+_y12+"] height: "+(_y12-_y11).toFixed(2)+" ("+_p1+"%)");
+			if (depth==2 ||!depth) console.log("    + lane: "+itemData.children[i0].children[i1].name+" [yt1: "+_y11+" yt2: "+_y12+"] height: "+(_y12-_y11).toFixed(2)+" ("+_p1+"%)");
 			//sublanes
 			for (var i2 in itemData.children[i0].children[i1].children){
-				var _y21=(itemData.children[i0].children[i1].distTransposed[i2].y1).toFixed(2);
-				var _y22=(itemData.children[i0].children[i1].distTransposed[i2].y2).toFixed(2);
-				var _p2 = (itemData.children[i0].children[i1].dist[i2].y2-itemData.children[i0].children[i1].dist[i2].y1).toFixed(2);
+				var _y21=(itemData.children[i0].children[i1].children[i2].yt1).toFixed(2);
+				var _y22=(itemData.children[i0].children[i1].children[i2].yt2).toFixed(2);
+				var _p2 = (itemData.children[i0].children[i1].children[i2].y2-itemData.children[i0].children[i1].children[i2].y1).toFixed(2);
 		
-				if (level =="sublane" ||!level)console.log("       + sublane: "+itemData.children[i0].children[i1].distTransposed[i2].name+" [y1: "+_y21+" y2: "+_y22+"] height: "+(_y22-_y21).toFixed(2)+" ("+_p2+"%)");
+				if (depth ==3 ||!depth)console.log("       + sublane: "+itemData.children[i0].children[i1].children[i2].name+" [yt1: "+_y21+" yt2: "+_y22+"] height: "+(_y22-_y21).toFixed(2)+" ("+_p2+"%)");
 			}
 		}
 	}
@@ -2273,86 +2172,75 @@ function checkDistributionOverride(override){
 }
 
 
-/**
- * and here comes another magic ;-)
- * we are transposing now 
- * taking upper distribution as 100% 
- * e.g. if we are in the root.topline lane (71%)
- * the 71% becomes the new 100% in this context
-*/
-function transposeDistribution(){
-	// first level transpose
-	for (var child in itemData.children){
-		var c0 = itemData.children[child];
-		var c0_base = (itemData.dist[parseInt(child)].y2-itemData.dist[parseInt(child)].y1)/itemData.y2;
 
-		if (c0.children){
-			var _distTransposed =[]
-			for (var i=0;i<c0.children.length;i++){
-				c1 = c0.children[i];
-						
-				if (c1.children){
-					var _v1 = itemData.dist[parseInt(child)].y1+(c0.dist[i].y1*c0_base);
-					var _v2 = itemData.dist[parseInt(child)].y1+(c0.dist[i].y2*c0_base)
-					console.log("_v1: "+_v1+" , "+"_v2: "+_v2);
-					_distTransposed[i]={"name":c0.children[i].name,"y1":_v1 ,"y2":_v2};
-					console.log("  * transposed - c0.dist["+i+"] ="+_distTransposed[i].y1);
+
+function transposeCoordinates(){
+      //depth=0
+		itemData.yt1 = itemData.y1;
+		itemData.yt2 = itemData.y2;
+
+	
+	var c1_base = 1;;
+	
+	//first level transpose ? (depth=1)
+	for (var i in itemData.children){
+		itemData.children[i].yt1 = itemData.y1+(itemData.children[i].y1*c1_base);
+		itemData.children[i].yt2 = itemData.y1+(itemData.children[i].y2*c1_base);
+	}		
+	
+	// second level transpose (depth=2)
+	for (var i in itemData.children){
+		var c2_base = (itemData.children[parseInt(i)].y2-itemData.children[parseInt(i)].y1)/itemData.y2;
+		if (itemData.children[i]){
+			var _yt1,_yt2;
+			for (var j=0;j<itemData.children[i].children.length;j++){
+				if (itemData.children[i].children[j].children){
+					_yt1 = itemData.children[parseInt(i)].y1+(itemData.children[i].children[j].y1*c2_base);
+					_yt2 = itemData.children[parseInt(i)].y1+(itemData.children[i].children[j].y2*c2_base)
+					//console.log("_yt1: "+_yt1+" , "+"_yt2: "+_yt2);
 				}
+				itemData.children[i].children[j].yt1=_yt1;
+				itemData.children[i].children[j].yt2=_yt2;
 			}
-			c0.distTransposed=_distTransposed;
 		}
 	}
-	// second level transpose
-	for (var child in itemData.children){
-		var c0 = itemData.children[child];
-		var c0_base = (itemData.dist[parseInt(child)].y2-itemData.dist[parseInt(child)].y1)/itemData.y2;
-	
-		if (c0.children){
-			for (var i=0;i<c0.children.length;i++){
-				var c1_base = (c0.dist[i].y2-c0.dist[i].y1)/itemData.y2;
-				c1 = c0.children[i];
-				var _distTransposed2 =[]
-		
-				for (var ii=0;ii<c1.children.length;ii++){
-					if (c1.children){
-	
-					console.log("  * going to transpose ["+c1.children[ii].name+"].... 100% [c1_base] ="+c1_base+" for: "+c1.name);
-					console.log("|  V1 "+(c0.distTransposed[parseInt(i)].y1+c1.dist[ii].y1*c1_base*c0_base));
-					
-					// have to multiply with c0_base AND c1_base 
+
+	// third level transpose (depth=3)
+	for (var i in itemData.children){
+		var c2_base = (itemData.children[parseInt(i)].y2-itemData.children[parseInt(i)].y1)/itemData.y2;
+		if (itemData.children[i]){
+			for (var j=0;j<itemData.children[i].children.length;j++){
+				var c3_base = (itemData.children[i].children[j].y2-itemData.children[i].children[j].y1)/itemData.y2;
+				for (var ii=0;ii<itemData.children[i].children[j].children.length;ii++){
+					if (itemData.children[i].children[j].children){
+					//console.log("  * going to transpose ["+itemData.children[i].children[j].children[ii].name+"].... 100% [c3_base] ="+c3_base+" for: "+itemData.children[i].children[j].name);
+					// have to multiply with c2_base AND c3_base 
 					// 2-level transpose !!!!!
-					
-					var _v1 = c0.distTransposed[parseInt(i)].y1+c1.dist[ii].y1*c1_base*c0_base;
-					var _v2 = c0.distTransposed[parseInt(i)].y1+c1.dist[ii].y2*c1_base*c0_base;
-					console.log("_v1: "+_v1+" , "+"_v2: "+_v2);
-					
-					_distTransposed2[ii]={"name":c1.children[ii].name,"y1":_v1 ,"y2":_v2};
+					var _yt1 = itemData.children[i].children[parseInt(j)].yt1+itemData.children[i].children[j].children[ii].y1*c3_base*c2_base;
+					var _yt2 = itemData.children[i].children[parseInt(j)].yt1+itemData.children[i].children[j].children[ii].y2*c3_base*c2_base;
+					//console.log("_yt1: "+_yt1+" , "+"_yt2: "+_yt2);
 					}
+					itemData.children[i].children[j].children[ii].yt1=_yt1;
+					itemData.children[i].children[j].children[ii].yt2=_yt2;
 				}
-				c1.distTransposed =_distTransposed2;
 			}
 		}
 	}
+	
 }
 
 /**
 calculates the offset to center elements / text per sublane 
 */
 function getSublaneCenterOffset(sublane){
-	
 	var _sublane = getSublaneByNameNEW(sublane);
-	
-	var _height = _sublane.y2-_sublane.y1;
-
-	//console.log("# of sublanes for "+lane+": "+_sublanes+ " y = "+_y+ "height: "+_height);
-	
+	var _height = _sublane.yt2-_sublane.yt1;
 	return -(_height/2);
 }
 
 /**
 * helper method to get item from object array by ID
 */
-
 function getItemByID(data,id){
 	for (var _item=0; _item< data.length;_item++){
 			if (data[_item].id == id){
@@ -2363,175 +2251,71 @@ function getItemByID(data,id){
 }
 
 
-/** return object array of lane names + y1 and y2 values
+/** return object array of lanes
 */
 function getLanesNEW(){
-	var _lanes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			_lanes.push({"lane":itemData.children[_theme].children[_lane].name,"y1":itemData.children[_theme].distTransposed[_lane].y1,"y2":itemData.children[_theme].distTransposed[_lane].y2});
-		}
-	}
-	return _lanes;
+	return getElementsByDepth(2);
 }
 
-function getLaneDistByNameNEW(lane){
-	var _lanes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			if (itemData.children[_theme].children[_lane].name == lane)
-				return {"lane":itemData.children[_theme].children[_lane].name,"y1":itemData.children[_theme].distTransposed[_lane].y1,"y2":itemData.children[_theme].distTransposed[_lane].y2};
-		}
+/** returns lane object by name
+ */
+function getLaneByNameNEW(name){
+	var _lanes = getLanesNEW();
+	for (i in _lanes){
+		if (_lanes[i].name==name) return _lanes[i];
 	}
 	return null;
 }
-
 
 
 function getSublanesNEW(lane){
-	var _sublanes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			
-			if (lane == itemData.children[_theme].children[_lane].name){
-				_sublanes = itemData.children[_theme].children[_lane].distTransposed;
-			}
-			
-		}
-	}
-	return _sublanes;
+	if (lane) 
+		return getLaneByNameNEW(lane).children;
+	else
+		return getElementsByDepth(3);
 }
 
-function getSublaneByNameNEW(sublane){
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			for (_sublane in itemData.children[_theme].children[_lane].children){
-				if (sublane == itemData.children[_theme].children[_lane].distTransposed[_sublane].name) return itemData.children[_theme].children[_lane].distTransposed[_sublane];
-			}
-		}
+function getSublaneByNameNEW(name){
+	var _sublanes = getSublanesNEW();
+	for (i in _sublanes){
+		if (_sublanes[i].name==name) return _sublanes[i];
 	}
 	return null;
 }
 
-
-/**NEW
- */ 
 function getThemesNEW(){
-	var _themes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		_themes.push(itemData.dist[_theme]);
-	}
-	return _themes;
+	return getElementsByDepth(1);
+}
+
+function getElementsByDepth(depth){
+	var _elements = new Array();
+	traverse(itemData,0,depth,_elements);
+	return _elements;
 }
 
 
-
-/*
-function getLanesFQ(){
-	var _lanes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			_lanes.push(itemData.children[_theme].name+"."+itemData.children[_theme].children[_lane].name);
-		}
-	}
-	return _lanes;
-}
-
-
-function getSubLanesFQ(){
-	var _sublanes = new Array();
-	
-	//ALL itemData.children.children
-	for(_theme in itemData.children){
-		for (_lane in itemData.children[_theme].children){
-			for (_sublane in itemData.children[_theme].children[_lane].children){
-				_sublanes.push(itemData.children[_theme].name+"."+itemData.children[_theme].children[_lane].name+"."+itemData.children[_theme].children[_lane].children[_sublane].name);
+/** start=0, stop=1 should give me the 2 top elements in hierarchy 
+ */
+function traverse(_itemData,_start,_stop,_list){
+	if (_itemData.children){
+		_start++;
+		for (i in _itemData.children){
+			if (_itemData.children[i].children && _stop >_start){
+				traverse(_itemData.children[i],_start,_stop,_list);
+			}
+			else {
+				// do whtever needs to be don on the stop-level
+				// as an example just return the elements
+				_list.push(_itemData.children[i]);
 			}
 		}
 	}
-	return _sublanes;
-}
-
-
-function getLaneDistributionNEW(){
-	var _dist = new Array();
-	_dist.push(100);
-	
-	for (var i in itemData.children){
-		for (var j in itemData.children[i].distTransposed){
-			_dist.push(100-(itemData.children[i].distTransposed[j].y2)*100);
-		}
+	else{
+		console.log("....no more children found..");
 	}
-	return _dist;
 }
-
-
-function getLaneDistributionRAW(){
-	var _dist = new Array();
-	//_dist.push(100);
 	
-	for (var i in itemData.children){
-		for (var j in itemData.children[i].dist){
-			_dist.push(100-(itemData.children[i].dist[j].y2)*100);
-		}
-	}
-	return _dist;
-}
 
-
-function getSubLaneDistributionNEW(){
-	var _dist = new Array();
-	_dist.push(100);
-	
-	for (var i in itemData.children){
-		for (var j in itemData.children[i].children){
-			for (var k in itemData.children[i].children[j].distTransposed){
-			_dist.push(100-(itemData.children[i].children[j].distTransposed[k].y2)*100);
-			}
-		}
-	}
-	return _dist;
-}
-
-function getSubLaneDistributionRAW(){
-	var _dist = new Array();
-	//_dist.push(100);
-	
-	for (var i in itemData.children){
-		for (var j in itemData.children[i].children){
-			for (var k in itemData.children[i].children[j].dist){
-			_dist.push(100-itemData.children[i].children[j].dist[k].y2);
-			}
-		}
-	}
-	return _dist;
-}
-
-
-
-function getThemeDistributionNEW(){
-	var _dist = new Array();
-	_dist.push(100);
-	
-	for (var i in itemData.children){
-		_dist.push(100-(itemData.dist[i].y2)*100);
-	}
-	return _dist;
-}
-
-*/
 
 
 function drawLineChart()
@@ -2540,8 +2324,8 @@ d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") &&
 
 var parseDate = d3.time.format("%d-%b-%y").parse;
 
-var _y1 = y(getLaneDistByNameNEW("topline.bwin").y1);
-var _y2 = y(getLaneDistByNameNEW("topline.bwin").y2);
+var _y1 = y(getLaneDistByNameNEW("root.topline.bwin").y1);
+var _y2 = y(getLaneDistByNameNEW("root.topline.bwin").y2);
 
 
 var _height = _y2-_y1;
@@ -2623,6 +2407,42 @@ svg.append("path")
 
 console.log("NGR sum:"+NGR_sum);
 
+}
+
+
+/** Calculate the difference of two dates in total days
+*/
+function diffDays(d1, d2){
+	date1_unixtime = parseInt(new Date(d1).getTime() / 1000);
+	date2_unixtime = parseInt(new Date(d2).getTime() / 1000);
+
+	// This is the calculated difference in seconds
+	var timeDifference = date2_unixtime - date1_unixtime;
+
+	// in Hours
+	var timeDifferenceInHours = timeDifference / 60 / 60;
+
+	// and finaly, in days :)
+	var timeDifferenceInDays = timeDifferenceInHours  / 24;
+
+	return timeDifferenceInDays;
+}	
+
+/**
+* helper methods
+*/
+function getInt(_value){
+	var _int =0;
+	if (parseInt(_value)) _int = parseInt(_value); 
+	return _int;				
+}
+
+function timeFormat(formats) {
+  return function(date) {
+    var i = formats.length - 1, f = formats[i];
+    while (!f[1](date)) f = formats[--i];
+    return f[0](date);
+  };
 }
 
 
