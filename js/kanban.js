@@ -139,7 +139,7 @@ function render(itemFile,metricFile,releaseFile,svgFile){
 		//d3.json("data/initiatives_mysql.json",handleInitiatives);
 		// working PHP json export 
 		
-		//d3.json("data/data.php",handleInitiatives);
+		//d3.json("data/data.php?type=initiatives",handleInitiatives);
 		
 		if ("data/"+metricFile)	d3.tsv("data/"+metricFile,handleMetrics);
 		
@@ -205,10 +205,11 @@ function drawInitiatives(){
 	init();
 	initHandlers();
 	
-	createLaneDistribution();
-
 	createLaneHierarchy();
 
+	createLaneDistribution();
+
+	
 
 	drawAxes();
 	drawLanes();
@@ -465,7 +466,7 @@ function drawLanes(){
 		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_WIDTH,_height,_lane);
 
 		// laneside descriptors
-		_drawLaneSideText(d3.select(this),_lane,-LANE_LABELBOX_WIDTH-2,y(laneDistribution[i])+3,"6px","start");
+		_drawLaneSideText(d3.select(this),_lane,-LANE_LABELBOX_WIDTH-2,_y+3,"6px","start");
 
 		//sublane descriptors
 		for (var l=0;l<laneMap[_lane].length;l++){
@@ -1834,10 +1835,11 @@ function customAxis(g) {
 **/
 function mapLane(lane,sublane){
 	
-	var _lanePosition = getLaneSublane(lane,sublane);
+	//var _lanePosition = getLaneSublane(lane,sublane);
+	var _l = getLane(lane);
 	
-	var _l=_lanePosition[0];
-	var _sl = _lanePosition[1];
+	//var _l=_lanePosition[0];
+	//var _sl = _lanePosition[1];
 	
 	//offset from the bottom of the lane
 	//var _offsetBottom = 0.5;
@@ -1855,6 +1857,36 @@ function mapLane(lane,sublane){
 
 	return _y;
 }
+
+function mapLaneNEW(lane,sublane){
+	
+	var _y=0;
+	
+	for (var i in itemData.children){
+		console.log("* scanning...."+itemData.children[i].name)
+			
+		for (j in itemData.children[i].children){
+			console.log("** scanning...."+itemData.children[i].children[j].name)
+				for (k in itemData.children[i].children[j].children){
+					console.log("*** scanning...."+itemData.children[i].children[j].children[k].name)
+					
+					if (lane+"."+sublane == itemData.children[i].children[j].distTransposed[k].name){
+					console.log("***match***");
+					_y=itemData.children[i].children[j].distTransposed[k].value1;
+					break;
+				}
+			}
+		}
+			
+		
+	}
+	return 100-(_y*100);
+	
+}
+	
+	
+	
+
 
 
 /** Calculate the difference of two dates in total days
@@ -1927,6 +1959,11 @@ function createLaneMap()
 	}
 }
 
+
+
+
+
+
 /** setup the laneDistrutionarray
 *
 */
@@ -1955,6 +1992,85 @@ function createLaneDistribution(){
 	//var laneDistribution=[100,84,68,60,52,40,26,18,0];
 }
 
+/**NEW
+ */
+function createLaneDistributionNEW(){
+	
+	createLaneMap();
+
+	laneDistribution=getLaneDistributionNEW();
+}
+
+/** NEW
+ * gets current transposed dist values below themes = lanes level !
+ */
+function getLaneDistributionNEW(){
+	var _dist = new Array();
+	_dist.push(100);
+	
+	for (var i in itemData.children){
+		for (var j in itemData.children[i].distTransposed){
+			_dist.push(100-(itemData.children[i].distTransposed[j].value2)*100);
+		}
+	}
+	return _dist;
+}
+
+function getLaneDistributionRAW(){
+	var _dist = new Array();
+	//_dist.push(100);
+	
+	for (var i in itemData.children){
+		for (var j in itemData.children[i].dist){
+			_dist.push(100-(itemData.children[i].dist[j].value2)*100);
+		}
+	}
+	return _dist;
+}
+
+
+function getSubLaneDistributionNEW(){
+	var _dist = new Array();
+	_dist.push(100);
+	
+	for (var i in itemData.children){
+		for (var j in itemData.children[i].children){
+			for (var k in itemData.children[i].children[j].distTransposed){
+			_dist.push(100-(itemData.children[i].children[j].distTransposed[k].value2)*100);
+			}
+		}
+	}
+	return _dist;
+}
+
+function getSubLaneDistributionRAW(){
+	var _dist = new Array();
+	//_dist.push(100);
+	
+	for (var i in itemData.children){
+		for (var j in itemData.children[i].children){
+			for (var k in itemData.children[i].children[j].dist){
+			_dist.push(100-itemData.children[i].children[j].dist[k].value2);
+			}
+		}
+	}
+	return _dist;
+}
+
+
+
+function getThemeDistributionNEW(){
+	var _dist = new Array();
+	_dist.push(100);
+	
+	for (var i in itemData.children){
+		_dist.push(100-(itemData.dist[i].value2)*100);
+	}
+	return _dist;
+}
+
+
+
 
 /**
  * create hierarchical data structure from flat import table
@@ -1963,164 +2079,189 @@ function createLaneHierarchy(){
 	// create hierarchical base data from list
 	itemData = _.nest(initiativeData,["theme","lane","sublane"]);
 
-
 	// and here comes the magic to tag the y-values to each level and element of the hierarchy
 	// remember structure (data domain) is always like
 	//
-	// |			- y max = 100
+	// |			- y min = 0
 	// |
 	// |
 	// |
 	// |
-	// ------------ -y min = 0
+	// ------------ -y max = 100
 	
 	
 	itemData.y1 = 0;
 	itemData.y2 = 100;
 	itemData.name="itemData root";
 
-	// check for each level whether we have a laneDistributionOverride data / otherwise distribute even
-	
-	
-	var count0=0;
 	
 	var _dist0=[];
 				
+	//calculate sum of all children
+	var _sum1=0;
+	for (var i in itemData.children){
+		_sum1=_sum1+itemData.children[i].children.length;
+	}
+	console.log("//// _count of lanes in root= "+_sum1);
+	console.log("//// _count of themes in root= "+itemData.children.length);
 	
-	for (var child in itemData.children){
+	for (var i0 in itemData.children){
 			console.log("* level-0 [\"themes\"] children found: size="+itemData.children.length);
-			console.log("* level-0 [\"themes\"] start traversing");
-			var c0 = itemData.children[child];
+			console.log("* level-0 [\"themes\"] start traversing: "+itemData.children[i0].name);
+			var c0 = itemData.children[i0];
 			itemData.type="root";
-			
-							
-			console.log("  child:"+c0);
-			// itemData.children => object array [Object,Object]
-			// GOAL is to have information on this level how the y-distribution looks like 
-			// when i have 2 objects (in this case toplevel "theme") i expect something like [71,29]
-			// meaning lane[0] takes 71% and lane[1] takes 29%
-			// => this can only be calculated from bottom up
-			// => so first go down until no children array 
-			// => and then calculate and traverse upwards 
+
 			if (c0.children){
 				console.log("  * level-1 children found: size="+c0.children.length);
-
-				var count1=0;
-				for (var child in c0.children){
-					console.log("    * level-1 [\"lanes\"]start traversing");
-					c1 = c0.children[child];
-					c0.type="theme";
+				c0.level="theme";
+				
+				var _dist1=[];
+				
+				//calculate sum of all children
+				var _sum2=0;
+				for (var i in c0.children){
+					_sum2=_sum2+c0.children[i].children.length;
+				}
+				console.log("/////////////// _count of sublanes "+c0.name+" = "+_sum2);
+				console.log("/////////////// _count of lanes "+c0.name+" = "+c0.children.length);
+					
+				for (var i1 in c0.children){
+					console.log("    * level-1 [\"lanes\"]start traversing: "+c0.children[i1].name);
+					c1 = c0.children[i1];
+					c1.level="lane";
 							
 					if (c1.children){
 						console.log("      * level-2 children found");
+						var _dist2=[];
 						
-						var count2=0;
-						for (var child in c1.children){
-							console.log("        * level-2 [\"sublanes\"] start traversing");
-							c2 = c1.children[child];
-							c1.type="lane";
+						//calculate sum of all childs in children
+						var _sum3=0;
+						for (var i in c1.children){
+							_sum3=_sum3+c1.children[i].children.length;
+						}
+						console.log("/////////////////////// _count of subitems ["+c1.name+"]= "+_sum3);
+						console.log("/////////////////////// _count of sublanes ["+c1.name+"]= "+c1.children.length);
+					
+						for (var i2 in c1.children){
+							console.log("        * level-2 [\"sublanes\"]: "+c1.children[i2].name+" start traversing");
+							c2 = c1.children[i2];
+							c2.level="sublane";
 						
 							if (c2.children){
 								console.log("          * level-3 children found");
-								
-								var count3=0;
-								for (var child in c2.children){
-									console.log("              * level-3 start [\"items\"] traversing");
-									c2.type="sublane";
-									c3 = c2.children[child];
-
+				
+								//calculate sum of all children
+								var _sum4=0;
+								for (var i3 in c2.children){
+									console.log("              * level-3 start [\"items\"] traversing: "+c2.children[i3].name);
+									c3 = c2.children[i3];
+									c3.level="item";
+									
 									if (c3.children){
+										// end of recursion
 										console.log("                  * level-4 children found");
 									}
 									else{
+										// go one step deeper in recusrion
 										console.log("                   [\"items\"]=> on leaf nodes: #"+c3.Title);
 										c3.type="item";
-									
 									}
-									//counting items
-									count3++;
-								}
-								console.log("############# number of items ["+c2.name+"]: "+count3);
-								c2.count=count3
-							}
-							count2++;
-						}
-						console.log("############# number of sublanes ["+c1.name+"]: "+count2);
-						c1.count=count2
-						
-						// peek into next down level and calculate distribution
-						var _sum2=0;
-						for (var i=0;i<count2;i++){
-							_sum2 =_sum2+c1.count;
-						}
-						console.log("=========== sum of all sublanes below theme ["+c1.name+"]= "+_sum2);
-						
-						var _dist2=[];
-						for (var i=0;i<count2;i++){
-							_dist2[i]=(c1.count/_sum2) ;
+								} // END ITEMS LOOP
+							} //end if(c2.children)
 							
-						}
-						console.log("=========== distribution of sublanes= "+_dist2);
+							
+							/**
+							 * "auto": takes the sum of subitems as basline and calculates the distribution accordingly - the more items the more space
+							 * "equal": takes the parent length of elements and calculates the equal distributed space (e.g. lane "bwin" has 4 sublanes => each sublane gets 1/4 (0.25) for its distribution
+							 * "override": takes specified values and overrides the distribution with those values => not implemented yet ;-)
+							 */
+							var STRATEGY ="auto";
+							//var STRATEGY ="equal";
+							
+							var _v1,_v2;
+							if (i2==0) _v1 = 0;
+							else _v1 = parseFloat(_dist2[parseInt(i2)-1].value2);
+								
+							if (STRATEGY =="auto")_v2 = itemData.children[i0].children[i1].children[i2].children.length/_sum3;
+							else if (STRATEGY=="equal") _v2 = 1/itemData.children[i0].children[i1].children.length;
+							
+							_v2 = _v2+_v1;
+							
+							_dist2[i2]={"name":itemData.children[i0].children[i1].name+"."+itemData.children[i0].children[i1].children[i2].name,"value1":_v1,"value2":_v2};
+						} // END SUBLANE LOOP
+
 						c1.dist=_dist2;
-					
-									
-						
 					}
-					count1++;
-				}
-				console.log("############# number of lanes ["+c0.name+"]: "+count1);
-				c0.count=count1
-				
-				
-				// peek into next down level and calculate distribution
-				var _sum1=0;
-				for (var i=0;i<count1;i++){
-					_sum1 =_sum1+c0.count;
-				}
-				console.log("=========== sum of all lanes below theme ["+c0.name+"]= "+_sum1);
-				
-				var _dist1=[];
-				for (var i=0;i<count1;i++){
-					_dist1[i]=(c0.count/_sum1) ;
+					console.log("OUT of loop: [i1]  ======== sum of all sublanes below theme ["+c0.name+"]= "+_sum2);
+
+					/**
+					 * the values in the override mean % of space the lanes will get => has to sum to 100% 
+					 */
+					var laneDistOverride;/* = [{"level":"lane","dist":
+												[
+													{"name":"bwin","value"		:30},
+													{"name":"pp","value"		:20},
+													{"name":"foxy","value"		:10},
+													{"name":"premium","value"	:20},
+													{"name":"casino","value"	:20}
+												]
+											},
+											{"level":"lane","dist":
+												[
+													{"name":"techdebt","value"	:40},
+													{"name":"shared","value"	:60}
+												]
+											}];
+					*/
+					var _v1,_v2;
+										
+					if (i1==0) _v1 = 0;
+					else _v1 = parseFloat(_dist1[parseInt(i1)-1].value2);
+	
+					_v2 = itemData.children[i0].children[i1].children.length/_sum2;
+
+					// override
+					if (laneDistOverride  && laneDistOverride[i0].level == itemData.children[i0].children[i1].level){
+						_v2=laneDistOverride[i0].dist[i1].value/100;
+					}
+
+					_v2 = _v2+_v1;
 					
-				}
-				console.log("=========== distribution of lanes= "+_dist1);
+					_dist1[i1]={"name":itemData.children[i0].children[i1].name,"value1":_v1,"value2":_v2};
+					
+				} //END LANE LEVEL
 				c0.dist=_dist1;
-				
-	
 			}
-			count0++;
-	}
-	console.log("############# number of themes ["+itemData.name+"]: "+count0);
+			
+			var themeDistOverride;// = {"level":"theme","dist":[{"name":"topline","value":80},{"name":"enabling","value":20}]};				
+			
+			//checkDistributionOverride(distOverride);
+			
+			var _v1,_v2;
+
+			if (i0==0) _v1 = 0;
+			else _v1 = parseFloat(_dist0[parseInt(i0)-1].value2);
+			
+			_v2 = itemData.children[i0].children.length/_sum1;
+			
+			//override
+			if (themeDistOverride  && themeDistOverride.level == itemData.children[i0].level){
+				_v2=(themeDistOverride.dist[i0].value)/100;
+			}
+			//override end
+			_v2 = _v2+_v1;
+			
+			_dist0[i0]={"name":itemData.children[i0].name,"value1":_v1,"value2":_v2};
+			
+	} //END LOOP itemData
 	
-	
-	
-	itemData.count=count0;
-	
-	
-	
-	
-	
-	
-	// peek into next down level and calculate distribution
-	// the sum is already there as [].length of according children array!!!
-	// itemData.count == itemData.children.length TRU
-	var _sum0=0;
-	for (var i=0;i<count0;i++){
-		_sum0 =_sum0+(itemData.children[i]).count;
-	}
-	console.log("=========== sum of all lanes below root= "+_sum0);
-	
-	var _dist0=[];
-	for (var i=0;i<count0;i++){
-		_dist0[i]=(itemData.children[i]).count/_sum0;
-	}
-	console.log("=========== distribution of themes= "+_dist0);
+	console.log("===== sum of all lanes below root ["+itemData.name+"]= "+_sum1);
+				
 	itemData.dist=_dist0;
-	
-	
-	
-		
+
+
+	transposeDistribution();
+}
 
 /**
 topline = 5 lanes
@@ -2135,61 +2276,113 @@ enabling = 2/7 => 28.6%
 
 
 
-					// and here comes another magic ;-)
-					// we are transposing now 
-					// taking upper distribution as 100% 
-					// e.g. if we are in the root.topline lane (71%)
-					// the 71% becomes the new 100% in this context
 
-	for (var child in itemData.children){
-			var c0 = itemData.children[child];
-			
-			var c0_base = itemData.dist[child];
-							
-			console.log("  child:"+c0);
-			if (c0.children){
-				console.log("  * transposed 100% ="+c0_base);
-				
-				var count1=0;
-				for (var child in c0.children){
-					
-					c1 = c0.children[child];
-							
-					if (c1.children){
-						console.log("  * parent = "+c0_base);
-						console.log("  * 100% ="+c1_base);
-						console.log("  * c0.dist["+child+"] ="+c0.dist[child]);
-						c0.dist[child]=c0.dist[child]*c0_base;
-						console.log("  * transposed - c0.dist["+child+"] ="+c0.dist[child]);
-					
-						var c1_base = c0.dist[child];
-						
-						
-						var count2=0;
-						for (var child in c1.children){
-							c2 = c1.children[child];
-						
-							if (c2.children){
-								console.log("  * parent = "+c1_base);
-								console.log("  * c1.dist["+child+"] ="+c1.dist[child]);
-								c1.dist[child]=c1.dist[child]*c1_base;
-								console.log("  * transposed - c1.dist["+child+"] ="+c1.dist[child]);
-						
-								var count3=0;
-								for (var child in c2.children){
-									c3 = c2.children[child];
-								}
-							}
-						}
-					}
-				}
+function printItemData(level){
+console.log("print lanes:");
+console.log("------------");
+
+// (Math.floor(y/x) * x).toFixed(2)
+	//themes
+	for (var i0 in itemData.children){
+		var _y01=((itemData.dist[i0].value1)*100).toFixed(2);
+		var _y02=((itemData.dist[i0].value2).toFixed(4)*100).toFixed(2);
+		
+		if (level=="theme" ||!level) console.log("+ theme: "+itemData.children[i0].name+" [y1: "+_y01+" y2: "+_y02+"] height: "+(_y02-_y01).toFixed(2));
+		//lanes
+		for (var i1 in itemData.children[i0].children){
+			var _y11=((itemData.children[i0].distTransposed[i1].value1).toFixed(4)*100).toFixed(2);
+			var _y12=((itemData.children[i0].distTransposed[i1].value2).toFixed(4)*100).toFixed(2);
+		
+			if (level=="lane" ||!level) console.log("  + lane: "+itemData.children[i0].children[i1].name+" [y1: "+_y11+" y2: "+_y12+"] height: "+(_y12-_y11).toFixed(2));
+			//sublanes
+			for (var i2 in itemData.children[i0].children[i1].children){
+				var _y21=((itemData.children[i0].children[i1].distTransposed[i2].value1).toFixed(4)*100).toFixed(2);
+				var _y22=((itemData.children[i0].children[i1].distTransposed[i2].value2).toFixed(4)*100).toFixed(2);
+		
+				if (level =="sublane" ||!level)console.log("    + sublane: "+itemData.children[i0].children[i1].name+"."+itemData.children[i0].children[i1].children[i2].name+" [y1: "+_y21+" y2: "+_y22+"] height: "+(_y22-_y21).toFixed(2));
 			}
 		}
+	}
+
+}
+
+/**not used yet ...
+ */
+function checkDistributionOverride(override){
+
+	var _checksum = 0;
+	for (var o in override.dist){
+		
+		console.log("+++++++++++++++++++ checksumming"+override.dist[o].value);
+		
+		_checksum = _checksum+override.dist[o].value;
+	}
+	
+	if (_checksum !=100) return false;
+	return true;
+}
 
 
+/**
+ * and here comes another magic ;-)
+ * we are transposing now 
+ * taking upper distribution as 100% 
+ * e.g. if we are in the root.topline lane (71%)
+ * the 71% becomes the new 100% in this context
+*/
+function transposeDistribution(){
+	// first level transpose
+	for (var child in itemData.children){
+		var c0 = itemData.children[child];
+		var c0_base = itemData.dist[parseInt(child)].value2-itemData.dist[parseInt(child)].value1;
 
-
-
+		if (c0.children){
+			var _distTransposed =[]
+			for (var i=0;i<c0.children.length;i++){
+				c1 = c0.children[i];
+						
+				if (c1.children){
+					var _v1 = itemData.dist[parseInt(child)].value1+(c0.dist[i].value1*c0_base);
+					var _v2 = itemData.dist[parseInt(child)].value1+(c0.dist[i].value2*c0_base)
+					console.log("_v1: "+_v1+" , "+"_v2: "+_v2);
+					_distTransposed[i]={"name":c0.children[i].name,"value1":_v1 ,"value2":_v2};
+					console.log("  * transposed - c0.dist["+i+"] ="+_distTransposed[i].value1);
+				}
+			}
+			c0.distTransposed=_distTransposed;
+		}
+	}
+	// second level transpose
+	for (var child in itemData.children){
+		var c0 = itemData.children[child];
+		var c0_base = itemData.dist[parseInt(child)].value2-itemData.dist[parseInt(child)].value1;
+	
+		if (c0.children){
+			for (var i=0;i<c0.children.length;i++){
+				var c1_base = c0.dist[i].value2-c0.dist[i].value1;
+				c1 = c0.children[i];
+				var _distTransposed2 =[]
+		
+				for (var ii=0;ii<c1.children.length;ii++){
+					if (c1.children){
+	
+					console.log("  * going to transpose ["+c1.children[ii].name+"].... 100% [c1_base] ="+c1_base+" for: "+c1.name);
+					console.log("|  V1 "+(c0.distTransposed[parseInt(i)].value1+c1.dist[ii].value1*c1_base*c0_base));
+					
+					// have to multiply with c0_base AND c1_base 
+					// 2-level transpose !!!!!
+					
+					var _v1 = c0.distTransposed[parseInt(i)].value1+c1.dist[ii].value1*c1_base*c0_base;
+					var _v2 = c0.distTransposed[parseInt(i)].value1+c1.dist[ii].value2*c1_base*c0_base;
+					console.log("_v1: "+_v1+" , "+"_v2: "+_v2);
+					
+					_distTransposed2[ii]={"name":c0.children[i].name+"."+c1.children[ii].name,"value1":_v1 ,"value2":_v2};
+					}
+				}
+				c1.distTransposed =_distTransposed2;
+			}
+		}
+	}
 }
 
 /**
@@ -2221,7 +2414,10 @@ function getItemByID(data,id){
 /**
 * helper method to return index of lane and index of sublane
 * based on string lane, string sublane
+* ONLY USED IN mapLane() function
+* 2014-01-02  refactored and made redundant
 */
+/*
 function getLaneSublane(_l, _sl) {
 	//lookup
 	var _position = getLane(_l);
@@ -2231,10 +2427,12 @@ function getLaneSublane(_l, _sl) {
 	_laneSublane.push(laneMap[_l].indexOf(_sl));
 	return _laneSublane;
 }
+* */
 
 /**
-*
+* returns position / index of lane by name
 */
+
 function getLane(_lane) {
 	var i=1;
 	var _position;
@@ -2259,6 +2457,108 @@ function getLanes(){
 	}
 	return _lanes;
 }
+
+
+
+/** return object array of lane names + y1 and y2 values
+*/
+function getLanesNEW(){
+	var _lanes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		for (_lane in itemData.children[_theme].children){
+			_lanes.push({"lane":itemData.children[_theme].children[_lane].name,"y1":itemData.children[_theme].distTransposed[_lane].value1,"y2":itemData.children[_theme].distTransposed[_lane].value2});
+		}
+	}
+	return _lanes;
+}
+
+function getLaneDistByNameNEW(lane){
+	var _lanes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		for (_lane in itemData.children[_theme].children){
+			if (itemData.children[_theme].children[_lane].name == lane)
+				return {"lane":itemData.children[_theme].children[_lane].name,"y1":itemData.children[_theme].distTransposed[_lane].value1,"y2":itemData.children[_theme].distTransposed[_lane].value2};
+		}
+	}
+	return null;
+}
+
+
+
+function getSublanesNEW(lane){
+	var _sublanes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		for (_lane in itemData.children[_theme].children){
+			
+			if (lane == itemData.children[_theme].children[_lane].name){
+				_sublanes = itemData.children[_theme].children[_lane].distTransposed;
+			}
+			
+		}
+	}
+	return _sublanes;
+}
+
+
+/**NEW
+ */
+function getLanesFQ(){
+	var _lanes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		for (_lane in itemData.children[_theme].children){
+			_lanes.push(itemData.children[_theme].name+"."+itemData.children[_theme].children[_lane].name);
+		}
+	}
+	return _lanes;
+}
+
+/**NEW
+ */
+function getSubLanesFQ(){
+	var _sublanes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		for (_lane in itemData.children[_theme].children){
+			for (_sublane in itemData.children[_theme].children[_lane].children){
+				_sublanes.push(itemData.children[_theme].name+"."+itemData.children[_theme].children[_lane].name+"."+itemData.children[_theme].children[_lane].children[_sublane].name);
+			}
+		}
+	}
+	return _sublanes;
+}
+
+/**NEW
+ */ 
+function getThemes(){
+	var _themes = new Array();
+	
+	//ALL itemData.children.children
+	for(_theme in itemData.children){
+		_themes.push(itemData.children[_theme].name);
+	}
+	return _themes;
+}
+
+
+/**
+ *
+ * what would be awesome is 
+ * getDistByName("bwin") => returns ("name":bwin,"y1":<from>,"y2":<to>)
+ */
+function getDistByName(name){
+	
+	
+}
+
 
 
 
