@@ -1065,11 +1065,15 @@ function drawItems(){
 						
 						for (var j=0;j<_dependingItems.length;j++) {	
 							var _d=_dependingItems[j];
+							
 							//lookup the concrete item 
 							var _dependingItem = getItemByID(initiativeData,_d);
+							
+							var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
+							
 							//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
 							var _toX = x(new Date(_dependingItem.planDate))	
-							var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_yOffset)+getInt(_dependingItem.sublaneOffset);
+							var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
 							// put lines in one layer to turn on off globally
 							dep.append("line")
 								.attr("x1", _itemXPlanned)
@@ -2691,3 +2695,4 @@ var PACKAGE_VERSION="20140105_1132";
 var PACKAGE_VERSION="20140105_1225";
 var PACKAGE_VERSION="20140107_1602";
 var PACKAGE_VERSION="20140112_1144";
+var PACKAGE_VERSION="20140113_2047";
