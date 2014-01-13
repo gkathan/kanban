@@ -210,6 +210,7 @@ function timeMachine(date){
 	}
 	setTODAY();
 	setWIP();
+	calculateQueueMetrics();
 	drawAll();
 }
 
@@ -721,7 +722,7 @@ function drawQueues(){
 	_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-30);
 		
 	// ------------- WIP marker lines ---------------------
-	_drawQueueMarker(gQueueWip,WIP_END,"today",x(WIP_END),-30);
+	_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-30);
 
 	//---------------- FUTURE queue --------------------
 	var gQueueFuture = gQueue.append("g").attr("id","future");
@@ -740,8 +741,10 @@ function drawQueues(){
 
 	//---------------- TOTAL DELAYED METRICS --------------------
 	_metric = {"text":"DELAY" ,"items":ITEMS_DELAYED ,"swag": DAYS_DELAYED}
-
-	_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth+100),_yMetricBase,_yMetricDetailsOffset);
+	
+	if (ITEMS_DELAYED){
+		_drawQueueMetric(gQueue,_metric,null,null,null,(_xWIPStart),_yMetricBase,_yMetricDetailsOffset,"red");
+	}
 } //end drawQueues
 
 
@@ -791,7 +794,8 @@ function drawQueues(){
 
 		/**
 		 */
-		function _drawQueueMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space){
+		function _drawQueueMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space,color){
+			if(!color) color=COLOR_BPTY;
 			if (width){
 				svg.append("use")
 				.attr("xlink:href","#icon_bracket_top_blue")
@@ -803,7 +807,7 @@ function drawQueues(){
 			.text(metric.text)
 			.style("text-anchor","middle")
 			.style("font-size","18px")
-			.style("fill","174D75")
+			.style("fill",color)
 			.attr("class","metricItems")
 			.attr("transform","translate("+metricX+","+metricY+") rotate(0)");
 
@@ -812,7 +816,7 @@ function drawQueues(){
 			.attr("class","metricItems")
 			.style("text-anchor","middle")
 			.style("font-size","9px")
-			.style("fill","174D75")
+			.style("fill",color)
 			.attr("transform","translate("+metricX+","+(metricY+space)+") rotate(0)");
 
 			svg.append("text")
@@ -820,7 +824,7 @@ function drawQueues(){
 			.attr("class","metricItems")
 			.style("text-anchor","middle")
 			.style("font-size","7px")
-			.style("fill","174D75")
+			.style("fill",color)
 			.attr("transform","translate("+metricX+","+(metricY+space+(space-2))+") rotate(0)");
 		}
 
@@ -1041,7 +1045,7 @@ function drawItems(){
 					   .attr("id","label_"+d.id)
 					   .text(d.Title)
 					   .style("font-size",5+d.Swag/500+"px")
-					   .style("font-weighT","bold")
+					   //.style("font-weight","bold")
 					   .attr("text-anchor","middle")
 					   .attr("x",_itemXPlanned)
 					   .attr("y",_itemY);
@@ -1305,7 +1309,7 @@ function onTooltipOutHandler(d,tooltip,highlight){
 function handleMetrics(data){
 	metricData=data;
 	
-	//current hack to show current lane metrics only when NESTLEVEL=3  (e.g. not in a businessmodel view)
+	//current hack to show current lane metrics only when NESTLEVEL=3  (=> then it is on arrayindex 1)
 	if (ITEMDATA_NEST.indexOf(METRIC_LEVEL)==1)
 		drawMetrics();
 }
@@ -1314,7 +1318,7 @@ function drawMetrics(){
 	d3.select("#metrics").remove();
 	
 	var i=0;
-	var gMetrics= svg.append("g").attr("id","metrics");
+	var gMetrics= svg.append("g").attr("id","metrics").style("visibility","hidden");
 				
 	var _bracketXOffset = LANE_LABELBOX_WIDTH+80;
 	var _primaryXOffset = _bracketXOffset +50;
@@ -1546,28 +1550,10 @@ function drawMetrics(){
  	_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk+25,_yRisk+85,10);
  	_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
  	
+ 
+/* ------------------------------------- linechart prototype ------------------------------------*/
+	drawLineChart();
 	
-/*	
-	//postits drag and drop
-	var postit=svg.append("g")
-		.attr("id","postit_1")
-		.data([ {"x":0, "y":0} ])
-		.call(drag);
-
-	postit.append("use")
-		.attr("xlink:href","#postit_yellow")
-		.attr("x",1000)
-		.attr("y",100);
-	postit.append("text")
-	.text("postit note")
-	.style("text-anchor","start")
-	.style("font-size","9px")
-	.style("font-weight","bold")
-	.style("fill","blue")
-		.attr("x",1002)
-		.attr("y",130);
-	;
-*/
 	//data
 	d3.select("body")
 				.append("ul")
@@ -1583,13 +1569,11 @@ function drawMetrics(){
 } //end drawMetrics
 
 function _drawRisks(svg,metric,x,y){
-		
 		svg.append("use").attr("xlink:href","#risks")
 		.attr("transform","translate ("+x+","+y+") scale(1)");
-		
-		
-	
 }
+
+
 
 
 
@@ -1758,6 +1742,7 @@ function _drawCX	(svg,data,x,y){
 }
 
 
+
 /**
 
 */
@@ -1813,11 +1798,69 @@ function drawReleases(){
 			
 }
 
+/**default font-size is 4*/
+function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
+	if (!size) size=4;
+	if (!scale) scale=1;
+	if (!color) color="yellow";
+	if (!textcolor) textcolor="black";
+	
+	//postits drag and drop
+	var postit=svg.append("g")
+		.attr("id","postit")
+		.data([ {"x":0, "y":0} ])
+		.call(drag);
+
+	var _rmax=3,
+		_rmin=-3;						;
+
+	var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
+	
+	var _split = text.split("/");
+			
+
+	postit.append("use")
+		.attr("xlink:href","#postit_"+color)
+		.style("cursor","pointer")		
+		.attr("transform","translate("+x+","+y+") scale("+scale+") rotate("+_rotate+")");
+		
+	var t =postit.append("text")
+	.style("text-anchor","start")
+		.style("font-size",size+"px")
+		.style("font-family","courier")
+		.style("font-weight","bold")
+		.style("cursor","pointer")		
+		.style("letter-spacing","-0.1")
+		.style("kerning","-0.1")
+		
+		.style("text-anchor","start")
+		.style("fill",textcolor)
+			.attr("transform","translate("+(x+1+Math.sqrt(scale))+","+(y-1+Math.sqrt(scale))+") scale("+scale+") rotate("+_rotate+")");;
+	
+	for (i in _split){
+			
+		t.append("tspan")
+		.text(_split[i])
+		.attr("dy",4+Math.sqrt(scale/5))
+		.attr("x",0);
+
+	postit.append("path").
+	attr("transform","translate("+((22*scale)+x)+","+(y+(2*scale))+") rotate("+(45+_rotate)+") scale("+(0.25*scale)+")")
+	.attr("d",d3.svg.symbol().type("cross"))
+	.style("fill","grey")
+	.on("click",function(d){postit.remove();});
+
+		
+	}
+}
+
+
 
 function drawVersion(){
 	d3.select("#version").remove()
 	console.log("####removed #version");
 
+	
 	
 	var _line =7;
 	var _offset =28;
@@ -1945,6 +1988,20 @@ d3.select("#b5").on("click", function(){
 });	
 
 
+d3.select("#b15").on("click", function(){
+	if (d3.select("#linechart").style("visibility") =="visible"){
+		 d3.select("#linechart").style("visibility","hidden");
+		 d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", 0);
+
+	}
+	else{
+		d3.select("#linechart").style("visibility","visible");
+		d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
+
+	}
+});	
+
+
 d3.select("#b8").on("click", function(){
 	if (d3.select("#releases").style("visibility") =="visible"){
 		 d3.select("#releases").style("visibility","hidden");
@@ -2034,18 +2091,37 @@ else d3.selectAll("#metrics,#queues,#lanes").attr("filter", "");
 document.getElementById("input_width").value = WIDTH;
 d3.select("#b11").on("click", function(){
 	WIDTH = document.getElementById("input_width").value;
-
 	drawAll();
-	
 });	
 
 document.getElementById("input_height").value = HEIGHT;
 d3.select("#b12").on("click", function(){
 	HEIGHT = document.getElementById("input_height").value;
-	
 	drawAll();
-	
 });	
+
+
+d3.select("#b30").on("click", function(){
+	_drawPostit(d3.select("#version"),x(KANBAN_START),-50,document.getElementById("input_postit").value,4,2,"yellow","red");
+
+});	
+
+document.getElementById("input_timemachine").value = TODAY.toString('yyyy-MM-dd');  ;
+d3.select("#b40").on("click", function(){
+	timeMachine(document.getElementById("input_timemachine").value);
+});	
+
+
+document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
+d3.select("#b50").on("click", function(){
+	KANBAN_START=new Date(timeMachine(document.getElementById("input_kanbanstart").value));
+});	
+
+document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
+d3.select("#b51").on("click", function(){
+	KANBAN_END=new Date(timeMachine(document.getElementById("input_kanbanend").value));
+});	
+
 
 
 d3.select("#l1").on("click", function(){
@@ -2454,12 +2530,14 @@ function traverse(_itemData,_start,_stop,_list){
 
 function drawLineChart()
 {
-d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
+
+
+var linechart = svg.select("#metrics").append("g").attr("id","linechart").style("visibility","hidden");
 
 var parseDate = d3.time.format("%d-%b-%y").parse;
 
-var _y1 = y(getLaneDistByNameNEW("root.topline.bwin").y1);
-var _y2 = y(getLaneDistByNameNEW("root.topline.bwin").y2);
+var _y1 = y(getLaneByNameNEW("root.topline.bwin").yt1);
+var _y2 = y(getLaneByNameNEW("root.topline.bwin").yt2);
 
 
 var _height = _y2-_y1;
@@ -2509,31 +2587,31 @@ d3.tsv("data/linechart.tsv", function(error, data) {
   x_line.domain(d3.extent(data, function(d) { return d.date; }));
   y_line.domain([0,400]);
 
-svg.append("path")
+linechart.append("path")
         .datum(data)
         .attr("class", "area")
         .attr("d", area);
   
-  svg.append("g")
+  linechart.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + _height + ")")
       .call(xLineAxis);
 
-  svg.append("g")
+  linechart.append("g")
       .attr("class", "y axis")
+      .style("font-size","6px")
+    
       .call(yLineAxis)
     .append("text")
-      .attr("transform", "translate (0,60) rotate(-90)")
-      .attr("y",10)
-      .style("text-anchor", "end")
-      .style("fill", "black")
+      .attr("transform", "translate (0,"+(_y2-5)+") rotate(0)")
+      .style("text-anchor", "start")
+      .style("fill", "white")
+      .style("opacity", 0.8)
       .style("font-size", "12px")
       .style("font-weight", "bold")
-      
-      
       .text("NGR (mio EUR)");
 
-  svg.select("#version").append("path").attr("id","linechart")
+  linechart.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("d", line);
@@ -2620,7 +2698,7 @@ function calculateQueueMetrics(){
 				
 		ITEMS_TOTAL++;
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_date)<WIP_START){
+		if (new Date(_date)<WIP_START &&_item.state=="done"){
 			ITEMS_DONE++;
 			if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
 		}
