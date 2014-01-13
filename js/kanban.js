@@ -1318,7 +1318,7 @@ function drawMetrics(){
 	d3.select("#metrics").remove();
 	
 	var i=0;
-	var gMetrics= svg.append("g").attr("id","metrics").style("visibility","hidden");
+	var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
 				
 	var _bracketXOffset = LANE_LABELBOX_WIDTH+80;
 	var _primaryXOffset = _bracketXOffset +50;
@@ -1550,6 +1550,12 @@ function drawMetrics(){
  	_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk+25,_yRisk+85,10);
  	_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
  	
+
+/* ------------------------------------- metric dates ------- ------------------------------------*/
+	_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-18),METRIC_BASLINE,"BASELINE","projection for");
+	_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-18),METRIC_PROJECTION,"PROJECTION","best case for");
+
+
  
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
@@ -1671,6 +1677,16 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
 }
 */
 
+/**date marker for metrics
+ * */
+function _drawMetricDate(svg,x,y,date,name,type){
+	_drawText(svg,name,x,y,18,"bold","start",COLOR_BPTY,null);
+	_drawText(svg,type+": ",x,y+10,6,"normal","start",COLOR_BPTY,null);
+	_drawText(svg,date.toString('yyyy-MM-dd'),x+80,y+10,8,"bold","end",COLOR_BPTY,null);
+	
+}
+
+
 
 /** helper function
  * */
@@ -1708,8 +1724,14 @@ function _drawPie(svg,id,data,x,y){
 	  .style("text-anchor", "middle")
 	  .style("fill", "#ffffff")
 	  .style("font-weight", "bold")
-	  .style("font-size", function(d) { return (5+d.data.percentage/10)+"px";})
-	  .text(function(d) { return d.data.percentage+"%"; });
+	  .style("font-size", function(d) { return (6+d.data.percentage/8)+"px";})
+	  .text(function(d) { return d.data.percentage; })
+		.append("tspan")
+		.text("%")
+		.style("font-size","4px")
+		.style("font-weight","normal")
+		.append("tspan");
+	
 }
 
 function _drawCX	(svg,data,x,y){
@@ -1727,6 +1749,14 @@ function _drawCX	(svg,data,x,y){
 			.text("%")
 			.style("font-size","4px")
 			.style("font-weight","normal");
+
+		svg.append("text")
+		.text("promoter-score")
+		.style("font-size","5px")
+		.style("font-weight","normal")
+		.style("fill",COLOR_BPTY)
+		.attr("x",x-4)
+		.attr("y",y-2)
 		
 		svg.append("text")
 		.text(data.loyalty)
@@ -1739,6 +1769,14 @@ function _drawCX	(svg,data,x,y){
 			.text("%")
 			.style("font-size","4px")
 			.style("font-weight","normal");
+			
+		svg.append("text")
+		.text("loyalty-index")
+		.style("font-size","5px")
+		.style("font-weight","normal")
+		.style("fill",COLOR_BPTY)
+		.attr("x",x)
+		.attr("y",y+50);
 }
 
 
@@ -1817,7 +1855,6 @@ function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 	var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
 	
 	var _split = text.split("/");
-			
 
 	postit.append("use")
 		.attr("xlink:href","#postit_"+color)
@@ -1849,8 +1886,6 @@ function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 	.attr("d",d3.svg.symbol().type("cross"))
 	.style("fill","grey")
 	.on("click",function(d){postit.remove();});
-
-		
 	}
 }
 
@@ -1859,8 +1894,6 @@ function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 function drawVersion(){
 	d3.select("#version").remove()
 	console.log("####removed #version");
-
-	
 	
 	var _line =7;
 	var _offset =28;
@@ -1878,7 +1911,6 @@ function drawVersion(){
 		
 	//title
 	//_drawText(gVersion,"strategic portfolio kanban board",WIDTH-42,(_y-(_offset-9)),9,"bold","end");
-
 
 	var i=0;
 
@@ -1912,7 +1944,6 @@ function drawVersion(){
 	
 	_drawText(gVersion,TITLE_TEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-180,24,"normal","middle",COLOR_BPTY,"italic");
 	_drawText(gVersion,TITLE_SUBTEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-160,16,"normal","middle",COLOR_BPTY,"italic");
-	
 	
 }
 
@@ -2147,7 +2178,8 @@ function customAxis(g) {
 
 
 /** config (former override)
- * */
+ * 
+ */
 function getConfigModeByDepth(depth){
 	for (var i in itemDataConfig){
 		if (itemDataConfig[i].depth==depth) return itemDataConfig[i].mode;
@@ -2170,7 +2202,6 @@ function getConfigByName(name){
  */
 function createLaneHierarchy(){
 	// create hierarchical base data from list
-	
 	itemData = _.nest(initiativeData,ITEMDATA_NEST);
 	
 	//depth = ITEMDATA_DEPTH_LEVEL
@@ -2178,8 +2209,6 @@ function createLaneHierarchy(){
 	
 	transposeCoordinates();
 }
-
-
 
 
 /** recursive traversion to enrich the itemData structure with y coordinates
@@ -2193,10 +2222,8 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 		_itemData.name="root";
 		_itemData.depth=0;
 	}
-	
 	if (_itemData.children){
 		_start++;
-
 		//calculate sum of all children
 			var _sum=0;
 			for (var i in _itemData.children){
@@ -2204,7 +2231,6 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 			}
 			_itemData.childsum=_sum;
 		//calculate sum end
-		
 		for (i in _itemData.children){
 			_itemData.children[i].depth=_start;
 			_itemData.children[i].name=_itemData.name+"."+_itemData.children[i].name;
@@ -2224,7 +2250,6 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 			else {
 				_y1 = parseFloat(_itemData.children[parseInt(i-1)].y2);
 			}	
-			
 			//default mode ="auto"
 			_y2 = itemData.y2*(_itemData.children[i].children.length/_itemData.childsum);
 
@@ -2232,7 +2257,6 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 			if (getConfigModeByDepth(_itemData.children[i].depth)=="equal"){
 				_y2 = itemData.y2/_itemData.children.length;
 			}
-			
 			// check manual percentage override
 			var _config = getConfigByName(_itemData.children[i].name);
 			if (_config){
@@ -2240,7 +2264,6 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 				_y2= _config;
 			}
 			// end override check 
-						
 			_y2 = _y2+_y1;
 			
 			_itemData.children[i].y1=_y1;
@@ -2313,7 +2336,6 @@ function printItemData(depth){
 			}
 		}
 	}
-
 }
 
 /**not used yet ...
@@ -2380,63 +2402,6 @@ function createAbsoluteCoordinates(_itemData,_start,_stop,base){
 		console.log("....no more children found..");
 	}
 }
-
-/* DELETE
-function transposeCoordinates(){
-      //depth=0
-		itemData.yt1 = itemData.y1;
-		itemData.yt2 = itemData.y2;
-
-	
-	var c1_base = 1;;
-	
-	//first level transpose ? (depth=1)
-	for (var i in itemData.children){
-		itemData.children[i].yt1 = itemData.y1+(itemData.children[i].y1*c1_base);
-		itemData.children[i].yt2 = itemData.y1+(itemData.children[i].y2*c1_base);
-	}		
-	
-	// second level transpose (depth=2)
-	for (var i in itemData.children){
-		var c2_base = (itemData.children[parseInt(i)].y2-itemData.children[parseInt(i)].y1)/itemData.y2;
-		if (itemData.children[i]){
-			var _yt1,_yt2;
-			for (var j=0;j<itemData.children[i].children.length;j++){
-				if (itemData.children[i].children[j].children){
-					_yt1 = itemData.children[parseInt(i)].y1+(itemData.children[i].children[j].y1*c2_base);
-					_yt2 = itemData.children[parseInt(i)].y1+(itemData.children[i].children[j].y2*c2_base)
-					//console.log("_yt1: "+_yt1+" , "+"_yt2: "+_yt2);
-				}
-				itemData.children[i].children[j].yt1=_yt1;
-				itemData.children[i].children[j].yt2=_yt2;
-			}
-		}
-	}
-
-	// third level transpose (depth=3)
-	for (var i in itemData.children){
-		var c2_base = (itemData.children[parseInt(i)].y2-itemData.children[parseInt(i)].y1)/itemData.y2;
-		if (itemData.children[i]){
-			for (var j=0;j<itemData.children[i].children.length;j++){
-				var c3_base = (itemData.children[i].children[j].y2-itemData.children[i].children[j].y1)/itemData.y2;
-				for (var ii=0;ii<itemData.children[i].children[j].children.length;ii++){
-					if (itemData.children[i].children[j].children){
-					//console.log("  * going to transpose ["+itemData.children[i].children[j].children[ii].name+"].... 100% [c3_base] ="+c3_base+" for: "+itemData.children[i].children[j].name);
-					// have to multiply with c2_base AND c3_base 
-					// 2-level transpose !!!!!
-					var _yt1 = itemData.children[i].children[parseInt(j)].yt1+itemData.children[i].children[j].children[ii].y1*c3_base*c2_base;
-					var _yt2 = itemData.children[i].children[parseInt(j)].yt1+itemData.children[i].children[j].children[ii].y2*c3_base*c2_base;
-					//console.log("_yt1: "+_yt1+" , "+"_yt2: "+_yt2);
-					}
-					itemData.children[i].children[j].children[ii].yt1=_yt1;
-					itemData.children[i].children[j].children[ii].yt2=_yt2;
-				}
-			}
-		}
-	}
-	
-}
-*/
 
 /**
 calculates the offset to center elements / text per sublane 
