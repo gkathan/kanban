@@ -83,7 +83,7 @@
 	WIDTH=1500;
 	HEIGHT = 1100;
 	render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
-	//render("initiatives_v20.txt","metrics.csv","releases.txt","external.svg","lanes.csv");
+	//render("initiatives_v20.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 
 </script>
 
@@ -168,20 +168,42 @@ function show_svg_code()
 
 
 <div style="margin-left:10px;margin-top:10px">
+
+	<div style="width:550px" class="input-group input-group-sm">
+      <input id="input_kanbanstart" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b50" class="btn btn-default input-sm" type="button">kanban start</button>
+      </span>
+      
+     <input id="input_kanbanend" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b51" class="btn btn-default input-sm" type="button">kanban end</button>
+      </span>
+
+	<input id="input_timemachine" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b40" class="btn btn-default input-sm" type="button">time machine</button>
+      </span>
+	
+      
+    </div><!-- /input-group -->
+
+
+
      
-	<div style="width:200px" class="input-group input-group-sm">
+	<div style="width:300px" class="input-group input-group-sm">
       <input id="input_width" type="text" class="form-control input-sm">
       <span class="input-group-btn">
         <button id="b11" class="btn btn-default input-sm" type="button">set WIDTH</button>
       </span>
-    </div><!-- /input-group -->
-
-	<div style="width:200px" class="input-group input-group-sm">
+      
       <input id="input_height" type="text" class="form-control input-sm">
       <span class="input-group-btn">
         <button id="b12" class="btn btn-default input-sm" type="button">set HEIGHT</button>
       </span>
+      
     </div><!-- /input-group -->
+
 
 	<div class="btn-group-xs">
 	  <button id="b1" type="button" class="btn btn-default">Queues</button>
@@ -192,12 +214,23 @@ function show_svg_code()
 	  <button id="b8" type="button" class="btn btn-default">Releases</button>
 	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
 	  <button id="b9" type="button" class="btn btn-default">Swag</button>
+	  <button id="b15" type="button" class="btn btn-default">Linechart</button>
 	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
 	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
 	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
 	  
 
 	</div>
+
+	<div style="width:250px" class="input-group input-group-sm">
+      <input id="input_postit" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
+      </span>
+      
+   </div><!-- /input-group -->
+
+
 
 
 	<!-- ########### The Export Section ####### -->
