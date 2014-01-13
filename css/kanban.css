@@ -23,7 +23,6 @@ svg {
 }
 
 
-
 .planned{
 			stroke:goldenrod;
 			stroke-width:0.5px;
@@ -104,7 +103,7 @@ svg {
 
 .wipLine {
 	stroke: red;
-	stroke-width: 2;
+	stroke-width: 1;
 	stroke-dasharray: 5,5;
 	stroke-opacity:0.5;
 }
@@ -165,6 +164,12 @@ svg {
 	text-anchor:middle;
 }
 
+.wipText{
+	font-size:6px;
+	font-weight:normal;
+	fill:red;
+	text-anchor:middle;
+}
 
 		
 .metricBigNumber {
@@ -297,7 +302,7 @@ pre.prettyprint{padding:2px;border:1px solid #888}
 .line {
   fill: none;
   stroke: black;
-  stroke-width: 2.5px;
+  stroke-width: 4px;
   }
 
 .area {
