@@ -57,6 +57,11 @@
 // global variables
 var CONTEXT="CONTEXT";
 
+var TITLE_TEXT = "\"let the world play for real\"";
+var TITLE_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"";
+
+
+
 var initiativeData;
 
 var metricData;
@@ -1732,39 +1737,24 @@ function _drawCX	(svg,data,x,y){
 		.style("font-size","8px")
 		.style("font-weight","bold")
 		.style("fill","white")
-		.style("text-anchor","middle")
-		.attr("x",x+11)
-		.attr("y",y+12);
-		
-		svg.append("text")
-		.text("%")
-		.style("font-size","4px")
-		.style("font-weight","normal")
-		.style("fill","white")
-		.style("text-anchor","end")
-		.attr("x",x+19)
-		.attr("y",y+12);
-		
-		
+		.attr("x",x+7)
+		.attr("y",y+12)
+			.append("tspan")
+			.text("%")
+			.style("font-size","4px")
+			.style("font-weight","normal");
 		
 		svg.append("text")
 		.text(data.loyalty)
 		.style("font-size","12px")
 		.style("font-weight","bold")
 		.style("fill","white")
-		.style("text-anchor","middle")
-		.attr("x",x+11)
-		.attr("y",y+38);
-		
-		svg.append("text")
-		.text("%")
-		.style("font-size","4px")
-		.style("font-weight","normal")
-		.style("fill","white")
-		.style("text-anchor","end")
-		.attr("x",x+21)
-		.attr("y",y+38);
-		
+		.attr("x",x+5)
+		.attr("y",y+38)
+			.append("tspan")
+			.text("%")
+			.style("font-size","4px")
+			.style("font-weight","normal");
 }
 
 
@@ -1825,7 +1815,7 @@ function drawReleases(){
 
 
 function drawVersion(){
-	d3.select("#releases").remove()
+	d3.select("#version").remove()
 	console.log("####removed #version");
 
 	
@@ -1877,6 +1867,10 @@ function drawVersion(){
 	
 	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,height+48,5,"normal","end");
 	
+	_drawText(gVersion,TITLE_TEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-180,24,"normal","middle",COLOR_BPTY,"italic");
+	_drawText(gVersion,TITLE_SUBTEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-160,16,"normal","middle",COLOR_BPTY,"italic");
+	
+	
 }
 
 /**
@@ -1889,12 +1883,15 @@ function _drawVersionText(svg,text,x,y,size){
 
 /**
  */
-function _drawText(svg,text,x,y,size,weight,anchor){
+function _drawText(svg,text,x,y,size,weight,anchor,color,style){
+	if (!style) style="normal";
+	if (!color) color="black";
 	svg.append("text")
 	.text(text)
 	.style("font-size",size+"px")
 	.style("font-weight",weight)
-	.style("fill","black")
+	.style("font-style",style)
+	.style("fill",color)
 	.style("text-anchor",anchor)
 	.attr("x",x)
 	.attr("y",y);
