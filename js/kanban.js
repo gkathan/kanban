@@ -76,8 +76,9 @@ var itemData;
 //top root parent of nested item hierarchy
 var NEST_ROOT="root";
 // nest -level
+var ITEMDATA_NEST = ["bm","theme","lane","themesl","sublane"];
 //var ITEMDATA_NEST = ["bm","theme","lane","sublane"];
-var ITEMDATA_NEST = ["theme","lane","sublane"];
+//var ITEMDATA_NEST= ["theme","lane","sublane"];
 
 //depth level 
 var ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
@@ -2149,12 +2150,14 @@ d3.select("#b40").on("click", function(){
 
 document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
 d3.select("#b50").on("click", function(){
-	KANBAN_START=new Date(timeMachine(document.getElementById("input_kanbanstart").value));
+	KANBAN_START=new Date(document.getElementById("input_kanbanstart").value);
+	drawAll();
 });	
 
 document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
 d3.select("#b51").on("click", function(){
-	KANBAN_END=new Date(timeMachine(document.getElementById("input_kanbanend").value));
+	KANBAN_END=new Date(document.getElementById("input_kanbanend").value);
+	drawAll();
 });	
 
 
@@ -2412,6 +2415,7 @@ calculates the offset to center elements / text per sublane
 * WORKS ONLY IN NEST=3 LEVEL CONTEXT !!!
 */
 function getSublaneCenterOffset(sublane){
+	console.log("+++++call getSublaneByNameNEW("+sublane+")");
 	var _sublane = getSublaneByNameNEW(sublane);
 	var _height = _sublane.yt2-_sublane.yt1;
 	return -(_height/2);
@@ -2696,3 +2700,5 @@ var PACKAGE_VERSION="20140105_1225";
 var PACKAGE_VERSION="20140107_1602";
 var PACKAGE_VERSION="20140112_1144";
 var PACKAGE_VERSION="20140113_2047";
+var PACKAGE_VERSION="20140113_2117";
+var PACKAGE_VERSION="20140114_1509";

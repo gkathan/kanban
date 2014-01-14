@@ -38,6 +38,7 @@
 		
 		<fileset dir="${src}/" includes="*.html"/>
 		<fileset dir="${src}/" includes="*.version"/>
+		<fileset dir="${src}/" includes="index.php"/>
 		
 	</zip>	
   </target>

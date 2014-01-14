@@ -92,3 +92,20 @@
 	fill:#eeeeee;
 	stroke:white;
 }
+
+.lanebox.wincom{
+	fill:grey;
+	stroke:white;
+	opacity:0.1;
+}
+.lanebox.kalixa{
+	fill:white;
+	stroke:white;
+	opacity:0.1;
+}
+.lanebox.conspo{
+	fill:#eeeeee;
+	stroke:white;
+	opacity:0.2;
+}
+
