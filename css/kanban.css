@@ -220,8 +220,8 @@ svg {
 	fill:white;
 	width:120px;
 	wight:80px;
-	font-size:7px;
-	padding:4px;
+	font-size:6px;
+	padding:2px;
 	background:white;
 	border:.5px solid grey;
 	border-radius:5px;
@@ -233,14 +233,14 @@ svg {
 .d3tooltip:after {
   box-sizing: border-box;
   display: inline;
-  font-size: 12px;
+  font-size:10px;
   width: 100%;
   line-height: 0;
-  color: #333333;
+  color: grey;
   content: "\25C0";
   position: absolute;
   text-align: left;
-  margin: -60px 0 0 -11px;
+  margin: -50px 0 0 -11px;
   top: 100%;
   left: 0;
 }
@@ -267,28 +267,28 @@ td         { border: 0px solid black;
 			 word-wrap:break-word;
 			 vertical-align:top;
 			 }
-td.small    { font-size: 6px;
+td.small    { font-size: 5px;
 			  font-weight:normal;
 			  text-align:right;
 			  vertical-align:top;
-			  padding-right: 5px;}
+			  padding-right: 4px;}
 
 td.bold		{font-weight:bold;
 			vertical-align:top;
 			}
 			  			 
 			 
-tr.header	{line-height:13px;
+tr.header	{line-height:8px;
 			
 			 padding: 0 0 0 0;}
-tr	{line-height:8px;
+tr	{line-height:6px;
 			 padding: 0 0 0 0;}
 
 
 .indicator
 {
   float:left;
-  height: 13px; /* or whatever you want */
+  height: 10px; /* or whatever you want */
   position:relative;
   background-color: red;
   width: 5px; /* or whatever you want */
