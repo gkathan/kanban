@@ -76,12 +76,14 @@ var itemData;
 //top root parent of nested item hierarchy
 var NEST_ROOT="root";
 // nest -level
-var ITEMDATA_NEST = ["bm","theme","lane","themesl","sublane"];
-//var ITEMDATA_NEST = ["bm","theme","lane","sublane"];
-//var ITEMDATA_NEST= ["theme","lane","sublane"];
+var ITEMDATA_NEST;
+
+var ITEMDATA_FILTER;
 
 //depth level 
-var ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
+// set in createLaneHierarchy()
+var ITEMDATA_DEPTH_LEVEL;
+
 
 
 
@@ -160,6 +162,8 @@ var LANE_LABELBOX_WIDTH =100;
 // scaling of graphical elements (itemblock,circle, circle icon)	
 var ITEM_SCALE=0.8;
 
+var ITEM_FONTSCALE=1.5;
+
 var x,y,svg,drag,drag_x;
 
 
@@ -232,6 +236,7 @@ function setTODAY(){
 
 
 function drawAll(){
+//	filterInitiativeData(initiativeData)
 	createLaneHierarchy();
 	drawInitiatives();
 	drawReleases();
@@ -239,7 +244,14 @@ function drawAll(){
 	drawVersion();
 }
 
-
+/*
+function filterInitiativeData(data){
+	if (ITEMDATA_FILTER)// && ITEMDATA_NEST.indexOf(ITEMDATA_FILTER.name)>=0)
+		initiativeData=data.filter(function(d){return true && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"")});
+	else
+		initiativeData=data;
+}
+*/
 
 /** main entry from data load
 *
@@ -248,6 +260,7 @@ function handleInitiatives(data) {
 	"use strict";
 	initiativeData=data;
 
+//	filterInitiativeData(data);
 	createLaneHierarchy();
 
 	drawInitiatives();
@@ -282,6 +295,8 @@ function drawInitiatives(){
 */
 function init(){
 	d3.select("#kanban").remove()
+
+	
 		
 	width = WIDTH - margin.left - margin.right,
 	height = HEIGHT - margin.top - margin.bottom;
@@ -844,7 +859,8 @@ function drawPostits(){
 
 	gPostits.selectAll("postit")
 	// filtered data before used in D3 ;-)	
-	.data(initiativeData.filter(function(d){return (d.state==="todo")}))
+	.data(initiativeData.filter(function(d){return (d.state==="todo")&& (new Date(d.planDate)>KANBAN_START);
+}))
 	.enter()
 	// **************** grouped item + svg block + label text
 	.append("g")
@@ -928,7 +944,16 @@ function drawItems(){
 		.style("opacity",0);
 	
 	var groups = gItems.selectAll("initiatives")
-				.data(initiativeData)
+				// filter data if ITEMDATA_FILTER is set
+				.data(initiativeData.filter(function(d){
+					var _filter=new Date(d.planDate)>KANBAN_START;
+					if (ITEMDATA_FILTER){
+						return _filter && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+					}
+					return _filter;
+					
+					}))
+					
 				.enter()
 				// **************** grouped item + svg block + label text
 				.append("g")
@@ -1028,7 +1053,7 @@ function drawItems(){
 					d3.select(this)
 					   .append("text")
 					   .text(d.Title)
-					   .attr("font-size",(5+(_size/5))+"px")
+					   .attr("font-size",(5+(_size/5)*ITEM_FONTSCALE)+"px")
 					   .attr("text-anchor","middle")
 					   .style("font-weight","bold")
 					   //.style("kerning",-0.5)
@@ -1037,7 +1062,7 @@ function drawItems(){
 					   .style("font-family","Open Sans Condensed,arial, sans-serif")
 					   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else return"black";})
 					   .attr("x",_itemXPlanned)
-					   .attr("y",(_itemY)+ parseInt(_size)+(6+(_size/5)));
+					   .attr("y",(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
 					
 					
 					// ------------- labels for sizing view -------------
@@ -1107,6 +1132,7 @@ function drawItems(){
    
 				}) //end each()
 
+/*
 	// data tracelog ********************
 		d3.select("body")
 				.append("ul")
@@ -1127,6 +1153,8 @@ function drawItems(){
 					}
 				})
 	// data tracelog end********************
+*/ 
+	
 } //end drawItems
 
 
@@ -1315,7 +1343,7 @@ function handleMetrics(data){
 	metricData=data;
 	
 	//current hack to show current lane metrics only when NESTLEVEL=3  (=> then it is on arrayindex 1)
-	if (ITEMDATA_NEST.indexOf(METRIC_LEVEL)==1)
+	//if (ITEMDATA_NEST.indexOf(METRIC_LEVEL)==1)
 		drawMetrics();
 }
 
@@ -1433,7 +1461,7 @@ function drawMetrics(){
 	// cx baseline 
 	
 	var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-	_drawCX(gMetrics,_cxBase,x(KANBAN_START.getTime()-7000000000),-y(12));
+	_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,-y(12));
 	
 	
 	//market share
@@ -1534,7 +1562,7 @@ function drawMetrics(){
 
 	// cx target 
 	var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-	_drawCX(gMetrics,_cxTarget,x(KANBAN_END.getTime()+6000000000),-y(12));
+	_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,-y(12));
 	
 	//market share
 	var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
@@ -1542,7 +1570,7 @@ function drawMetrics(){
 	
 	
 /* ----------------------------------------- risks ------------------------------------------------ */
- 	var _yRisk = y(getLaneByNameNEW("root.topline.foxy").yt2)-30;
+ 	var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
  	var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
  	
  	_drawRisks(gMetrics,0,_xRisk,_yRisk);
@@ -1565,6 +1593,8 @@ function drawMetrics(){
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
 	
+	
+/*	
 	//data
 	d3.select("body")
 				.append("ul")
@@ -1576,7 +1606,7 @@ function drawMetrics(){
 					return "drawMetrics; "+d.id + " lane: " + d.lane +" date: "+d.date + " scale: "+d.scale+" number: "+d.number+" type: "+d.type;
 				})
 				.style("font-size","6px");
-			
+*/			
 } //end drawMetrics
 
 function _drawRisks(svg,metric,x,y){
@@ -2161,6 +2191,31 @@ d3.select("#b51").on("click", function(){
 });	
 
 
+d3.select("#b70").on("click", function(){
+	HEIGHT=1000;
+	ITEM_SCALE=0.6;
+	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
+	ITEMDATA_FILTER = null;
+	drawAll();
+});	
+
+d3.select("#b71").on("click", function(){
+	HEIGHT=1100;
+	ITEM_SCALE=0.8;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	drawAll();
+});	
+
+d3.select("#b72").on("click", function(){
+	HEIGHT=500;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
+	drawAll();
+});	
+
+
 
 d3.select("#l1").on("click", function(){
 	window.location.href="treemap.html";
@@ -2209,7 +2264,15 @@ function getConfigByName(name){
  */
 function createLaneHierarchy(){
 	// create hierarchical base data from list
-	itemData = _.nest(initiativeData,ITEMDATA_NEST);
+	ITEMDATA_DEPTH_LEVEL=ITEMDATA_NEST.length;
+	
+	itemData = _.nest(initiativeData.filter(function(d){
+					if (ITEMDATA_FILTER){
+						return eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"")
+					}
+					else{
+						return true;
+					}}),ITEMDATA_NEST);
 	
 	//depth = ITEMDATA_DEPTH_LEVEL
 	createRelativeCoordinates(itemData,0,ITEMDATA_DEPTH_LEVEL);
@@ -2445,7 +2508,7 @@ function getLanesNEW(){
 function getLaneByNameNEW(name){
 	var _lanes = getLanesNEW();
 	for (i in _lanes){
-		if (_lanes[i].name==name) return _lanes[i];
+		if ((_lanes[i].name).indexOf(name)>=0) return _lanes[i];
 	}
 	return null;
 }
@@ -2509,8 +2572,8 @@ var linechart = svg.select("#metrics").append("g").attr("id","linechart").style(
 
 var parseDate = d3.time.format("%d-%b-%y").parse;
 
-var _y1 = y(getLaneByNameNEW("root.topline.bwin").yt1);
-var _y2 = y(getLaneByNameNEW("root.topline.bwin").yt2);
+var _y1 = y(getLaneByNameNEW("bwin").yt1);
+var _y2 = y(getLaneByNameNEW("bwin").yt2);
 
 
 var _height = _y2-_y1;
@@ -2702,3 +2765,4 @@ var PACKAGE_VERSION="20140112_1144";
 var PACKAGE_VERSION="20140113_2047";
 var PACKAGE_VERSION="20140113_2117";
 var PACKAGE_VERSION="20140114_1509";
+var PACKAGE_VERSION="20140115_1756";
