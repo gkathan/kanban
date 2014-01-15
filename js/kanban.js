@@ -161,8 +161,9 @@ var LANE_LABELBOX_WIDTH =100;
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
 var ITEM_SCALE=0.8;
-
 var ITEM_FONTSCALE=1.5;
+
+var POSTIT_SCALE=1;
 
 var x,y,svg,drag,drag_x;
 
@@ -885,7 +886,7 @@ function drawPostits(){
 		if(d.state=="todo")
 		{
 			var postit_x_offset = -2*_size+2;
-			var postit_y_offset = -1.5*_size;
+			var postit_y_offset = -2*_size*POSTIT_SCALE;
 		
 			var postit_x =_itemXPlanned+postit_x_offset;
 			var postit_y =_itemY+postit_y_offset;
@@ -894,7 +895,7 @@ function drawPostits(){
 				_rmin=-5;						;
 			
 			var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
-			var _scale = _size/8;
+			var _scale = (_size/8)*POSTIT_SCALE;
 			
 			var postit = d3.select(this)
 			.on("mouseover", function(d){
@@ -909,14 +910,21 @@ function drawPostits(){
 			.attr("transform","translate("+postit_x+","+postit_y+") scale("+_scale+") rotate("+_rotate+")")
 			
 			postit.append("text")
-			.text("DoD: "+d.id)
+			.text("todo:")
 			.style("text-anchor","start")
 			.style("font-size",(3+_size/6)+"px")
 			.style("font-weight","bold")
-			.style("fill","blue")
-			.attr("transform","translate("+(postit_x)+","+(postit_y+10)+") rotate("+_rotate+")");
+			.style("fill","red")
+			.attr("transform","translate("+(postit_x+1)+","+(postit_y+5)+") rotate("+_rotate+") scale("+POSTIT_SCALE+")")
+			.append("tspan")
+			.attr("dy",5)
+			.attr("x",0)
+			.text("id:"+d.id);
 		}
 	})
+	//grey all todo text 
+	d3.select("#items").selectAll("text").filter(function(d){return d.state=="todo";}).style("fill","grey")
+	
 }
 
 /** renders the items
@@ -2766,3 +2774,4 @@ var PACKAGE_VERSION="20140113_2047";
 var PACKAGE_VERSION="20140113_2117";
 var PACKAGE_VERSION="20140114_1509";
 var PACKAGE_VERSION="20140115_1756";
+var PACKAGE_VERSION="20140115_2028";
