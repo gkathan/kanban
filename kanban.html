@@ -5,10 +5,14 @@
 <link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban.css">
 <link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban_b2c.css">
 
-
 <!--
 <link rel="stylesheet" type="text/css" href="css/kanban.css">
 <link rel="stylesheet" type="text/css" href="css/kanban_b2c.css">
+-->
+
+<!--
+<link rel="stylesheet" type="text/css" href="http://portfolio.ea.bwinparty.corp/css/kanban.css">
+<link rel="stylesheet" type="text/css" href="http://portfolio.ea.bwinparty.corp/css/kanban_b2c.css">
 -->
 
 <script src="js/d3.v3.min.js"></script>
@@ -40,30 +44,30 @@
 	CONTEXT="BPTY.B2C ONLINE GAMING";
 	//percentages is for override => if not specified it uses mode to auto layout
 	itemDataConfig = [	
-						{"depth":1, "mode": "auto","percentages":
+						{"level":"theme", "mode": "auto","percentages":
 								[
-									{"name":"root.topline","value"		:64},
-									{"name":"root.enabling","value"		:36}
+									{"name":"b2c gaming.topline","value"		:64},
+									{"name":"b2c gaming.enabling","value"		:36}
 								]
 						},
-						{"depth":2,"mode": "auto","percentages":
+						{"level":"lane","mode": "auto","percentages":
 								[
-									{"name":"root.topline.bwin","value"		:28},
-									{"name":"root.topline.pp","value"		:22},
-									{"name":"root.topline.foxy","value"		:16},
-									{"name":"root.topline.premium","value"	:14},
-									{"name":"root.topline.casino","value"	:20},
-									{"name":"root.enabling.techdebt","value":45},
-									{"name":"root.enabling.shared","value"	:55}
+									{"name":"bwin","value"		:28},
+									{"name":"pp","value"		:22},
+									{"name":"foxy","value"		:16},
+									{"name":"premium","value"	:14},
+									{"name":"casino","value"	:20},
+									{"name":"techdebt","value"	:45},
+									{"name":"shared","value"	:55}
 								]
 						},
 						// selective override only for one sublane works too ;-)
-						{"depth":3,"mode":"equal","percentages":
+						{"level":"sublane","mode":"equal","percentages":
 								[
-									{"name":"root.topline.bwin.touch","value"	:40},
-									{"name":"root.topline.bwin.market","value"	:20},
-									{"name":"root.topline.bwin.product","value"	:20},
-									{"name":"root.topline.bwin.enabling","value":20}
+									{"name":"bwin.touch","value"	:40},
+									{"name":"bwin.market","value"	:20},
+									{"name":"bwin.product","value"	:20},
+									{"name":"bwin.enabling","value":20}
 								]
 						}];				
 	
@@ -84,7 +88,7 @@
 	
 	 //ITEMDATA_NEST= ["bm","theme","lane","themesl","sublane"];
 	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
-	ITEMDATA_NEST= ["theme","lane","sublane"];
+	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 
 	//ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -106,6 +110,7 @@
 <!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
 
 <!--<form id="svgform" method="post" action="http://localhost:8080/transcode/">-->
+<!--<form id="svgform" method="post" action="http://tomcat.ea.bwinparty.corp/transcode/">-->
 <form id="svgform" method="post" action="http://www.kathan.at/transcode/">
 
  <input type="hidden" id="format" name="format" value="">
