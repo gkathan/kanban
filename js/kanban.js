@@ -61,8 +61,10 @@ var TITLE_TEXT = "\"let the world play for real\"";
 var TITLE_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"";
 
 
-
+//the data as it is read on init
 var initiativeData;
+// depending on context we filter this data for every view
+var filteredInitiativeData;
 
 var metricData;
 //current metric data is on 
@@ -860,7 +862,7 @@ function drawPostits(){
 
 	gPostits.selectAll("postit")
 	// filtered data before used in D3 ;-)	
-	.data(initiativeData.filter(function(d){return (d.state==="todo")&& (new Date(d.planDate)>KANBAN_START);
+	.data(filteredInitiativeData.filter(function(d){return (d.state==="todo")&& (new Date(d.planDate)>KANBAN_START);
 }))
 	.enter()
 	// **************** grouped item + svg block + label text
@@ -951,16 +953,18 @@ function drawItems(){
 		.attr("id","labels")
 		.style("opacity",0);
 	
-	var groups = gItems.selectAll("initiatives")
-				// filter data if ITEMDATA_FILTER is set
-				.data(initiativeData.filter(function(d){
+	filteredInitiativeData = initiativeData.filter(function(d){
 					var _filter=new Date(d.planDate)>KANBAN_START;
 					if (ITEMDATA_FILTER){
 						return _filter && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 					}
 					return _filter;
 					
-					}))
+					});
+	
+	var groups = gItems.selectAll("initiatives")
+				// filter data if ITEMDATA_FILTER is set
+				.data(filteredInitiativeData)
 					
 				.enter()
 				// **************** grouped item + svg block + label text
@@ -1101,7 +1105,7 @@ function drawItems(){
 							var _d=_dependingItems[j];
 							
 							//lookup the concrete item 
-							var _dependingItem = getItemByID(initiativeData,_d);
+							var _dependingItem = getItemByID(filteredInitiativeData,_d);
 							
 							var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
 							
@@ -1237,7 +1241,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.state=="done") _indicator ="green";
 	else if (d.state=="planned") _indicator ="gold";
 	
-	var _htmlBase ="<table><col width=\"25\"/><col width=\"90\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.Title +"</b></td</tr>"+(d.Title2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.Title2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"95\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.Title +"</b></td</tr>"+(d.Title2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.Title2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1285,7 +1289,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 				.transition()            
 				.delay(500)            
 				.duration(500)
-				.attr("r", getItemByID(initiativeData,_di).size*2);
+				.attr("r", getItemByID(filteredInitiativeData,_di).size*2);
 		}
 		// end check depending items
 	}
@@ -1338,7 +1342,7 @@ function onTooltipOutHandler(d,tooltip,highlight){
 				.transition()            
 				.delay(0)            
 				.duration(500)
-				.attr("r", getItemByID(initiativeData,_di).size);
+				.attr("r", getItemByID(filteredInitiativeData,_di).size);
 		} // end de- check depending items
 	}
 }
@@ -1350,271 +1354,260 @@ function onTooltipOutHandler(d,tooltip,highlight){
 function handleMetrics(data){
 	metricData=data;
 	
-	//current hack to show current lane metrics only when NESTLEVEL=3  (=> then it is on arrayindex 1)
-	//if (ITEMDATA_NEST.indexOf(METRIC_LEVEL)==1)
-		drawMetrics();
+	drawMetrics();
 }
 
 function drawMetrics(){
-	d3.select("#metrics").remove();
 	
-	var i=0;
-	var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
-				
-	var _bracketXOffset = LANE_LABELBOX_WIDTH+80;
-	var _primaryXOffset = _bracketXOffset +50;
-	var _secondaryXOffset = LANE_LABELBOX_WIDTH+45;
-	var _tertiaryXOffset = LANE_LABELBOX_WIDTH+45;
-	
-	// => this for sure should be refactored into ONE parametrized method
-	
-	// -------------------------- baseline -------------------------------
-	var _baselinePrimarySum=0;
-	var _targetPrimarySum=0;
-	
-	gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
-	.selectAll("primary_baseline")
-	.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) <= METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "1metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
+	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
+	if (!ITEMDATA_FILTER || ITEMDATA_FILTER.value!="new biz"){
+
+		d3.select("#metrics").remove();
 		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
+		var i=0;
+		var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
+					
+		var _bracketXOffset = LANE_LABELBOX_WIDTH+80;
+		var _primaryXOffset = _bracketXOffset +50;
+		var _secondaryXOffset = LANE_LABELBOX_WIDTH+45;
+		var _tertiaryXOffset = LANE_LABELBOX_WIDTH+45;
 		
-		//primary metrics
-		var _primTextYOffset = _height/2;
-
-		// 100 is the height of the brackets svg
-		var _bracketHeight = 100;
-
-		if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
-
-		_drawBracket(d3.select(this),d,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
-
-		_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
-
-
-		i++;
-	});
-
-	i=0;
-
-
-	//_drawMetricBlock(gMetrics,"baseline","secondary",0);
-
-
-//---------------------------- secondary ---------------------------------
-	gMetrics.append("g").attr("id","secondary").append("g").attr("id","baseline")
-	.selectAll("secondary_baseline")
-	.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) <= METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "2metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
+		// => this for sure should be refactored into ONE parametrized method
 		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
+		// -------------------------- baseline -------------------------------
+		var _baselinePrimarySum=0;
+		var _targetPrimarySum=0;
 		
-		//secondary metrics
-		var _secTextYOffset = _height/2;
-	
-		_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6);
+		gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
+		.selectAll("primary_baseline")
+		.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) <= METRIC_BASLINE}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "1metric_"+d.id;})
+		.each(function(d){
+			var _l = getLanesNEW()[i];
+			
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//primary metrics
+			var _primTextYOffset = _height/2;
+
+			// 100 is the height of the brackets svg
+			var _bracketHeight = 100;
+
+			if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
+
+			_drawBracket(d3.select(this),d,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
+
+			_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
+
+
+			i++;
+		});
+
+		i=0;
+
+
+		//_drawMetricBlock(gMetrics,"baseline","secondary",0);
+
+
+	//---------------------------- secondary ---------------------------------
+		gMetrics.append("g").attr("id","secondary").append("g").attr("id","baseline")
+		.selectAll("secondary_baseline")
+		.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) <= METRIC_BASLINE}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "2metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+			
+			var _l = getLanesNEW()[i];
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//secondary metrics
+			var _secTextYOffset = _height/2;
 		
-		i++;
-	});
+			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6);
+			
+			i++;
+		});
+		 
+		i=0;
+	//---------------------------- tertiary ---------------------------------
+		gMetrics.append("g").attr("id","tertiary").append("g").attr("id","baseline")
+		.selectAll("tertiary_baseline")
+		.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) <= METRIC_BASLINE}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "3metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+			
+			var _l = getLanesNEW()[i];
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//tertiary metrics
+			var _tertTextYOffset = (_height/2)+20;
+		
+			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6);
+			
+			i++;
+		});
+
+
+		
+		// calculated sum
+		
+		//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
+		var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,-35,10);
+		
+
+		//pie baseline
+		var _primaryXOffsetPie = LANE_LABELBOX_WIDTH +130;
+		var _yPie = -80;
+		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
+
+		// cx baseline 
+		
+		var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
+		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,-y(12));
+		
+		
+		//market share
+		var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,-120,10);
+		
+		
+		
+		// -------------------------- target -------------------------------
+		i=0;
+		
+		gMetrics.select("#primary").append("g").attr("id","target").selectAll("primary_future")
+		.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) >= METRIC_PROJECTION}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "1metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+			
+			var _l = getLanesNEW()[i];
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//primary metrics
+			var _primTextYOffset = _height/2;
+
+			// 100 is the height of the brackets svg
+			var _bracketHeight = 100;
+			
+			
+			if (d.sustainable==1) _targetPrimarySum = _targetPrimarySum+parseInt(d.number);
+			
+			_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffset),_y,(_height/_bracketHeight));
+			
+			_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffset,_y+_primTextYOffset,10);
+
+			i++;
+		});
+		
+		
+		
+		i=0;
+
+	//---------------------------- secondary ---------------------------------
+		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target")
+		.selectAll("secondary_baseline")
+		.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) > METRIC_BASLINE}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "2metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+			
+			var _l = getLanesNEW()[i];
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//secondary metrics
+			var _primTextYOffset = _height/2;
+			
+			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffset,_y+_primTextYOffset,6);
+
+			i++;
+		});
+
+		i=0;
+	//---------------------------- tertiary ---------------------------------
+		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target")
+		.selectAll("tertiary_target")
+		.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) > METRIC_BASLINE}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "3metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+			
+			var _l = getLanesNEW()[i];
+			var _y = y(_l.yt1);
+			var _height = y(_l.yt2-_l.yt1);
+			
+			//tertiary metrics
+			var _tertTextYOffset = (_height/2)+20;
+		
+			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffset,_y+_tertTextYOffset,6);
+			
+			i++;
+		});
+
+
+		// calculated sum
+		_total.number=_targetPrimarySum;
+		_drawTextMetric(gMetrics.select("#target"),_total,"metricBig",x(KANBAN_END)+_primaryXOffset,-37,10);
+
+
+		//pie target
+		_drawPie(gMetrics,"target",PIE_TARGET,x(KANBAN_END)+_primaryXOffsetPie,_yPie);
+
+
+		// cx target 
+		var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
+		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,-y(12));
+		
+		//market share
+		var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,-118,10);
+		
+		
+	/* ----------------------------------------- risks ------------------------------------------------ */
+		var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
+		var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
+		
+		_drawRisks(gMetrics,0,_xRisk,_yRisk);
+		
+		var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
+		var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
+		var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":-1 };
+		
+		_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk+25,_yRisk+65,10);
+		_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk+25,_yRisk+85,10);
+		_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
+		
+
+	/* ------------------------------------- metric dates ------- ------------------------------------*/
+		_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-18),METRIC_BASLINE,"BASELINE","projection for");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-18),METRIC_PROJECTION,"PROJECTION","best case for");
+
+
 	 
-	i=0;
-//---------------------------- tertiary ---------------------------------
-	gMetrics.append("g").attr("id","tertiary").append("g").attr("id","baseline")
-	.selectAll("tertiary_baseline")
-	.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) <= METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "3metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
-		
-		//tertiary metrics
-		var _tertTextYOffset = (_height/2)+20;
+	/* ------------------------------------- linechart prototype ------------------------------------*/
+		drawLineChart();
 	
-		_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6);
-		
-		i++;
-	});
+	}	
 
-
-	
-	// calculated sum
-	
-	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
-	var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,-35,10);
-	
-
-	//pie baseline
-	var _primaryXOffsetPie = LANE_LABELBOX_WIDTH +130;
-	var _yPie = -80;
-	_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
-
-	// cx baseline 
-	
-	var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-	_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,-y(12));
-	
-	
-	//market share
-	var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,-120,10);
-	
-	
-	
-	// -------------------------- target -------------------------------
-	i=0;
-	
-	gMetrics.select("#primary").append("g").attr("id","target").selectAll("primary_future")
-	.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) >= METRIC_PROJECTION}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "1metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
-		
-		//primary metrics
-		var _primTextYOffset = _height/2;
-
-		// 100 is the height of the brackets svg
-		var _bracketHeight = 100;
-		
-		
-		if (d.sustainable==1) _targetPrimarySum = _targetPrimarySum+parseInt(d.number);
-		
-		_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffset),_y,(_height/_bracketHeight));
-		
-		_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffset,_y+_primTextYOffset,10);
-
-		i++;
-	});
-	
-	
-	
-	i=0;
-
-//---------------------------- secondary ---------------------------------
-	gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target")
-	.selectAll("secondary_baseline")
-	.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) > METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "2metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
-		
-		//secondary metrics
-		var _primTextYOffset = _height/2;
-		
-		_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffset,_y+_primTextYOffset,6);
-
-		i++;
-	});
-
-	i=0;
-//---------------------------- tertiary ---------------------------------
-	gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target")
-	.selectAll("tertiary_target")
-	.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) > METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "3metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.yt1);
-		var _height = y(_l.yt2-_l.yt1);
-		
-		//tertiary metrics
-		var _tertTextYOffset = (_height/2)+20;
-	
-		_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffset,_y+_tertTextYOffset,6);
-		
-		i++;
-	});
-
-
-	// calculated sum
-	_total.number=_targetPrimarySum;
-	_drawTextMetric(gMetrics.select("#target"),_total,"metricBig",x(KANBAN_END)+_primaryXOffset,-37,10);
-
-
-	//pie target
-	_drawPie(gMetrics,"target",PIE_TARGET,x(KANBAN_END)+_primaryXOffsetPie,_yPie);
-
-
-	// cx target 
-	var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-	_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,-y(12));
-	
-	//market share
-	var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,-118,10);
-	
-	
-/* ----------------------------------------- risks ------------------------------------------------ */
- 	var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
- 	var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
- 	
- 	_drawRisks(gMetrics,0,_xRisk,_yRisk);
-	
- 	var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
- 	var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
- 	var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":-1 };
-	
- 	_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk+25,_yRisk+65,10);
- 	_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk+25,_yRisk+85,10);
- 	_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
- 	
-
-/* ------------------------------------- metric dates ------- ------------------------------------*/
-	_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-18),METRIC_BASLINE,"BASELINE","projection for");
-	_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-18),METRIC_PROJECTION,"PROJECTION","best case for");
-
-
- 
-/* ------------------------------------- linechart prototype ------------------------------------*/
-	drawLineChart();
-	
-	
-/*	
-	//data
-	d3.select("body")
-				.append("ul")
-				.selectAll("li")
-				.data(metricData)
-				.enter()
-				.append("li")
-				.text(function(d) {
-					return "drawMetrics; "+d.id + " lane: " + d.lane +" date: "+d.date + " scale: "+d.scale+" number: "+d.number+" type: "+d.type;
-				})
-				.style("font-size","6px");
-*/			
 } //end drawMetrics
 
 function _drawRisks(svg,metric,x,y){
@@ -2202,7 +2195,6 @@ d3.select("#b51").on("click", function(){
 d3.select("#b70").on("click", function(){
 	HEIGHT=1000;
 	ITEM_SCALE=0.6;
-	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
 	drawAll();
 });	
@@ -2210,7 +2202,6 @@ d3.select("#b70").on("click", function(){
 d3.select("#b71").on("click", function(){
 	HEIGHT=1100;
 	ITEM_SCALE=0.8;
-	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
 	drawAll();
 });	
@@ -2218,7 +2209,6 @@ d3.select("#b71").on("click", function(){
 d3.select("#b72").on("click", function(){
 	HEIGHT=500;
 	ITEM_SCALE=1.5;
-	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
 	drawAll();
 });	
@@ -2250,17 +2240,24 @@ function customAxis(g) {
 /** config (former override)
  * 
  */
-function getConfigModeByDepth(depth){
+function getConfigByLevel(level){
 	for (var i in itemDataConfig){
-		if (itemDataConfig[i].depth==depth) return itemDataConfig[i].mode;
+		if (itemDataConfig[i].level==level) return itemDataConfig[i];
 	}
 	return null;
 }
 
+function getConfigModeByLevel(level){
+	_config = getConfigByLevel(level);
+	if (_config) return _config.mode;
+	return null;
+}
+
+
 function getConfigByName(name){
 	for (var i in itemDataConfig){
 		for (p in itemDataConfig[i].percentages){
-			if (itemDataConfig[i].percentages[p].name==name) return itemDataConfig[i].percentages[p].value;
+			if (itemDataConfig[i].percentages[p].name.indexOf(name>=0)) return itemDataConfig[i].percentages[p].value;
 		}
 	}
 	return null;
@@ -2282,7 +2279,6 @@ function createLaneHierarchy(){
 						return true;
 					}}),ITEMDATA_NEST);
 	
-	//depth = ITEMDATA_DEPTH_LEVEL
 	createRelativeCoordinates(itemData,0,ITEMDATA_DEPTH_LEVEL);
 	
 	transposeCoordinates();
@@ -2299,6 +2295,7 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 		_itemData.y2 = Y_MAX;
 		_itemData.name="root";
 		_itemData.depth=0;
+		_itemData.level="root";
 	}
 	if (_itemData.children){
 		_start++;
@@ -2312,6 +2309,7 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 		for (i in _itemData.children){
 			_itemData.children[i].depth=_start;
 			_itemData.children[i].name=_itemData.name+"."+_itemData.children[i].name;
+			_itemData.children[i].level=ITEMDATA_NEST[_start-1];
 
 			if (_itemData.children[i].children && _stop >_start){
 				//recurse deeper
@@ -2332,14 +2330,26 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 			_y2 = itemData.y2*(_itemData.children[i].children.length/_itemData.childsum);
 
 			//check if mode is set to "equal"
-			if (getConfigModeByDepth(_itemData.children[i].depth)=="equal"){
+			if (getConfigModeByLevel(_itemData.children[i].level)=="equal"){
 				_y2 = itemData.y2/_itemData.children.length;
 			}
 			// check manual percentage override
-			var _config = getConfigByName(_itemData.children[i].name);
+			var _config = getConfigByLevel(_itemData.children[i].level);
 			if (_config){
-				console.log("config for: "+_itemData.children[i].name+" :"+_config);
-				_y2= _config;
+				// ok got a config for this level - now check whether we find a matching config 
+				// check for match in config.percentages
+				if (_config.percentages){
+					var _name = _itemData.children[i].name;
+					for (var p in _config.percentages){
+						console.log("...name:"+_name);
+						if (_name.indexOf(_config.percentages[p].name)>=0){
+							_y2=_config.percentages[p].value;
+							console.log("_y2 override:"+_y2);
+						}
+					}
+				}
+				//console.log("config for: "+_itemData.children[i].name+" :"+_config);
+				//_y2= _config;
 			}
 			// end override check 
 			_y2 = _y2+_y1;
@@ -2483,7 +2493,6 @@ function createAbsoluteCoordinates(_itemData,_start,_stop,base){
 
 /**
 calculates the offset to center elements / text per sublane 
-* WORKS ONLY IN NEST=3 LEVEL CONTEXT !!!
 */
 function getSublaneCenterOffset(sublane){
 	console.log("+++++call getSublaneByNameNEW("+sublane+")");
@@ -2622,9 +2631,6 @@ d3.tsv("data/linechart.tsv", function(error, data) {
     d.date = parseDate(d.date);
     NGR_sum -=parseFloat(d.NGR_bwin);
     d.NGR_bwin =NGR_sum;
-    
-    console.log("date: "+d.date+" foreach"+NGR_sum+" d.NGR="+d.NGR_bwin);
-
   });
 
 
@@ -2733,10 +2739,18 @@ function calculateQueueMetrics(){
 	
 	var _item;
 	
-	for(_d in initiativeData)
-	{	
-		_item = initiativeData[_d];
+	var _filteredItems = initiativeData.filter(function(d){
+		if (ITEMDATA_FILTER) return eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+		return true;
+		});
+	
+	for(_d in _filteredItems){	
+		
+		console.log("metric caluclation: "+_d);
+		_item = _filteredItems[_d];
 		var _date = _item.actualDate;
+		console.log("date: "+_date);
+		
 		var _sizingPD = parseInt(_item.Swag);
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
@@ -2775,3 +2789,4 @@ var PACKAGE_VERSION="20140113_2117";
 var PACKAGE_VERSION="20140114_1509";
 var PACKAGE_VERSION="20140115_1756";
 var PACKAGE_VERSION="20140115_2028";
+var PACKAGE_VERSION="20140116_0800";
