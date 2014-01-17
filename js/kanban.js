@@ -119,7 +119,7 @@ var itemDataConfig;
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 200, right: 100, bottom: 50, left: 300};
+var margin = {top: 200, right: 200, bottom: 50, left: 300};
 var width,height;
 
 
@@ -151,7 +151,7 @@ var Y_MAX =100;
 var Y_MIN=0;
 
 var METRIC_BASLINE = new Date("2013-12-31");
-var METRIC_PROJECTION = new Date("2015-12-31");
+var METRIC_FORECAST = new Date("2015-12-31");
 
 // queue metrics
 var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
@@ -1107,19 +1107,21 @@ function drawItems(){
 							//lookup the concrete item 
 							var _dependingItem = getItemByID(filteredInitiativeData,_d);
 							
-							var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
-							
-							//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
-							var _toX = x(new Date(_dependingItem.planDate))	
-							var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
-							// put lines in one layer to turn on off globally
-							dep.append("line")
-								.attr("x1", _itemXPlanned)
-								.attr("y1", _itemY)
-								.attr("x2", _toX)
-								.attr("y2", _toY)
-								.attr("class", "dependLine")
-								.attr("marker-end", "url(#arrow_grey)");
+							if (_dependingItem){
+								var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
+								
+								//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
+								var _toX = x(new Date(_dependingItem.planDate))	
+								var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
+								// put lines in one layer to turn on off globally
+								dep.append("line")
+									.attr("x1", _itemXPlanned)
+									.attr("y1", _itemY)
+									.attr("x2", _toX)
+									.attr("y2", _toY)
+									.attr("class", "dependLine")
+									.attr("marker-end", "url(#arrow_grey)");
+							}
 						} // end for loop
 						//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
 					} // end if dependcies
@@ -1360,7 +1362,7 @@ function handleMetrics(data){
 function drawMetrics(){
 	
 	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
-	if (!ITEMDATA_FILTER || ITEMDATA_FILTER.value!="new biz"){
+	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" && ITEMDATA_FILTER.value!="bwin")){
 
 		d3.select("#metrics").remove();
 		
@@ -1380,12 +1382,12 @@ function drawMetrics(){
 		
 		gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
 		.selectAll("primary_baseline")
-		.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) <= METRIC_BASLINE}))
+		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="baseline"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "1metric_"+d.id;})
 		.each(function(d){
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
@@ -1415,14 +1417,12 @@ function drawMetrics(){
 	//---------------------------- secondary ---------------------------------
 		gMetrics.append("g").attr("id","secondary").append("g").attr("id","baseline")
 		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) <= METRIC_BASLINE}))
+		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="baseline"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "2metric_"+d.id;})
 		.each(function(d){
-			var _lane = d.lane;
-			
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
 			
@@ -1438,14 +1438,12 @@ function drawMetrics(){
 	//---------------------------- tertiary ---------------------------------
 		gMetrics.append("g").attr("id","tertiary").append("g").attr("id","baseline")
 		.selectAll("tertiary_baseline")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) <= METRIC_BASLINE}))
+		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="baseline"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "3metric_"+d.id;})
 		.each(function(d){
-			var _lane = d.lane;
-			
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
 			
@@ -1487,14 +1485,12 @@ function drawMetrics(){
 		i=0;
 		
 		gMetrics.select("#primary").append("g").attr("id","target").selectAll("primary_future")
-		.data(metricData.filter(function(d){return d.class=="primary" && new Date(d.date) >= METRIC_PROJECTION}))
+		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast" }))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "1metric_"+d.id;})
 		.each(function(d){
-			var _lane = d.lane;
-			
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
 			
@@ -1521,14 +1517,12 @@ function drawMetrics(){
 	//---------------------------- secondary ---------------------------------
 		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target")
 		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && new Date(d.date) > METRIC_BASLINE}))
+		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "2metric_"+d.id;})
 		.each(function(d){
-			var _lane = d.lane;
-			
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
 			
@@ -1544,14 +1538,12 @@ function drawMetrics(){
 	//---------------------------- tertiary ---------------------------------
 		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target")
 		.selectAll("tertiary_target")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && new Date(d.date) > METRIC_BASLINE}))
+		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "3metric_"+d.id;})
 		.each(function(d){
-			var _lane = d.lane;
-			
-			var _l = getLanesNEW()[i];
+			var _l = getLaneByNameNEW(d.lane);
 			var _y = y(_l.yt1);
 			var _height = y(_l.yt2-_l.yt1);
 			
@@ -1598,9 +1590,27 @@ function drawMetrics(){
 		
 
 	/* ------------------------------------- metric dates ------- ------------------------------------*/
-		_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-18),METRIC_BASLINE,"BASELINE","projection for");
-		_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-18),METRIC_PROJECTION,"PROJECTION","best case for");
+		_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-20),METRIC_BASLINE,"BASELINE","projection for");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-20),METRIC_FORECAST,"FORECAST","best case for");
+		
 
+	/* ------------------------------------- goal column ------- ------------------------------------*/
+		var _goalXOffset=340;
+		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,y(-20),METRIC_FORECAST,"GOAL","norbert says");
+
+		i=0;
+		
+		gMetrics.select("#primary").append("g").attr("id","goal").selectAll("primary_future")
+		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="goal" }))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "1metric_"+d.id;})
+		.each(function(d){
+			var _lane = d.lane;
+
+			// goal total
+			_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,-37,10);
+		})
 
 	 
 	/* ------------------------------------- linechart prototype ------------------------------------*/
@@ -1717,8 +1727,8 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
  * */
 function _drawMetricDate(svg,x,y,date,name,type){
 	_drawText(svg,name,x,y,18,"bold","start",COLOR_BPTY,null);
-	_drawText(svg,type+": ",x,y+10,6,"normal","start",COLOR_BPTY,null);
-	_drawText(svg,date.toString('yyyy-MM-dd'),x+80,y+10,8,"bold","end",COLOR_BPTY,null);
+	_drawText(svg,type+": ",x+5,y+6,5,"normal","start",COLOR_BPTY,null);
+	_drawText(svg,date.toString('yyyy-MM-dd'),x+5,y+16,10,"bold","start",COLOR_BPTY,null);
 	
 }
 
@@ -2195,21 +2205,37 @@ d3.select("#b51").on("click", function(){
 d3.select("#b70").on("click", function(){
 	HEIGHT=1000;
 	ITEM_SCALE=0.6;
+	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
+	CONTEXT="holding";
 	drawAll();
 });	
 
 d3.select("#b71").on("click", function(){
 	HEIGHT=1100;
 	ITEM_SCALE=0.8;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	CONTEXT=ITEMDATA_FILTER.value;
+
 	drawAll();
 });	
 
 d3.select("#b72").on("click", function(){
 	HEIGHT=500;
 	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+});	
+
+d3.select("#b73").on("click", function(){
+	HEIGHT=450;
+	ITEM_SCALE=1.3;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
+	CONTEXT=ITEMDATA_FILTER.value;
 	drawAll();
 });	
 
@@ -2496,9 +2522,11 @@ calculates the offset to center elements / text per sublane
 */
 function getSublaneCenterOffset(sublane){
 	console.log("+++++call getSublaneByNameNEW("+sublane+")");
-	var _sublane = getSublaneByNameNEW(sublane);
-	var _height = _sublane.yt2-_sublane.yt1;
-	return -(_height/2);
+	if(sublane){
+		var _sublane = getSublaneByNameNEW(sublane);
+		var _height = _sublane.yt2-_sublane.yt1;
+		return -(_height/2);
+	}
 }
 
 /**
@@ -2710,11 +2738,14 @@ function timeFormat(formats) {
 /** helper to return fully qualified (FQ) name over all nest levels
  */
 function getFQName(d){
-	var _fq= NEST_ROOT;
-	for (var i=0;i<ITEMDATA_NEST.length;i++){
-		_fq=_fq+"."+d[ITEMDATA_NEST[i]];
+	console.log("d:"+d);
+	if (d){
+			var _fq= NEST_ROOT;
+			for (var i=0;i<ITEMDATA_NEST.length;i++){
+				_fq=_fq+"."+d[ITEMDATA_NEST[i]];
+			}
+			return _fq;
 	}
-	return _fq;
 }
 
 
