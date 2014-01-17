@@ -40,8 +40,16 @@
 	WIDTH=1500;
 	HEIGHT = 1100;
 
+	ITEM_SCALE=0.8;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
+	//ITEMDATA_NEST= ["bm","theme","lane","themesl","sublane"];
+	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 
-	CONTEXT="BPTY.B2C ONLINE GAMING";
+	
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	CONTEXT=ITEMDATA_FILTER.value;
+
+
 	//percentages is for override => if not specified it uses mode to auto layout
 	itemDataConfig = [	
 						{"level":"theme", "mode": "auto","percentages":
@@ -51,15 +59,17 @@
 								]
 						},
 						{"level":"lane","mode": "auto","percentages":
+								
 								[
-									{"name":"bwin","value"		:28},
-									{"name":"pp","value"		:22},
-									{"name":"foxy","value"		:16},
-									{"name":"premium","value"	:14},
-									{"name":"casino","value"	:20},
-									{"name":"techdebt","value"	:45},
-									{"name":"shared","value"	:55}
+									{"name":"topline.bwin","value"		:28},
+									{"name":"topline.pp","value"		:22},
+									{"name":"topline.foxy","value"		:16},
+									{"name":"topline.premium","value"	:14},
+									{"name":"topline.casino","value"	:20},
+									{"name":"enabling.techdebt","value"	:45},
+									{"name":"enabling.shared","value"	:55}
 								]
+									
 						},
 						// selective override only for one sublane works too ;-)
 						{"level":"sublane","mode":"equal","percentages":
@@ -69,7 +79,14 @@
 									{"name":"bwin.product","value"	:20},
 									{"name":"bwin.enabling","value":20}
 								]
-						}];				
+						}];		
+						
+	/*[
+									{"name":"topline.kalixa","value"	:60},
+									{"name":"topline.win","value"	:30},
+									{"name":"topline.conspo","value"	:30}
+								]
+	*/			
 	
 	// pie chart sustainable vs. uusustainable business
 	PIE_BASELINE =[{"type":"sustainable","percentage":65},{"type":"notsustainable","percentage":35}];
@@ -86,15 +103,8 @@
 	LOYALTYINDEX_BASELINE = 67
 	LOYALTYINDEX_TARGET = 75;
 	
-	 //ITEMDATA_NEST= ["bm","theme","lane","themesl","sublane"];
-	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
-	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
-
-	//ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
-	//render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
-	
 	render("initiatives_v20.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
+	//render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 	
 
 </script>
@@ -236,6 +246,7 @@ function show_svg_code()
 	  <button id="b70" type="button" class="btn btn-default">Holding</button>
 	  <button id="b71" type="button" class="btn btn-default">B2C Gaming</button>
 	  <button id="b72" type="button" class="btn btn-default">New Biz</button>
+	  <button id="b73" type="button" class="btn btn-default">Bwin</button>
 	  
 	  
 
