@@ -327,7 +327,12 @@ function init(){
 				d3.select(this).attr("transform", function(d,i){
 					return "translate(" + [ d.x,d.y ] + ")"
 				})
+			})	
+			.on("dragend",function(d,i){
+				console.log("dragend event: x="+d.x+", y="+d.y);
+				console.log("context: this= "+this);
 			});
+
 
 	drag_x = d3.behavior.drag()
 			.on("drag", function(d,i) {
@@ -1030,7 +1035,7 @@ function drawItems(){
 					
 					// ------------  item blocks --------------
 					d3.select(this)
-						.append("use").attr("xlink:href",function(d){console.log("------------------------------------------ ITEMBLOCK: "+d.Title+" d.type="+d.Type);return "#"+d.Type})
+						.append("use").attr("xlink:href",function(d){console.log("------------------------------------------ ITEMBLOCK: "+d.name+" d.type="+d.Type);return "#"+d.Type})
 						.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
 
 					
@@ -1064,7 +1069,7 @@ function drawItems(){
 					// ------------  item names --------------
 					d3.select(this)
 					   .append("text")
-					   .text(d.Title)
+					   .text(d.name)
 					   .attr("font-size",(5+(_size/5)*ITEM_FONTSCALE)+"px")
 					   .attr("text-anchor","middle")
 					   .style("font-weight","bold")
@@ -1081,7 +1086,7 @@ function drawItems(){
 					gLabels
 					   .append("text")
 					   .attr("id","label_"+d.id)
-					   .text(d.Title)
+					   .text(d.name)
 					   .style("font-size",5+d.Swag/500+"px")
 					   //.style("font-weight","bold")
 					   .attr("text-anchor","middle")
@@ -1110,7 +1115,7 @@ function drawItems(){
 							if (_dependingItem){
 								var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
 								
-								//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.Title);
+								//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
 								var _toX = x(new Date(_dependingItem.planDate))	
 								var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
 								// put lines in one layer to turn on off globally
@@ -1155,7 +1160,7 @@ function drawItems(){
 				.enter()
 				.append("li")
 				.text(function(d) {
-					return "ID: "+d.id+" name: "+d.Title + " lane (main/sub): " + d.lane+"/"+d.sublane+" plaDdate: "+d.planDate + " scaleX = "+x(new Date(d.planDate))+" state: "+d.state+" size: "+d.size+" sizingPD: "+parseInt(d.Swag);
+					return "ID: "+d.id+" name: "+d.name + " lane (main/sub): " + d.lane+"/"+d.sublane+" plaDdate: "+d.planDate + " scaleX = "+x(new Date(d.planDate))+" state: "+d.state+" size: "+d.size+" sizingPD: "+parseInt(d.Swag);
 				});
 			d3.selectAll("li")
 				.style("font-size","6px")
@@ -1243,7 +1248,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.state=="done") _indicator ="green";
 	else if (d.state=="planned") _indicator ="gold";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"95\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.Title +"</b></td</tr>"+(d.Title2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.Title2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"95\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1882,6 +1887,35 @@ function drawReleases(){
 			
 }
 
+
+/** ola - my first class in javascript ;-)
+ */
+function Postit(text){
+	this.id=TODAY.getTime();
+	this.text=text;
+	this.color="yellow";
+	this.textcolor="black";
+	this.scale=1;
+	this.size=4;
+	this.x=0;
+	this.y=0;
+}
+
+Postit.prototype.getInfo=function(){
+	return "Postit: id: "+this.id+" text: "+this.text+" color: "+this.color+" coordinates: ("+this.x+","+this.y+")";
+}
+
+function _loadPostits(){
+	d3.json("http://localhost/data/data.php?type=postits",handlePostits);
+	
+}
+
+function handlePostits(data){
+	console.log("posits:"+data);
+}
+	
+
+
 /**default font-size is 4*/
 function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 	if (!size) size=4;
@@ -1889,9 +1923,9 @@ function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 	if (!color) color="yellow";
 	if (!textcolor) textcolor="black";
 	
-	//postits drag and drop
+//postits drag and drop
 	var postit=svg.append("g")
-		.attr("id","postit")
+		.attr("id","postit_"+TODAY.getTime())
 		.data([ {"x":0, "y":0} ])
 		.call(drag);
 
@@ -2821,3 +2855,4 @@ var PACKAGE_VERSION="20140114_1509";
 var PACKAGE_VERSION="20140115_1756";
 var PACKAGE_VERSION="20140115_2028";
 var PACKAGE_VERSION="20140116_0800";
+var PACKAGE_VERSION="20140117_0810";
