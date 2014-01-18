@@ -2,18 +2,10 @@
 <meta charset="utf-8">
 <head>
 
-<link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban.css">
-<link rel="stylesheet" type="text/css" href="http://www.kathan.at/stuff/d3/css/kanban_b2c.css">
 
-<!--
 <link rel="stylesheet" type="text/css" href="css/kanban.css">
 <link rel="stylesheet" type="text/css" href="css/kanban_b2c.css">
--->
 
-<!--
-<link rel="stylesheet" type="text/css" href="http://portfolio.ea.bwinparty.corp/css/kanban.css">
-<link rel="stylesheet" type="text/css" href="http://portfolio.ea.bwinparty.corp/css/kanban_b2c.css">
--->
 
 <script src="js/d3.v3.min.js"></script>
 <script src="js/date.min.js"></script>
@@ -31,7 +23,9 @@
 
 <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
 
+<!--
 <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300italic,700' rel='stylesheet' type='text/css'>
+-->
 
 </head>
 
@@ -67,7 +61,11 @@
 									{"name":"topline.premium","value"	:14},
 									{"name":"topline.casino","value"	:20},
 									{"name":"enabling.techdebt","value"	:45},
-									{"name":"enabling.shared","value"	:55}
+									{"name":"enabling.shared","value"	:55},
+									{"name":"topline.kalixa","value"	:50},
+									{"name":"enabling.wincom","value"	:35},
+									{"name":"enabling.conspo","value"	:15}
+
 								]
 									
 						},
@@ -81,12 +79,6 @@
 								]
 						}];		
 						
-	/*[
-									{"name":"topline.kalixa","value"	:60},
-									{"name":"topline.win","value"	:30},
-									{"name":"topline.conspo","value"	:30}
-								]
-	*/			
 	
 	// pie chart sustainable vs. uusustainable business
 	PIE_BASELINE =[{"type":"sustainable","percentage":65},{"type":"notsustainable","percentage":35}];
@@ -119,9 +111,7 @@
 <!-- production transcoder (tomcat6): http://www.kathan.at/transcode/--> 
 <!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
 
-<!--<form id="svgform" method="post" action="http://localhost:8080/transcode/">-->
-<!--<form id="svgform" method="post" action="http://tomcat.ea.bwinparty.corp/transcode/">-->
-<form id="svgform" method="post" action="http://www.kathan.at/transcode/">
+<form id="svgform" method="post" action="http://localhost:8080/transcode/">
 
  <input type="hidden" id="format" name="format" value="">
  <input type="hidden" id="data" name="data" value="">
@@ -147,10 +137,12 @@ function submit_download_form(output_format)
 	// last css is for bootstrap => exclude !
 	
 	var declaration ="";
-	for (var i=0;i<(document.styleSheets.length-2);i++){
+	for (var i=0;i<(document.styleSheets.length-1);i++){
 		console.log("***"+i);
 		declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
 	}
+	console.log("***declaration"+declaration);
+
 	// Get the d3js SVG element
 	var svg = document.getElementsByTagName("svg")[0];
 	// Extract the data as SVG text string
