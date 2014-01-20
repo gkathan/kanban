@@ -201,6 +201,7 @@ function render(itemFile,metricFile,releaseFile,svgFile,laneTextFile){
 		if (metricFile)	d3.tsv("data/"+metricFile,handleMetrics);
 		d3.tsv("data/"+releaseFile,handleReleases);
 		
+		loadPostits();
 		
 	}); // end xml load anonymous 
 }
@@ -997,7 +998,10 @@ function drawItems(){
 					
 					//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
 					
-					var _itemY = y(getSublaneByNameNEW(getFQName(d)).yt1-_yOffset)+getInt(d.sublaneOffset);
+					var _sublane = getSublaneByNameNEW(getFQName(d));
+					var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
+					
+					var _itemY = y(_sublane.yt1-_yOffset)+getInt(d.sublaneOffset);
 
 					
 					// ------------  line if delayed  before plan--------------
@@ -1248,7 +1252,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.state=="done") _indicator ="green";
 	else if (d.state=="planned") _indicator ="gold";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"95\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1296,7 +1300,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 				.transition()            
 				.delay(500)            
 				.duration(500)
-				.attr("r", getItemByID(filteredInitiativeData,_di).size*2);
+				.attr("r", getItemByID(filteredInitiativeData,_di).size*2*ITEM_SCALE);
 		}
 		// end check depending items
 	}
@@ -1349,7 +1353,7 @@ function onTooltipOutHandler(d,tooltip,highlight){
 				.transition()            
 				.delay(0)            
 				.duration(500)
-				.attr("r", getItemByID(filteredInitiativeData,_di).size);
+				.attr("r", getItemByID(filteredInitiativeData,_di).size*ITEM_SCALE);
 		} // end de- check depending items
 	}
 }
@@ -1367,7 +1371,7 @@ function handleMetrics(data){
 function drawMetrics(){
 	
 	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
-	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" && ITEMDATA_FILTER.value!="bwin")){
+	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" )){
 
 		d3.select("#metrics").remove();
 		
@@ -1394,21 +1398,22 @@ function drawMetrics(){
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
 			
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
-			
-			//primary metrics
-			var _primTextYOffset = _height/2;
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//primary metrics
+				var _primTextYOffset = _height/2;
 
-			// 100 is the height of the brackets svg
-			var _bracketHeight = 100;
+				// 100 is the height of the brackets svg
+				var _bracketHeight = 100;
 
-			if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
+				if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
 
-			_drawBracket(d3.select(this),d,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
+				_drawBracket(d3.select(this),d,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
 
-			_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
-
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
+			}
 
 			i++;
 		});
@@ -1428,14 +1433,16 @@ function drawMetrics(){
 		.attr("id",function(d){return "2metric_"+d.id;})
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
+			if (_l){
+
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _secTextYOffset = _height/2;
 			
-			//secondary metrics
-			var _secTextYOffset = _height/2;
-		
-			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6);
-			
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6);
+			}
 			i++;
 		});
 		 
@@ -1449,14 +1456,15 @@ function drawMetrics(){
 		.attr("id",function(d){return "3metric_"+d.id;})
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//tertiary metrics
+				var _tertTextYOffset = (_height/2)+20;
 			
-			//tertiary metrics
-			var _tertTextYOffset = (_height/2)+20;
-		
-			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6);
-			
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6);
+			}
 			i++;
 		});
 
@@ -1465,8 +1473,9 @@ function drawMetrics(){
 		// calculated sum
 		
 		//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
+		var _yTotal =-35;
 		var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,-35,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,_yTotal,10);
 		
 
 		//pie baseline
@@ -1475,14 +1484,15 @@ function drawMetrics(){
 		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
 
 		// cx baseline 
-		
+		var _yCX =-102;
 		var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,-y(12));
+		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,_yCX);
 		
 		
 		//market share
+		var _yMarketShare =-120;
 		var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,-120,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,_yMarketShare,10);
 		
 		
 		
@@ -1496,22 +1506,24 @@ function drawMetrics(){
 		.attr("id",function(d){return "1metric_"+d.id;})
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
+			if (_l){
 			
-			//primary metrics
-			var _primTextYOffset = _height/2;
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//primary metrics
+				var _primTextYOffset = _height/2;
 
-			// 100 is the height of the brackets svg
-			var _bracketHeight = 100;
-			
-			
-			if (d.sustainable==1) _targetPrimarySum = _targetPrimarySum+parseInt(d.number);
-			
-			_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffset),_y,(_height/_bracketHeight));
-			
-			_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffset,_y+_primTextYOffset,10);
-
+				// 100 is the height of the brackets svg
+				var _bracketHeight = 100;
+				
+				
+				if (d.sustainable==1) _targetPrimarySum = _targetPrimarySum+parseInt(d.number);
+				
+				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffset),_y,(_height/_bracketHeight));
+				
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffset,_y+_primTextYOffset,10);
+			}
 			i++;
 		});
 		
@@ -1528,14 +1540,15 @@ function drawMetrics(){
 		.attr("id",function(d){return "2metric_"+d.id;})
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
-			
-			//secondary metrics
-			var _primTextYOffset = _height/2;
-			
-			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffset,_y+_primTextYOffset,6);
-
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _primTextYOffset = _height/2;
+				
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffset,_y+_primTextYOffset,6);
+			}
 			i++;
 		});
 
@@ -1549,21 +1562,22 @@ function drawMetrics(){
 		.attr("id",function(d){return "3metric_"+d.id;})
 		.each(function(d){
 			var _l = getLaneByNameNEW(d.lane);
-			var _y = y(_l.yt1);
-			var _height = y(_l.yt2-_l.yt1);
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//tertiary metrics
+				var _tertTextYOffset = (_height/2)+20;
 			
-			//tertiary metrics
-			var _tertTextYOffset = (_height/2)+20;
-		
-			_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffset,_y+_tertTextYOffset,6);
-			
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffset,_y+_tertTextYOffset,6);
+			}
 			i++;
 		});
 
 
 		// calculated sum
 		_total.number=_targetPrimarySum;
-		_drawTextMetric(gMetrics.select("#target"),_total,"metricBig",x(KANBAN_END)+_primaryXOffset,-37,10);
+		_drawTextMetric(gMetrics.select("#target"),_total,"metricBig",x(KANBAN_END)+_primaryXOffset,_yTotal,10);
 
 
 		//pie target
@@ -1572,15 +1586,19 @@ function drawMetrics(){
 
 		// cx target 
 		var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,-y(12));
+		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,_yCX);
 		
 		//market share
 		var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,-118,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,_yMarketShare,10);
 		
 		
 	/* ----------------------------------------- risks ------------------------------------------------ */
-		var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
+		if (getLaneByNameNEW("foxy")) 
+			var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
+		else
+			var _yRisk = y(20)-30;
+		
 		var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
 		
 		_drawRisks(gMetrics,0,_xRisk,_yRisk);
@@ -1594,14 +1612,15 @@ function drawMetrics(){
 		_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
 		
 
+		var METRIC_DATES_Y=-160;
 	/* ------------------------------------- metric dates ------- ------------------------------------*/
-		_drawMetricDate(gMetrics,x(KANBAN_START)-270,y(-20),METRIC_BASLINE,"BASELINE","projection for");
-		_drawMetricDate(gMetrics,x(KANBAN_END)+170,y(-20),METRIC_FORECAST,"FORECAST","best case for");
+		_drawMetricDate(gMetrics,x(KANBAN_START)-255,METRIC_DATES_Y,METRIC_BASLINE,"BASELINE","projection for");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+155,METRIC_DATES_Y,METRIC_FORECAST,"FORECAST","best case for");
 		
 
 	/* ------------------------------------- goal column ------- ------------------------------------*/
 		var _goalXOffset=340;
-		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,y(-20),METRIC_FORECAST,"GOAL","norbert says");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_FORECAST,"GOAL","norbert says");
 
 		i=0;
 		
@@ -1732,8 +1751,8 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
  * */
 function _drawMetricDate(svg,x,y,date,name,type){
 	_drawText(svg,name,x,y,18,"bold","start",COLOR_BPTY,null);
-	_drawText(svg,type+": ",x+5,y+6,5,"normal","start",COLOR_BPTY,null);
-	_drawText(svg,date.toString('yyyy-MM-dd'),x+5,y+16,10,"bold","start",COLOR_BPTY,null);
+	_drawText(svg,type+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
+	_drawText(svg,date.toString('yyyy-MM-dd'),x,y+16,10,"bold","start",COLOR_BPTY,null);
 	
 }
 
@@ -1887,63 +1906,132 @@ function drawReleases(){
 			
 }
 
-
 /** ola - my first class in javascript ;-)
  */
-function Postit(text){
-	this.id=TODAY.getTime();
+function Postit(id,text,x,y,scale,size,color,textcolor){
+	if (!id) this.id=new Date().getTime();
+	else this.id=id;
 	this.text=text;
-	this.color="yellow";
-	this.textcolor="black";
-	this.scale=1;
-	this.size=4;
-	this.x=0;
-	this.y=0;
+	if (!color) this.color="yellow";
+	else this.color=color;
+	if (!textcolor)	this.textcolor="black";
+	else this.textcolor=textcolor;
+	if (!scale)	this.scale=1;
+	else this.scale=scale;	
+	if (!size) this.size=4;
+	else this.size=size;	
+	this.x=x;
+	this.y=y;
+	
+	console.log("constructor: "+this.getInfo());
 }
 
 Postit.prototype.getInfo=function(){
-	return "Postit: id: "+this.id+" text: "+this.text+" color: "+this.color+" coordinates: ("+this.x+","+this.y+")";
+	return JSON.stringify(this);
 }
 
-function _loadPostits(){
-	d3.json("http://localhost/data/data.php?type=postits",handlePostits);
-	
+Postit.prototype.save=function(){
+	var _insert = JSON.stringify(this);
+	console.log("save: "+_insert);
+
+	$.ajax({
+        type: "POST",
+        url: "/data/insert.php",
+        data: _insert,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data){consoloe.log(data);},
+        failure: function(errMsg) {
+            consoloe.log(errMsg);
+        }
+  });
 }
 
-function handlePostits(data){
-	console.log("posits:"+data);
+Postit.prototype.remove=function(){
+	var _remove = JSON.stringify(this);
+	console.log("delete: "+_remove);
+
+	$.ajax({
+        type: "POST",
+        url: "/data/remove.php",
+        data: _remove,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data){console.log(data);},
+        failure: function(errMsg) {
+            console.log(errMsg);
+        }
+  });
 }
-	
+
+Postit.prototype.update=function(){
+	var _update = JSON.stringify(this);
+	console.log("call update: "+_update);
+
+	$.ajax({
+        type: "POST",
+        url: "/data/update.php",
+        data: _update,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data){console.log(data);},
+        failure: function(errMsg) {
+            console.log(errMsg);
+        }
+  });
+}
 
 
-/**default font-size is 4*/
-function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
-	if (!size) size=4;
-	if (!scale) scale=1;
-	if (!color) color="yellow";
-	if (!textcolor) textcolor="black";
+
+Postit.prototype.draw=function(svg){
+	var p=this;
+	console.log("in draw(): "+this.getInfo());
+	//postits drag and drop
+	var drag_postit = d3.behavior.drag()
+		.on("dragstart", function(d,i) {
+			console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y);
+		})	
+
+		.on("drag", function(d,i) {
+			d.x += d3.event.dx
+			d.y += d3.event.dy
+			console.log("drag= d.x:"+d.x+" - d.y:"+d.y);
+
+			d3.select(this).attr("transform", function(d,i){
+				return "translate(" + [ d.x,d.y ] + ")"
+			})
+		})	
+		.on("dragend",function(d,i){
+			//postit update position
+			p.x=getInt(d.x)+getInt(p.x);
+			p.y=getInt(d.y)+getInt(p.y);
+			console.log("dragend event: x="+d.x+", y="+d.y);
+			console.log("context: this= "+this);
+
+			p.update();
+		});
 	
-//postits drag and drop
+	
 	var postit=svg.append("g")
-		.attr("id","postit_"+TODAY.getTime())
+		.attr("id","postit_"+this.id)
 		.data([ {"x":0, "y":0} ])
-		.call(drag);
+		.call(drag_postit);
 
 	var _rmax=3,
 		_rmin=-3;						;
 
 	var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
 	
-	var _split = text.split("/");
+	var _split = this.text.split("/");
 
 	postit.append("use")
-		.attr("xlink:href","#postit_"+color)
+		.attr("xlink:href","#postit_"+this.color)
 		.style("cursor","pointer")		
-		.attr("transform","translate("+x+","+y+") scale("+scale+") rotate("+_rotate+")");
+		.attr("transform","translate("+this.x+","+this.y+") scale("+this.scale+") rotate("+_rotate+")");
 		
 	var t =postit.append("text")
 	.style("text-anchor","start")
-		.style("font-size",size+"px")
+		.style("font-size",this.size+"px")
 		.style("font-family","courier")
 		.style("font-weight","bold")
 		.style("cursor","pointer")		
@@ -1951,23 +2039,52 @@ function _drawPostit(svg,x,y,text,size,scale,color,textcolor){
 		.style("kerning","-0.1")
 		
 		.style("text-anchor","start")
-		.style("fill",textcolor)
-			.attr("transform","translate("+(x+1+Math.sqrt(scale))+","+(y-1+Math.sqrt(scale))+") scale("+scale+") rotate("+_rotate+")");;
+		.style("fill",this.textcolor)
+			.attr("transform","translate("+(getInt(this.x)+Math.sqrt(this.scale)+1)+","+(getInt(this.y)+Math.sqrt(this.scale)-1)+") scale("+this.scale+") rotate("+_rotate+")");
 	
 	for (i in _split){
 			
 		t.append("tspan")
 		.text(_split[i])
-		.attr("dy",4+Math.sqrt(scale/5))
+		.attr("dy",4+Math.sqrt(this.scale/5))
 		.attr("x",0);
 
-	postit.append("path").
-	attr("transform","translate("+((22*scale)+x)+","+(y+(2*scale))+") rotate("+(45+_rotate)+") scale("+(0.25*scale)+")")
-	.attr("d",d3.svg.symbol().type("cross"))
-	.style("fill","grey")
-	.on("click",function(d){postit.remove();});
-	}
+		postit.append("path").
+		attr("transform","translate("+((22*this.scale)+getInt(this.x))+","+(getInt(this.y)+(2*this.scale))+") rotate("+(45+_rotate)+") scale("+(0.25*this.scale)+")")
+		.attr("d",d3.svg.symbol().type("cross"))
+		.style("fill","grey")
+		.on("click",function(d){postit.remove();p.remove()});
+	}	
 }
+
+function loadPostits(){
+	d3.json("http://localhost/data/data.php?type=postits",handlePostits);
+}
+
+
+
+function handlePostits(data){
+	
+	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
+	console.log("posits:"+data);
+	for (var i in data){
+		console.log("id: "+data[i].id);
+		console.log("text: "+data[i].text);
+		console.log("x: "+data[i].x);
+		console.log("y: "+data[i].y);
+		console.log("size: "+data[i].size);
+		console.log("scale: "+data[i].scale);
+		console.log("id: "+data[i].id);
+		
+		var p = new Postit(data[i].id,data[i].text,data[i].x,data[i].y,data[i].scale,data[i].size,data[i].color,data[i].textcolor);
+		console.log(JSON.stringify(p));
+		p.draw(gCustomPostits);
+		
+	}
+	
+}
+	
+
 
 
 
@@ -2213,7 +2330,11 @@ d3.select("#b12").on("click", function(){
 
 
 d3.select("#b30").on("click", function(){
-	_drawPostit(d3.select("#version"),x(KANBAN_START),-50,document.getElementById("input_postit").value,4,2,"yellow","red");
+	post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"yellow","red");
+	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
+	
+	post.draw(gCustomPostits);
+	post.save();
 
 });	
 
@@ -2251,7 +2372,7 @@ d3.select("#b71").on("click", function(){
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
 	CONTEXT=ITEMDATA_FILTER.value;
-
+    loadPostits();
 	drawAll();
 });	
 
@@ -2265,10 +2386,28 @@ d3.select("#b72").on("click", function(){
 });	
 
 d3.select("#b73").on("click", function(){
-	HEIGHT=450;
+	HEIGHT=600;
 	ITEM_SCALE=1.3;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+});	
+
+d3.select("#b77").on("click", function(){
+	HEIGHT=450;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+});	
+
+d3.select("#b78").on("click", function(){
+	HEIGHT=600;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
 	CONTEXT=ITEMDATA_FILTER.value;
 	drawAll();
 });	
@@ -2603,7 +2742,7 @@ function getSublanesNEW(lane){
 function getSublaneByNameNEW(name){
 	var _sublanes = getSublanesNEW();
 	for (i in _sublanes){
-		if (_sublanes[i].name==name) return _sublanes[i];
+		if (_sublanes[i].name.indexOf(name)>=0) return _sublanes[i];
 	}
 	return null;
 }
@@ -2645,91 +2784,94 @@ function traverse(_itemData,_start,_stop,_list){
 
 function drawLineChart()
 {
+	var linechart = svg.select("#metrics").append("g").attr("id","linechart").style("visibility","hidden");
+
+	var parseDate = d3.time.format("%d-%b-%y").parse;
+
+	var _lane = getLaneByNameNEW("bwin");
+
+	if (_lane){
+
+		var _y1 = y(getLaneByNameNEW("bwin").yt1);
+		var _y2 = y(getLaneByNameNEW("bwin").yt2);
 
 
-var linechart = svg.select("#metrics").append("g").attr("id","linechart").style("visibility","hidden");
+		var _height = _y2-_y1;
 
-var parseDate = d3.time.format("%d-%b-%y").parse;
+		console.log("height: bwin"+_height+" y1:"+_y1);
 
-var _y1 = y(getLaneByNameNEW("bwin").yt1);
-var _y2 = y(getLaneByNameNEW("bwin").yt2);
+		var x_line = d3.time.scale()
+			.range([0, x(WIP_START)]);
 
+		var y_line = d3.scale.linear()
+			.range([_height,_y1]);
 
-var _height = _y2-_y1;
+		var xLineAxis = d3.svg.axis()
+			.scale(x_line)
+			.tickFormat("")
+			.tickSize(0)
+			.orient("top");
 
-console.log("height: bwin"+_height+" y1:"+_y1);
+		var yLineAxis = d3.svg.axis()
+			.scale(y_line)
+			.orient("left");
 
-var x_line = d3.time.scale()
-    .range([0, x(WIP_START)]);
+		var line = d3.svg.line()
+			.x(function(d) { return x_line(d.date); })
+			.y(function(d) { return y_line(d.NGR_bwin); });
 
-var y_line = d3.scale.linear()
-    .range([_height,_y1]);
+		var area = d3.svg.area()
+			.x(function(d) { return x_line(d.date); })
+			.y0(_height)
+			.y1(function(d) { return y_line(d.NGR_bwin); });
+			
+			
 
-var xLineAxis = d3.svg.axis()
-    .scale(x_line)
-    .tickFormat("")
-    .tickSize(0)
-    .orient("top");
+		var NGR_sum=360.0;
 
-var yLineAxis = d3.svg.axis()
-    .scale(y_line)
-    .orient("left");
-
-var line = d3.svg.line()
-    .x(function(d) { return x_line(d.date); })
-    .y(function(d) { return y_line(d.NGR_bwin); });
-
-var area = d3.svg.area()
-    .x(function(d) { return x_line(d.date); })
-    .y0(_height)
-    .y1(function(d) { return y_line(d.NGR_bwin); });
-    
-    
-
-var NGR_sum=360.0;
-
-d3.tsv("data/linechart.tsv", function(error, data) {
-  data.forEach(function(d) {
-    d.date = parseDate(d.date);
-    NGR_sum -=parseFloat(d.NGR_bwin);
-    d.NGR_bwin =NGR_sum;
-  });
+		d3.tsv("data/linechart.tsv", function(error, data) {
+		  data.forEach(function(d) {
+			d.date = parseDate(d.date);
+			NGR_sum -=parseFloat(d.NGR_bwin);
+			d.NGR_bwin =NGR_sum;
+		  });
 
 
-  x_line.domain(d3.extent(data, function(d) { return d.date; }));
-  y_line.domain([0,400]);
+		  x_line.domain(d3.extent(data, function(d) { return d.date; }));
+		  y_line.domain([0,400]);
 
-linechart.append("path")
-        .datum(data)
-        .attr("class", "area")
-        .attr("d", area);
-  
-  linechart.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + _height + ")")
-      .call(xLineAxis);
+		linechart.append("path")
+				.datum(data)
+				.attr("class", "area")
+				.attr("d", area);
+		  
+		  linechart.append("g")
+			  .attr("class", "x axis")
+			  .attr("transform", "translate(0," + _height + ")")
+			  .call(xLineAxis);
 
-  linechart.append("g")
-      .attr("class", "y axis")
-      .style("font-size","6px")
-    
-      .call(yLineAxis)
-    .append("text")
-      .attr("transform", "translate (0,"+(_y2-5)+") rotate(0)")
-      .style("text-anchor", "start")
-      .style("fill", "white")
-      .style("opacity", 0.8)
-      .style("font-size", "12px")
-      .style("font-weight", "bold")
-      .text("NGR (mio EUR)");
+		  linechart.append("g")
+			  .attr("class", "y axis")
+			  .style("font-size","6px")
+			
+			  .call(yLineAxis)
+			.append("text")
+			  .attr("transform", "translate (0,"+(_y2-5)+") rotate(0)")
+			  .style("text-anchor", "start")
+			  .style("fill", "white")
+			  .style("opacity", 0.8)
+			  .style("font-size", "12px")
+			  .style("font-weight", "bold")
+			  .text("NGR (mio EUR)");
 
-  linechart.append("path")
-      .datum(data)
-      .attr("class", "line")
-      .attr("d", line);
-});
+		  linechart.append("path")
+			  .datum(data)
+			  .attr("class", "line")
+			  .attr("d", line);
+		});
 
-console.log("NGR sum:"+NGR_sum);
+		console.log("NGR sum:"+NGR_sum);
+	}
 
 }
 
@@ -2856,3 +2998,4 @@ var PACKAGE_VERSION="20140115_1756";
 var PACKAGE_VERSION="20140115_2028";
 var PACKAGE_VERSION="20140116_0800";
 var PACKAGE_VERSION="20140117_0810";
+var PACKAGE_VERSION="20140118_2252";
