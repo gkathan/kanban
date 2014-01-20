@@ -191,15 +191,19 @@ function render(itemFile,metricFile,releaseFile,svgFile,laneTextFile){
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 		
-		if (laneTextFile) d3.tsv("data/"+laneTextFile,handleLaneText);
+//		if (laneTextFile) d3.tsv("data/"+laneTextFile,handleLaneText);
 		
-		d3.tsv("data/"+itemFile,handleInitiatives);
-		//d3.json("data/initiatives_mysql.json",handleInitiatives);
-		// working PHP json export 
-		//d3.json("data/data.php?type=initiatives",handleInitiatives);
+//		d3.tsv("data/"+itemFile,handleInitiatives);
+		d3.json("data/data.php?type=lanetext",handleLaneText);
+		
+		d3.json("data/data.php?type=initiatives",handleInitiatives);
+		
+		//if (metricFile)	d3.tsv("data/"+metricFile,handleMetrics);
+		//d3.tsv("data/"+releaseFile,handleReleases);
+		d3.json("data/data.php?type=releases",handleReleases);
 	
-		if (metricFile)	d3.tsv("data/"+metricFile,handleMetrics);
-		d3.tsv("data/"+releaseFile,handleReleases);
+		d3.json("data/data.php?type=metrics",handleMetrics);
+	
 		
 		loadPostits();
 		
@@ -2999,3 +3003,4 @@ var PACKAGE_VERSION="20140115_2028";
 var PACKAGE_VERSION="20140116_0800";
 var PACKAGE_VERSION="20140117_0810";
 var PACKAGE_VERSION="20140118_2252";
+var PACKAGE_VERSION="20140120_1919";
