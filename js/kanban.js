@@ -176,127 +176,6 @@ var COLOR_BPTY="#174D75";
 // size of white space around boxes
 var WIDTH_WHITESTROKE ="5px";
 
-/** main etry point
- * 
- */
-function render(itemFile,metricFile,releaseFile,svgFile,laneTextFile){
-	
-	dataversions.itemFile=itemFile;
-	dataversions.metricFile=metricFile;
-	dataversions.releaseFile=releaseFile;
-	dataversions.svgFile=svgFile;
-	dataversions.laneTextFile=laneTextFile;
-
-
-	d3.xml("data/"+svgFile, function(xml) {
-		document.body.appendChild(document.importNode(xml.documentElement, true));
-		
-//		if (laneTextFile) d3.tsv("data/"+laneTextFile,handleLaneText);
-		
-//		d3.tsv("data/"+itemFile,handleInitiatives);
-		d3.json("data/data.php?type=lanetext",handleLaneText);
-		
-		d3.json("data/data.php?type=initiatives",handleInitiatives);
-		
-		//if (metricFile)	d3.tsv("data/"+metricFile,handleMetrics);
-		//d3.tsv("data/"+releaseFile,handleReleases);
-		d3.json("data/data.php?type=releases",handleReleases);
-	
-		d3.json("data/data.php?type=metrics",handleMetrics);
-	
-		
-		loadPostits();
-		
-	}); // end xml load anonymous 
-}
-
-/**
- * change TODAY date and see what happens
- * pass date in format "yyyy-mm-dd" or "today" to reset to today
- * */
-function timeMachine(date){
-	if (date!="today") TIMEMACHINE = new Date(date);
-	else {
-		TIMEMACHINE = null;
-		// and reload();
-		d3.tsv("data/"+dataversions.itemFile,handleInitiatives);
-	}
-	setTODAY();
-	setWIP();
-	calculateQueueMetrics();
-	drawAll();
-}
-
-/** whenever we use the TODAY.add() function we need to set back TODAY to original value...
- * */
-function setWIP(){
-	WIP_START = TODAY.add(WIP_OFFSET_DAYS).days();
-	setTODAY();
-	WIP_END = TODAY.add(WIP_WINDOW_DAYS+WIP_OFFSET_DAYS).days();
-	setTODAY();
-}
-
-function setTODAY(){
-	if (TIMEMACHINE) TODAY = new Date(TIMEMACHINE);
-	else TODAY = new Date();
-}
-
-
-
-function drawAll(){
-//	filterInitiativeData(initiativeData)
-	createLaneHierarchy();
-	drawInitiatives();
-	drawReleases();
-	drawMetrics();
-	drawVersion();
-}
-
-/*
-function filterInitiativeData(data){
-	if (ITEMDATA_FILTER)// && ITEMDATA_NEST.indexOf(ITEMDATA_FILTER.name)>=0)
-		initiativeData=data.filter(function(d){return true && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"")});
-	else
-		initiativeData=data;
-}
-*/
-
-/** main entry from data load
-*
-*/
-function handleInitiatives(data) {
-	"use strict";
-	initiativeData=data;
-
-//	filterInitiativeData(data);
-	createLaneHierarchy();
-
-	drawInitiatives();
-	drawVersion();
-}
-
-function handleLaneText(data) {
-	"use strict";
-	laneTextData=data;
-}
-
-
-/**
-
-*/
-function drawInitiatives(){
-	init();
-	initHandlers();
-	
-	
-	drawAxes();
-	drawLanes();
-	drawQueues();
-	
-	drawItems();
-	drawPostits();
-}
-
 
 /**
 *
@@ -304,8 +183,6 @@ function drawInitiatives(){
 function init(){
 	d3.select("#kanban").remove()
 
-	
-		
 	width = WIDTH - margin.left - margin.right,
 	height = HEIGHT - margin.top - margin.bottom;
 
@@ -347,7 +224,146 @@ function init(){
 					return "translate(" + [ d.x,d.y ] + ")"
 				})
 			});
+}
 
+/** main etry point
+ * 
+ */
+function render(svgFile){
+	d3.xml("data/"+svgFile, function(xml) {
+		document.body.appendChild(document.importNode(xml.documentElement, true));
+	
+		$.when($.getJSON("/data/data.php?type=lanetext"),
+				$.getJSON("/data/data.php?type=initiatives"),
+				$.getJSON("/data/data.php?type=metrics"),
+				$.getJSON("/data/data.php?type=releases"))
+			.done(function(lanetext,initiatives,metrics,releases){
+					if (lanetext[1]=="success") laneTextData=lanetext[0];
+					else throw new Exception("error loading lanetext");
+					if (initiatives[1]=="success") initiativeData=initiatives[0];
+					else throw new Exception("error loading initiatives");
+					if (metrics[1]=="success") metricData=metrics[0];
+					else throw new Exception("error loading metrics");
+					if (releases[1]=="success") releaseData=releases[0];
+					else throw new Exception("error loading releases");
+					
+					initHandlers();
+					
+					renderB2CGaming();
+					//renderHolding();
+				});
+	}); // end xml load anonymous 
+}
+
+
+function renderB2CGaming() {
+	HEIGHT=1100;
+	ITEM_SCALE=0.8;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	CONTEXT=ITEMDATA_FILTER.value;
+    loadPostits();
+	drawAll();
+}
+
+function renderBwin(){
+	HEIGHT=600;
+	ITEM_SCALE=1.3;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+}
+
+function renderHolding(){
+	HEIGHT=1000;
+	ITEM_SCALE=0.6;
+	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
+	ITEMDATA_FILTER = null;
+	CONTEXT="holding";
+	drawAll();
+}
+
+function renderShared(){
+	HEIGHT=600;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+}
+
+function renderNewBiz(){
+	HEIGHT=500;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["theme","lane","sublane"];
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+}
+
+function renderTechdebt(){
+	HEIGHT=450;
+	ITEM_SCALE=1.5;
+	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	drawAll();
+}
+
+
+
+/**
+*/
+function drawInitiatives(){
+	drawAxes();
+	drawLanes();
+	drawQueues();
+	
+	drawItems();
+	drawPostits();
+}
+
+function drawAll(){
+	init();
+	createLaneHierarchy();
+	
+	drawInitiatives();
+	drawMetrics();
+	drawReleases();
+	drawVersion();
+}
+
+
+/**
+ * change TODAY date and see what happens
+ * pass date in format "yyyy-mm-dd" or "today" to reset to today
+ * */
+function timeMachine(date){
+	if (date!="today") TIMEMACHINE = new Date(date);
+	else {
+		TIMEMACHINE = null;
+		// and reload();
+		d3.tsv("data/"+dataversions.itemFile,handleInitiatives);
+	}
+	setTODAY();
+	setWIP();
+	calculateQueueMetrics();
+	drawAll();
+}
+
+/** whenever we use the TODAY.add() function we need to set back TODAY to original value...
+ * */
+function setWIP(){
+	WIP_START = TODAY.add(WIP_OFFSET_DAYS).days();
+	setTODAY();
+	WIP_END = TODAY.add(WIP_WINDOW_DAYS+WIP_OFFSET_DAYS).days();
+	setTODAY();
+}
+
+function setTODAY(){
+	if (TIMEMACHINE) TODAY = new Date(TIMEMACHINE);
+	else TODAY = new Date();
 }
 
 /** draws grid
@@ -1363,22 +1379,14 @@ function onTooltipOutHandler(d,tooltip,highlight){
 }
 
 
-/**
-
-*/
-function handleMetrics(data){
-	metricData=data;
-	
-	drawMetrics();
-}
 
 function drawMetrics(){
+	d3.select("#metrics").remove();
 	
 	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
 	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" )){
 
-		d3.select("#metrics").remove();
-		
+		console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
 		var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
 					
@@ -1855,15 +1863,6 @@ function _drawCX	(svg,data,x,y){
 
 
 
-/**
-
-*/
-function handleReleases(data)
-{
-	releaseData = data;
-
-	drawReleases();
-}
 
 function drawReleases(){	
 	
@@ -2334,7 +2333,7 @@ d3.select("#b12").on("click", function(){
 
 
 d3.select("#b30").on("click", function(){
-	post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"yellow","red");
+	post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"blue","red");
 	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
 	
 	post.draw(gCustomPostits);
@@ -2362,58 +2361,27 @@ d3.select("#b51").on("click", function(){
 
 
 d3.select("#b70").on("click", function(){
-	HEIGHT=1000;
-	ITEM_SCALE=0.6;
-	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
-	ITEMDATA_FILTER = null;
-	CONTEXT="holding";
-	drawAll();
+	renderHolding();
 });	
 
 d3.select("#b71").on("click", function(){
-	HEIGHT=1100;
-	ITEM_SCALE=0.8;
-	ITEMDATA_NEST= ["theme","lane","sublane"];
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
-	CONTEXT=ITEMDATA_FILTER.value;
-    loadPostits();
-	drawAll();
+	renderB2CGaming();
 });	
 
 d3.select("#b72").on("click", function(){
-	HEIGHT=500;
-	ITEM_SCALE=1.5;
-	ITEMDATA_NEST= ["theme","lane","sublane"];
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
-	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+	renderNewBiz();
 });	
 
 d3.select("#b73").on("click", function(){
-	HEIGHT=600;
-	ITEM_SCALE=1.3;
-	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
-	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+	renderBwin();
 });	
 
 d3.select("#b77").on("click", function(){
-	HEIGHT=450;
-	ITEM_SCALE=1.5;
-	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
-	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+	renderTechdebt();
 });	
 
 d3.select("#b78").on("click", function(){
-	HEIGHT=600;
-	ITEM_SCALE=1.5;
-	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
-	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+	renderShared();
 });	
 
 
@@ -3004,3 +2972,5 @@ var PACKAGE_VERSION="20140116_0800";
 var PACKAGE_VERSION="20140117_0810";
 var PACKAGE_VERSION="20140118_2252";
 var PACKAGE_VERSION="20140120_1919";
+var PACKAGE_VERSION="20140120_1944";
+var PACKAGE_VERSION="20140120_1954";
