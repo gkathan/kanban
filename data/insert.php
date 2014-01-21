@@ -12,11 +12,10 @@ $_insert = json_decode(file_get_contents('php://input'));
  $y    = $_insert->{'y'};
 
 
-echo"<br>decoded json: "+$_insert;
 
-$dbhost = 'localhost:3036';
-$dbuser = 'root';
-$dbpass = 'kakroot';
+$dbhost = 'localhost';
+$dbuser = 'kanban';
+$dbpass = 'k4nb4n';
 $conn = mysql_connect($dbhost, $dbuser, $dbpass);
 if(! $conn )
 {

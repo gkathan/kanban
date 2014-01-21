@@ -13,9 +13,9 @@ $_data = json_decode(file_get_contents('php://input'));
 
 
 
-$dbhost = 'localhost:3036';
-$dbuser = 'root';
-$dbpass = 'kakroot';
+$dbhost = 'localhost';
+$dbuser = 'kanban';
+$dbpass = 'k4nb4n';
 $conn = mysql_connect($dbhost, $dbuser, $dbpass);
 if(! $conn )
 {

@@ -5,7 +5,7 @@
 $type = htmlspecialchars($_GET["type"]);
 
 
-	mysql_connect("localhost", "root", "kakroot") or die(mysql_error());
+	mysql_connect("localhost", "kanban", "k4nb4n") or die(mysql_error());
 	mysql_select_db("kanban") or die(mysql_error());
 
 	mysql_query('SET CHARACTER SET utf8');
