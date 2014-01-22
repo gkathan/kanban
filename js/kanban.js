@@ -636,28 +636,22 @@ function drawLaneText(svg,lane,side)
 	console.log("*****drawLaneText(): svg="+svg);
 	
 	if (laneTextData){
-		svg.selectAll("#laneText")
-		// [changed 20140104]
-		.data(laneTextData.filter(function(d){return (d.lane==lane && d.side==side)}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "text_"+d.lane;})
-		//.style("opacity",function(d){return d.accuracy/10})
-		//.on("mouseover",animateScaleUp)
-		.each(function(d){
-			d3.select(this)
-			.append("text")
-			.text(d.text)
-			.attr("x",_xBase)
-			.attr("y",_yBase+(i*(parseInt(d.size)+1)))
-			.style("font-size",d.size+"px")
-			.style("font-weight",d.format)
-			.style("fill",_color);
-
-			i++;
-		})
+	var _lanetext = laneTextData.filter(function(d){return (d.lane==lane && d.side==side)});
+		if (_lanetext){
+			var gLanetext = svg.append("g")
+			.attr("id","text_"+lane);
+	
+			for (var i in _lanetext){
+					gLanetext.append("text")
+					.text(_lanetext[i].text)
+					.attr("x",_xBase)
+					.attr("y",_yBase+(i*(parseInt(_lanetext[i].size)+1)))
+					.style("font-size",_lanetext[i].size+"px")
+					.style("font-weight",_lanetext[i].format)
+					.style("fill",_color);
+			}
+		}
 	}
-
 }
 
 
@@ -3000,3 +2994,4 @@ var PACKAGE_VERSION="20140120_1919";
 var PACKAGE_VERSION="20140120_1944";
 var PACKAGE_VERSION="20140120_1954";
 var PACKAGE_VERSION="20140121_2131";
+var PACKAGE_VERSION="20140122_2107";
