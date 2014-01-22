@@ -229,14 +229,14 @@ function init(){
 /** main etry point
  * 
  */
-function render(svgFile){
+function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable){
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
-		$.when($.getJSON("/data/data.php?type=lanetext"),
-				$.getJSON("/data/data.php?type=initiatives"),
-				$.getJSON("/data/data.php?type=metrics"),
-				$.getJSON("/data/data.php?type=releases"))
+		$.when($.getJSON("/data/data.php?type="+laneTextTable),
+				$.getJSON("/data/data.php?type="+initiativeTable),
+				$.getJSON("/data/data.php?type="+metricsTable),
+				$.getJSON("/data/data.php?type="+releaseTable))
 			.done(function(lanetext,initiatives,metrics,releases){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
@@ -272,8 +272,29 @@ function renderBwin(){
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
 	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+				});
 }
+
+function renderBwinSecondLevel(){
+	HEIGHT=800;
+	ITEM_SCALE=1.0;
+	ITEMDATA_NEST= ["themesl","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	
+	console.log("*************************************************************************************calling getJSON..");
+	
+	$.when($.getJSON("/data/data.php?type=initiatives_sports"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+				});
+}
+
 
 function renderHolding(){
 	HEIGHT=1000;
@@ -523,7 +544,7 @@ function drawLanes(){
 	.enter()
 	// **************** grouped item + svg block + label text
 	.append("g")
-	.attr("id",function(d){return "lane_"+d.lane;})
+	.attr("id",function(d){return "lane_"+d.name;})
 	//.style("opacity",function(d){return d.accuracy/10})
 	//.on("mouseover",animateScaleUp)
 	.each(function(d){
@@ -553,7 +574,7 @@ function drawLanes(){
 	
 
 		// laneside descriptors
-		_drawLaneSideText(d3.select(this),_lane,-LANE_LABELBOX_WIDTH-2,_y+3,"6px","start");
+		_drawLaneSideText(d3.select(this),_lane,-LANE_LABELBOX_WIDTH-2,_y+3,"5px","start");
 
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
@@ -619,13 +640,13 @@ function drawLaneText(svg,lane,side)
 		// [changed 20140104]
 		.data(laneTextData.filter(function(d){return (d.lane==lane && d.side==side)}))
 		.enter()
-		// **************** grouped item + svg block + label text
 		.append("g")
 		.attr("id",function(d){return "text_"+d.lane;})
 		//.style("opacity",function(d){return d.accuracy/10})
 		//.on("mouseover",animateScaleUp)
 		.each(function(d){
-			svg.append("text")
+			d3.select(this)
+			.append("text")
 			.text(d.text)
 			.attr("x",_xBase)
 			.attr("y",_yBase+(i*(parseInt(d.size)+1)))
@@ -2061,7 +2082,7 @@ Postit.prototype.draw=function(svg){
 }
 
 function loadPostits(){
-	d3.json("http://localhost/data/data.php?type=postits",handlePostits);
+	d3.json("data/data.php?type=postits",handlePostits);
 }
 
 
@@ -2374,6 +2395,10 @@ d3.select("#b72").on("click", function(){
 
 d3.select("#b73").on("click", function(){
 	renderBwin();
+});	
+
+d3.select("#b74").on("click", function(){
+	renderBwinSecondLevel();
 });	
 
 d3.select("#b77").on("click", function(){
@@ -2974,3 +2999,4 @@ var PACKAGE_VERSION="20140118_2252";
 var PACKAGE_VERSION="20140120_1919";
 var PACKAGE_VERSION="20140120_1944";
 var PACKAGE_VERSION="20140120_1954";
+var PACKAGE_VERSION="20140121_2131";
