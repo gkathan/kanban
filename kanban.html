@@ -31,6 +31,11 @@
 
 <!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
 <script>
+	
+	TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
+	//TRANSCODE_URL = "http://localhost:8080/transcode";
+	
+	
 	WIDTH=1500;
 	HEIGHT = 1100;
 
@@ -115,8 +120,9 @@
      
 <!-- production transcoder (tomcat6): http://www.kathan.at/transcode/--> 
 <!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
+<!--<form id="svgform" method="post" action="http://tomcat.ea.bwinparty.corp/transcode/">-->
 
-<form id="svgform" method="post" action="http://localhost:8080/transcode/">
+<form id="svgform" method="post" action="localhost:8080/transcode/">
 
  <input type="hidden" id="format" name="format" value="">
  <input type="hidden" id="data" name="data" value="">
@@ -155,7 +161,7 @@ function submit_download_form(output_format)
 	var form = document.getElementById("svgform");
 	
 	//console.log(declaration+svg_xml);
-
+	form.action=TRANSCODE_URL;
 	form["format"].value = output_format;
 	form["data"].value = declaration+svg_xml ;
 	form["context"].value = CONTEXT ;
@@ -164,7 +170,7 @@ function submit_download_form(output_format)
 	//high res scale
 	form["png_scale"].value = 3 ;
 	console.log("*going to submit");
-
+	
 	form.submit();
 }
 
@@ -261,7 +267,6 @@ function show_svg_code()
       <span class="input-group-btn">
         <button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
       </span>
-      
    </div><!-- /input-group -->
 
 
@@ -277,22 +282,26 @@ function show_svg_code()
 				Save as PNG</button>
 			&nbsp;<button class="btn btn-warning btn-xs" id="show_svg_code" value="">
 				Show SVG</button>
-			<br>
-			<br>
+
+			<div style="width:400px" class="input-group input-group-sm">
+				  <input id="input_transcode_url" type="text" class="form-control input-sm">
+				  <span class="input-group-btn">
+					<button id="b99" class="btn btn-default input-sm" type="button">set transcode URL</button>
+				  </span>
+			</div><!-- /input-group -->
+
+			
 	</div>
 
 <script>
 	// Attached actions to the buttons
+	
 	$("#show_svg_code").click(function() { show_svg_code(); });
 	$("#save_as_svg").click(function() { submit_download_form("svg"); });
 	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
 	$("#save_as_png").click(function() { submit_download_form("png"); });
-
-
-
-
-
-
+	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
+	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
 		
 
 </script>
