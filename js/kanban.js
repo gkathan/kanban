@@ -165,6 +165,12 @@ var LANE_LABELBOX_WIDTH =100;
 var ITEM_SCALE=0.8;
 var ITEM_FONTSCALE=1.5;
 
+// the relative scaling compared to ITEM 
+// if set to 1 = TACTICS are in same SIZE than corp ITEMS
+// if set to e.g. 0.5 TACTICS are half the size
+var TACTIC_SCALE=0.9;
+
+
 var POSTIT_SCALE=1;
 
 var x,y,svg,drag,drag_x;
@@ -176,6 +182,8 @@ var COLOR_BPTY="#174D75";
 // size of white space around boxes
 var WIDTH_WHITESTROKE ="5px";
 
+
+var TRANSCODE_URL;
 
 /**
 *
@@ -281,8 +289,13 @@ function renderBwin(){
 
 function renderBwinSecondLevel(){
 	HEIGHT=800;
-	ITEM_SCALE=1.0;
+	ITEM_SCALE=0.5;
+	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
+	//ITEMDATA_NEST= ["isCorporate","themesl","sublane"];
+	//ITEMDATA_NEST= ["themesl","lane","sublane"];
+	//ITEMDATA_NEST= ["lane","sublane"];
+	//ITEMDATA_NEST= ["theme","themesl","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
 	CONTEXT=ITEMDATA_FILTER.value;
 	
@@ -574,7 +587,8 @@ function drawLanes(){
 	
 
 		// laneside descriptors
-		_drawLaneSideText(d3.select(this),_lane,-LANE_LABELBOX_WIDTH-2,_y+3,"5px","start");
+		var _laneName = _.last(_lane.split("."))
+		_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_WIDTH-2,_y+3,"5px","start");
 
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
@@ -585,7 +599,7 @@ function drawLanes(){
 			// strip only the sublane name if name is fully qualified like "topline.bwin.touch"
 			var _sublane = _.last((_sublanes[s].name).split("."))
 			
-			_drawLaneSideText(d3.select(this),_sublane,1,_y+_h/2,"5px","middle");
+			_drawLaneSideText(d3.select(this),_sublane,1,_y+_h/2,"4px","middle");
 
 			//no lines for first and last sublane
 			if (s>0 && s<_sublanes.length){
@@ -699,11 +713,14 @@ function drawLaneText(svg,lane,side)
 			.style("stroke-width",WIDTH_WHITESTROKE)
 			.attr("class","lanebox "+lane)
 				.on("click",function(d){window.location.href="kanban_"+lane+".html";});
-			//logo
-			svg.append("use")
-			.attr("xlink:href","#"+lane)
-			.attr("x",x+_x_offset)
-			.attr("y",y+_y_offset);
+			
+			// only append logo if we have declared on in external.svg
+			if (document.getElementById(lane)){
+				svg.append("use")
+				.attr("xlink:href","#"+lane)
+				.attr("x",x+_x_offset)
+				.attr("y",y+_y_offset);
+			}
 		}
 		
 		function _drawLaneArea(svg,x,y,width,height,i){
@@ -1015,6 +1032,7 @@ function drawItems(){
 				//.on("mouseover",animateScaleUp)
 				.each(function(d){
 					var _size = d.size*ITEM_SCALE;
+					if (!d.isCorporate) _size = _size * TACTIC_SCALE;
 					
 					var _itemXPlanned = x(new Date(d.planDate));
 					var _itemXActual = x(new Date(d.actualDate));
@@ -1066,15 +1084,23 @@ function drawItems(){
 						// ----------- circle icons -------------
 						console.log("################################ id:"+d.id+" "+_itemXPlanned);
 						
-						d3.select(this)
-							.append("use").attr("xlink:href","#icon_"+d.theme+"."+d.lane+"."+d.sublane)
-							.attr("transform","translate("+(_itemX-(1.2*_size/2))+","+(_itemY-(1.2*_size/2))+") scale("+_size/10+") ");
+						// only append icon if we have declared on in external.svg
+						if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
+							d3.select(this)
+								.append("use").attr("xlink:href","#icon_"+d.theme+"."+d.lane+"."+d.sublane)
+								.attr("transform","translate("+(_itemX-(1.2*_size/2))+","+(_itemY-(1.2*_size/2))+") scale("+_size/10+") ");
+						}
 					} //end if d.Type!="target"
 
 					
 					// ------------  item blocks --------------
+					// if isCorporate flag is not set use "tactic" icon 
+					var _iconRef=d.Type;
+					if (!d.isCorporate) {
+						_iconRef = "tactic";
+					}
 					d3.select(this)
-						.append("use").attr("xlink:href",function(d){console.log("------------------------------------------ ITEMBLOCK: "+d.name+" d.type="+d.Type);return "#"+d.Type})
+						.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
 						.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
 
 					
@@ -1106,12 +1132,23 @@ function drawItems(){
 															
 					
 					// ------------  item names --------------
+					var _textWeight="bold";
+					var _textStyle="normal";
+					var _textSize = 5+(_size/5)*ITEM_FONTSCALE;
+					if (!d.isCorporate) {
+						_textWeight = "normal";
+						_textStyle="italic";
+						_textSize =_textSize * TACTIC_SCALE;
+					}
+					
+					
 					d3.select(this)
 					   .append("text")
 					   .text(d.name)
-					   .attr("font-size",(5+(_size/5)*ITEM_FONTSCALE)+"px")
+					   .attr("font-size",_textSize+"px")
 					   .attr("text-anchor","middle")
-					   .style("font-weight","bold")
+					   .style("font-weight",_textWeight)
+					   .style("font-style",_textStyle)
 					   //.style("kerning",-0.5)
 					   //.style("letter-spacing",-.2)
 					   //google font
@@ -1171,7 +1208,8 @@ function drawItems(){
 					} // end if dependcies
 					
 					// ----------------- startDate indicator ---------------------
-					if(d.startDate){
+					if(d.startDate && new Date(d.startDate)>KANBAN_START){
+						console.log("____startDate: "+d.startDate);
 						_drawStartDateIndicator(dep,_itemXStart,_itemXPlanned,_itemY,_size);
 					}
 					// ----------------- sizings --------------------------------
@@ -2995,3 +3033,8 @@ var PACKAGE_VERSION="20140120_1944";
 var PACKAGE_VERSION="20140120_1954";
 var PACKAGE_VERSION="20140121_2131";
 var PACKAGE_VERSION="20140122_2107";
+var PACKAGE_VERSION="20140122_2126";
+var PACKAGE_VERSION="20140123_0702";
+var PACKAGE_VERSION="20140123_1817";
+var PACKAGE_VERSION="20140123_1817";
+var PACKAGE_VERSION="20140123_1824";
