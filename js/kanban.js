@@ -255,8 +255,6 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable)
 					if (releases[1]=="success") releaseData=releases[0];
 					else throw new Exception("error loading releases");
 					
-					initHandlers();
-					
 					renderB2CGaming();
 					//renderHolding();
 				});
@@ -271,7 +269,14 @@ function renderB2CGaming() {
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
 	CONTEXT=ITEMDATA_FILTER.value;
     loadPostits();
-	drawAll();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+					initHandlers();
+				});
 }
 
 function renderBwin(){
@@ -280,10 +285,12 @@ function renderBwin(){
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
 	CONTEXT=ITEMDATA_FILTER.value;
+
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
+					initHandlers();
 				});
 }
 
@@ -305,9 +312,32 @@ function renderBwinSecondLevel(){
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
+					initHandlers();
 				});
 }
 
+
+function renderEntIT(){
+	HEIGHT=600;
+	ITEM_SCALE=0.5;
+	ITEM_FONTSCALE=0.75;
+	ITEMDATA_NEST= ["themesl","sublane"];
+	//ITEMDATA_NEST= ["isCorporate","themesl","sublane"];
+	//ITEMDATA_NEST= ["themesl","lane","sublane"];
+	//ITEMDATA_NEST= ["lane","sublane"];
+	//ITEMDATA_NEST= ["theme","themesl","sublane"];
+	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
+	CONTEXT=ITEMDATA_FILTER.value;
+	
+	console.log("*************************************************************************************calling getJSON..");
+	
+	$.when($.getJSON("/data/data.php?type=initiatives_entit"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+				});
+}
 
 function renderHolding(){
 	HEIGHT=1000;
@@ -315,7 +345,13 @@ function renderHolding(){
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
 	CONTEXT="holding";
-	drawAll();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+				});
 }
 
 function renderShared(){
@@ -324,7 +360,14 @@ function renderShared(){
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
 	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+				});
+
 }
 
 function renderNewBiz(){
@@ -333,7 +376,13 @@ function renderNewBiz(){
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
 	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+				});
 }
 
 function renderTechdebt(){
@@ -342,7 +391,13 @@ function renderTechdebt(){
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
 	CONTEXT=ITEMDATA_FILTER.value;
-	drawAll();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					initHandlers();
+				});
 }
 
 
@@ -2236,226 +2291,6 @@ function _drawLegendLine(svg,x1,x2,y){
 	.attr("class", "legendLine");
 }
 
-/**
-*
-*/
-function initHandlers(){
-d3.select("#b0").on("click", function(){
-	var dep = d3.select("#dependencies").selectAll("g");
-	if (dep.style("visibility") =="visible") dep.style("visibility","hidden");
-	else dep.style("visibility","visible");
-});
-
-d3.select("#b1").on("click", function(){
-	if (d3.select("#queues").style("visibility") =="visible") d3.select("#queues").style("visibility","hidden");
-	else d3.select("#queues").style("visibility","visible");
-});
-
-d3.select("#b2").on("click", function(){
-	if (d3.select("#items").style("visibility") =="visible") d3.selectAll("#items,#postits").style("visibility","hidden");
-	else d3.selectAll("#items,#postits").style("visibility","visible");
-});
-
-d3.select("#b3").on("click", function(){
-	if (d3.select("#lanes").style("visibility") =="visible") d3.select("#lanes").style("visibility","hidden");
-	else d3.select("#lanes").style("visibility","visible");
-});
-
-d3.select("#b4").on("click", function(){
-	if (d3.select("#axes").style("visibility") =="visible") d3.select("#axes").style("visibility","hidden");
-	else d3.select("#axes").style("visibility","visible");
-});
-
-d3.select("#b5").on("click", function(){
-	if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
-	else d3.select("#metrics").style("visibility","visible");
-});	
-
-
-d3.select("#b15").on("click", function(){
-	if (d3.select("#linechart").style("visibility") =="visible"){
-		 d3.select("#linechart").style("visibility","hidden");
-		 d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", 0);
-
-	}
-	else{
-		d3.select("#linechart").style("visibility","visible");
-		d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
-
-	}
-});	
-
-
-d3.select("#b8").on("click", function(){
-	if (d3.select("#releases").style("visibility") =="visible"){
-		 d3.select("#releases").style("visibility","hidden");
-		 d3.select("#items").style("opacity",1);
-	 }
-	 
-	else{
-		 d3.select("#releases").style("visibility","visible");
-		 d3.select("#items").style("opacity",0.5);
-	 }
-});	
-
-d3.select("#b9").on("click", function(){
-	if (d3.select("#sizings").style("opacity") >0){
-	 
-		 d3.selectAll("#items,#queues,#postits,#metrics")
-		 .style("visibility","visible");
-		 
-		 d3.selectAll("#sizings,#labels")
-		 .transition()
-		 .delay(0)
-		 .duration(1000)
-		 .style("opacity",0);
-
-		 d3.selectAll("#items,#queues,#lanes,#axes,#postits,#metrics")
-		 .transition()
-		 .delay(0)
-		 .duration(1000)
-		 .style("opacity",1);
-		 
-	/*	 d3.selectAll("#items,#queues,#lanes,#axes")
-		 .attr("filter", 0);
-	*/	 
-	 }
-	 
-	else{
-		 
-		 d3.selectAll("#sizings,#labels")
-		 .transition()
-		 .delay(0)
-		 .duration(1000)
-		 .style("opacity",1);
-
-		 d3.selectAll("#items,#queues,#postits,#metrics")
-		 .transition()
-		 .delay(0)
-		 .duration(1000)
-		 .style("opacity",0);
-		 
-		 d3.selectAll("#items,#queues,#postits,#metrics")
-		 .transition()
-		 .delay(1000)
-		 .style("visibility","hidden");
-		 
-		 d3.selectAll("#lanes,#axes")
-		 .transition()
-		 .duration(1000)
-		 .style("opacity",0.5);
-		 
-/*		 d3.selectAll("#items,#queues,#lanes,#axes")
-		 .attr("filter", "url(#blur)")
-		 .transitioned;
-*/
-	 }
-});	
-
-d3.select("#b6").on("click", function(){
-	WIP_WINDOW_DAYS = 120;
-	setWIP();
-	drawAll();
-});	
-
-d3.select("#b7").on("click", function(){
-	WIP_WINDOW_DAYS = 90;
-	setWIP();
-	drawAll();
-});	
-
-d3.select("#b10").on("click", function(){
-// do blur
-if (!d3.selectAll("#metrics,#queues,#lanes").attr("filter")) d3.selectAll("#metrics,#queues,#lanes").attr("filter", "url(#blur)");
-else d3.selectAll("#metrics,#queues,#lanes").attr("filter", "");
-
-});
-
-
-document.getElementById("input_width").value = WIDTH;
-d3.select("#b11").on("click", function(){
-	WIDTH = document.getElementById("input_width").value;
-	drawAll();
-});	
-
-document.getElementById("input_height").value = HEIGHT;
-d3.select("#b12").on("click", function(){
-	HEIGHT = document.getElementById("input_height").value;
-	drawAll();
-});	
-
-
-d3.select("#b30").on("click", function(){
-	post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"blue","red");
-	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
-	
-	post.draw(gCustomPostits);
-	post.save();
-
-});	
-
-document.getElementById("input_timemachine").value = TODAY.toString('yyyy-MM-dd');  ;
-d3.select("#b40").on("click", function(){
-	timeMachine(document.getElementById("input_timemachine").value);
-});	
-
-
-document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
-d3.select("#b50").on("click", function(){
-	KANBAN_START=new Date(document.getElementById("input_kanbanstart").value);
-	drawAll();
-});	
-
-document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
-d3.select("#b51").on("click", function(){
-	KANBAN_END=new Date(document.getElementById("input_kanbanend").value);
-	drawAll();
-});	
-
-
-d3.select("#b70").on("click", function(){
-	renderHolding();
-});	
-
-d3.select("#b71").on("click", function(){
-	renderB2CGaming();
-});	
-
-d3.select("#b72").on("click", function(){
-	renderNewBiz();
-});	
-
-d3.select("#b73").on("click", function(){
-	renderBwin();
-});	
-
-d3.select("#b74").on("click", function(){
-	renderBwinSecondLevel();
-});	
-
-d3.select("#b77").on("click", function(){
-	renderTechdebt();
-});	
-
-d3.select("#b78").on("click", function(){
-	renderShared();
-});	
-
-
-
-d3.select("#l1").on("click", function(){
-	window.location.href="treemap.html";
-});	
-
-d3.select("#l2").on("click", function(){
-	window.location.href="tree.html";
-});	
-
-d3.select("#l3").on("click", function(){
-	window.location.href="force.html";
-});	
-	
-}
 
 
 function customAxis(g) {
@@ -2742,6 +2577,14 @@ function getItemByID(data,id){
 			}
 	}
 }
+
+function getItemsBySublane(sublane){
+	var _sub = getSublaneByNameNEW(sublane);
+	if (_sub.children){
+		return _sub.children;
+	} 
+}
+
 
 
 /** return object array of lanes
@@ -3038,3 +2881,15 @@ var PACKAGE_VERSION="20140123_0702";
 var PACKAGE_VERSION="20140123_1817";
 var PACKAGE_VERSION="20140123_1817";
 var PACKAGE_VERSION="20140123_1824";
+var PACKAGE_VERSION="20140124_1110";
+var PACKAGE_VERSION="20140124_1113";
+var PACKAGE_VERSION="20140124_1430";
+var PACKAGE_VERSION="20140124_1457";
+var PACKAGE_VERSION="20140124_1458";
+var PACKAGE_VERSION="20140124_1506";
+var PACKAGE_VERSION="20140124_1509";
+var PACKAGE_VERSION="20140124_1510";
+var PACKAGE_VERSION="20140124_1520";
+var PACKAGE_VERSION="20140124_1551";
+var PACKAGE_VERSION="20140124_1753";
+var PACKAGE_VERSION="20140124_1831";
