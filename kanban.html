@@ -104,7 +104,6 @@
 	LOYALTYINDEX_TARGET = 75;
 		
 	render("external.svg","lanetext","initiatives","metrics","releases");
-
 	//render("initiatives_v20.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 	//render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 	
@@ -202,9 +201,12 @@ function show_svg_code()
 	  <button id="b71" type="button" class="btn btn-success">B2C Gaming</button>
 	  <button id="b72" type="button" class="btn btn-success">New Biz</button>
 	  <button id="b73" type="button" class="btn btn-success">Bwin</button>
-	  <button id="b74" type="button" class="btn btn-success">Bwin Drill-in</button>
 	  <button id="b77" type="button" class="btn btn-success">Techdebt</button>
 	  <button id="b78" type="button" class="btn btn-success">Shared</button>
+	  <button id="b74" type="button" class="btn btn-danger">Bwin Drill-in</button>
+	  <button id="b75" type="button" class="btn btn-danger">EntIT Drill-in</button>
+	  
+	  
 	</div>
 
 	<div style="width:550px" class="input-group input-group-sm">
@@ -292,23 +294,7 @@ function show_svg_code()
 
 			
 	</div>
-
-<script>
-	// Attached actions to the buttons
 	
-	$("#show_svg_code").click(function() { show_svg_code(); });
-	$("#save_as_svg").click(function() { submit_download_form("svg"); });
-	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
-	$("#save_as_png").click(function() { submit_download_form("png"); });
-	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
-	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
-		
-
-</script>
-
-
-
-
 	<div class="btn-group-xs">
 	  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
 	  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
@@ -321,6 +307,250 @@ function show_svg_code()
 	  </div>
 		
 
+
+<script>
+	// Attached actions to the buttons
+	
+	$("#show_svg_code").click(function() { show_svg_code(); });
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
+	$("#save_as_png").click(function() { submit_download_form("png"); });
+	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
+	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
+		
+	initHandlers();
+		
+function initHandlers(){	
+	
+	d3.select("#b0").on("click", function(){
+		var dep = d3.select("#dependencies").selectAll("g");
+		if (dep.style("visibility") =="visible") dep.style("visibility","hidden");
+		else dep.style("visibility","visible");
+	});
+
+	d3.select("#b1").on("click", function(){
+		if (d3.select("#queues").style("visibility") =="visible") d3.select("#queues").style("visibility","hidden");
+		else d3.select("#queues").style("visibility","visible");
+	});
+
+	d3.select("#b2").on("click", function(){
+		if (d3.select("#items").style("visibility") =="visible") d3.selectAll("#items,#postits").style("visibility","hidden");
+		else d3.selectAll("#items,#postits").style("visibility","visible");
+	});
+
+	d3.select("#b3").on("click", function(){
+		if (d3.select("#lanes").style("visibility") =="visible") d3.select("#lanes").style("visibility","hidden");
+		else d3.select("#lanes").style("visibility","visible");
+	});
+
+	d3.select("#b4").on("click", function(){
+		if (d3.select("#axes").style("visibility") =="visible") d3.select("#axes").style("visibility","hidden");
+		else d3.select("#axes").style("visibility","visible");
+	});
+
+	d3.select("#b5").on("click", function(){
+		if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
+		else d3.select("#metrics").style("visibility","visible");
+	});	
+
+
+	d3.select("#b15").on("click", function(){
+		if (d3.select("#linechart").style("visibility") =="visible"){
+			 d3.select("#linechart").style("visibility","hidden");
+			 d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", 0);
+
+		}
+		else{
+			d3.select("#linechart").style("visibility","visible");
+			d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
+
+		}
+	});	
+
+
+	d3.select("#b8").on("click", function(){
+		if (d3.select("#releases").style("visibility") =="visible"){
+			 d3.select("#releases").style("visibility","hidden");
+			 d3.select("#items").style("opacity",1);
+		 }
+		 
+		else{
+			 d3.select("#releases").style("visibility","visible");
+			 d3.select("#items").style("opacity",0.5);
+		 }
+	});	
+
+	d3.select("#b9").on("click", function(){
+		if (d3.select("#sizings").style("opacity") >0){
+		 
+			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 .style("visibility","visible");
+			 
+			 d3.selectAll("#sizings,#labels")
+			 .transition()
+			 .delay(0)
+			 .duration(1000)
+			 .style("opacity",0);
+
+			 d3.selectAll("#items,#queues,#lanes,#axes,#postits,#metrics")
+			 .transition()
+			 .delay(0)
+			 .duration(1000)
+			 .style("opacity",1);
+			 
+		/*	 d3.selectAll("#items,#queues,#lanes,#axes")
+			 .attr("filter", 0);
+		*/	 
+		 }
+		 
+		else{
+			 
+			 d3.selectAll("#sizings,#labels")
+			 .transition()
+			 .delay(0)
+			 .duration(1000)
+			 .style("opacity",1);
+
+			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 .transition()
+			 .delay(0)
+			 .duration(1000)
+			 .style("opacity",0);
+			 
+			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 .transition()
+			 .delay(1000)
+			 .style("visibility","hidden");
+			 
+			 d3.selectAll("#lanes,#axes")
+			 .transition()
+			 .duration(1000)
+			 .style("opacity",0.5);
+			 
+	/*		 d3.selectAll("#items,#queues,#lanes,#axes")
+			 .attr("filter", "url(#blur)")
+			 .transitioned;
+	*/
+		 }
+	});	
+
+	d3.select("#b6").on("click", function(){
+		WIP_WINDOW_DAYS = 120;
+		setWIP();
+		drawAll();
+	});	
+
+	d3.select("#b7").on("click", function(){
+		WIP_WINDOW_DAYS = 90;
+		setWIP();
+		drawAll();
+	});	
+
+	d3.select("#b10").on("click", function(){
+	// do blur
+	if (!d3.selectAll("#metrics,#queues,#lanes").attr("filter")) d3.selectAll("#metrics,#queues,#lanes").attr("filter", "url(#blur)");
+	else d3.selectAll("#metrics,#queues,#lanes").attr("filter", "");
+
+	});
+
+
+	document.getElementById("input_width").value = WIDTH;
+	d3.select("#b11").on("click", function(){
+		WIDTH = document.getElementById("input_width").value;
+		drawAll();
+	});	
+
+	document.getElementById("input_height").value = HEIGHT;
+	d3.select("#b12").on("click", function(){
+		HEIGHT = document.getElementById("input_height").value;
+		drawAll();
+	});	
+
+
+	d3.select("#b30").on("click", function(){
+		post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"blue","red");
+		var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
+		
+		post.draw(gCustomPostits);
+		post.save();
+
+	});	
+
+	document.getElementById("input_timemachine").value = TODAY.toString('yyyy-MM-dd');  ;
+	d3.select("#b40").on("click", function(){
+		timeMachine(document.getElementById("input_timemachine").value);
+	});	
+
+
+	document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
+	d3.select("#b50").on("click", function(){
+		KANBAN_START=new Date(document.getElementById("input_kanbanstart").value);
+		drawAll();
+	});	
+
+	document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
+	d3.select("#b51").on("click", function(){
+		KANBAN_END=new Date(document.getElementById("input_kanbanend").value);
+		drawAll();
+	});	
+
+
+	d3.select("#b70").on("click", function(){
+		renderHolding();
+	});	
+
+	d3.select("#b71").on("click", function(){
+		renderB2CGaming();
+	});	
+
+	d3.select("#b72").on("click", function(){
+		renderNewBiz();
+	});	
+
+	d3.select("#b73").on("click", function(){
+		renderBwin();
+	});	
+
+	d3.select("#b74").on("click", function(){
+		renderBwinSecondLevel();
+	});	
+
+	d3.select("#b75").on("click", function(){
+		renderEntIT();
+	});	
+
+
+
+	d3.select("#b77").on("click", function(){
+		renderTechdebt();
+	});	
+
+	d3.select("#b78").on("click", function(){
+		renderShared();
+	});	
+
+
+
+	d3.select("#l1").on("click", function(){
+		window.location.href="treemap.html";
+	});	
+
+	d3.select("#l2").on("click", function(){
+		window.location.href="tree.html";
+	});	
+
+	d3.select("#l3").on("click", function(){
+		window.location.href="force.html";
+	});	
+}
+		
+
+</script>
+
+
+
+
+	
 
 </body>
 </html>
