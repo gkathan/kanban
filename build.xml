@@ -48,6 +48,9 @@
 		<fileset dir="${src}" includes="css/*.css"/>
 		<fileset dir="${src}" includes="js/*.js" />
 		<fileset dir="${src}" includes="data/*.php"/>
+		<fileset dir="${src}" includes="data/linechart.tsv"/>
+		<fileset dir="${src}" includes="data/backlog.csv"/>
+		
 		<fileset dir="${src}" includes="data/*.svg"/>
 		<fileset dir="${src}" includes="img/*"/>
 		
