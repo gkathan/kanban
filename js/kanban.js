@@ -264,6 +264,7 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable)
 
 function renderB2CGaming() {
 	HEIGHT=1100;
+	WIDTH=1500;
 	ITEM_SCALE=0.8;
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -281,6 +282,7 @@ function renderB2CGaming() {
 
 function renderBwin(){
 	HEIGHT=600;
+	WIDTH=1500;
 	ITEM_SCALE=1.3;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
@@ -296,6 +298,7 @@ function renderBwin(){
 
 function renderBwinSecondLevel(){
 	HEIGHT=800;
+	WIDTH=1500;
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -319,6 +322,7 @@ function renderBwinSecondLevel(){
 
 function renderEntIT(){
 	HEIGHT=600;
+	WIDTH=1500;
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -341,6 +345,7 @@ function renderEntIT(){
 
 function renderHolding(){
 	HEIGHT=1000;
+	WIDTH=1500;
 	ITEM_SCALE=0.6;
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
@@ -356,6 +361,7 @@ function renderHolding(){
 
 function renderShared(){
 	HEIGHT=600;
+	WIDTH=1500;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
@@ -372,6 +378,7 @@ function renderShared(){
 
 function renderNewBiz(){
 	HEIGHT=500;
+	WIDTH=1500;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
@@ -387,6 +394,7 @@ function renderNewBiz(){
 
 function renderTechdebt(){
 	HEIGHT=450;
+	WIDTH=1500;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
@@ -411,6 +419,7 @@ function drawInitiatives(){
 	
 	drawItems();
 	drawPostits();
+	
 }
 
 function drawAll(){
@@ -421,6 +430,8 @@ function drawAll(){
 	drawMetrics();
 	drawReleases();
 	drawVersion();
+	drawWC2014();
+	drawLegend();
 }
 
 
@@ -698,6 +709,9 @@ function drawLaneText(svg,lane,side)
 	
 	var _yBase = y((getLaneByNameNEW(lane).yt1))+35;
 	
+	// just get the last element in a FQN
+	lane = _.last(lane.split("."))
+	
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_WIDTH+10
 	else if (side=="target") _xBase= x(KANBAN_END)+10;
@@ -706,7 +720,7 @@ function drawLaneText(svg,lane,side)
 	
 	if (laneTextData){
 	var _lanetext = laneTextData.filter(function(d){return (d.lane==lane && d.side==side)});
-		if (_lanetext){
+		if (_lanetext && CONTEXT!="holding"){
 			var gLanetext = svg.append("g")
 			.attr("id","text_"+lane);
 	
@@ -1970,6 +1984,28 @@ function _drawCX	(svg,data,x,y){
 }
 
 
+/**
+ * soccer world championship 2014 block
+ */
+function drawWC2014(){
+	
+	var svg = d3.select("#items");
+	var _x = x(new Date("2014-06-13"));
+	var _y = x(new Date("2014-07-13"));
+	
+	svg.append("rect")
+	.attr("x",_x)
+	.attr("width",(_y-_x))
+	.attr("y",0)
+	.attr("height",y(100))
+	.style("fill","white")
+	.style("opacity",0.75);
+	
+	
+	svg.append("use").attr("xlink:href","#wc2014")
+	.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ");
+	
+}
 
 
 function drawReleases(){	
@@ -2280,6 +2316,111 @@ function _drawText(svg,text,x,y,size,weight,anchor,color,style){
 	
 }
 
+function drawLegend(){
+	var _line =7;
+	var _offset =28;
+	var _y = height;
+	var _x = -280;
+	
+	var t;
+
+	var gLegend= svg.select("#version")
+		.append("g")
+		.attr("id","legend");
+	
+	gLegend.append("use").attr("xlink:href","#item")
+		.attr("transform","translate ("+_x+","+(_y+2)+") scale(0.30) ");
+	_drawText(svg,"... corporate initiative [planned finish]",_x+12,(_y+7),5,"normal","start",null,"italic");
+	
+	gLegend.append("use").attr("xlink:href","#tactic")
+		.attr("transform","translate ("+_x+","+(_y+12)+") scale(0.30) ");
+	_drawText(svg,"... tactical initiative [planned finish]",_x+12,(_y+17),5,"normal","start",null,"italic");
+	
+	gLegend.append("use").attr("xlink:href","#innovation")
+		.attr("transform","translate ("+_x+","+(_y+22)+") scale(0.30) ");
+	_drawText(svg,"... innovation initiative [planned finish]",_x+12,(_y+27),5,"normal","start",null,"italic");
+
+	
+	gLegend.append("use").attr("xlink:href","#item")
+		.attr("transform","translate ("+_x+","+(_y+32)+") scale(0.30) ");
+	
+	gLegend.append("use").attr("xlink:href","#postit_yellow")
+		.attr("transform","translate ("+_x+","+(_y+30)+") scale(0.35) ");
+	_drawText(svg,"... fuzzy initiative [planned finish]",_x+12,(_y+37),5,"normal","start",null,"italic");
+
+
+
+			
+
+
+	
+	gLegend.append("circle").attr("r",10)
+		.style("fill","green")
+		.style("opacity",0.5)
+		.attr("transform","translate ("+(_x+100)+","+(_y+5)+") scale(0.30) ");
+		
+	_drawText(svg,"... initiative [done]",(_x+105),(_y+7),5,"normal","start",null,"italic");
+	
+	gLegend.append("circle").attr("r",10)
+		.attr("transform","translate ("+(_x+100)+","+(_y+15)+") scale(0.30) ")
+		.style("opacity",0.5)
+		.style("fill","red");
+	_drawText(svg,"... initiative [delayed]",(_x+105),(_y+17),5,"normal","start",null,"italic");
+	
+	gLegend.append("circle").attr("r",10)
+		.style("opacity",0.5)
+		.style("fill","gold")
+		.attr("transform","translate ("+(_x+100)+","+(_y+25)+") scale(0.30) ");
+	_drawText(svg,"... initiative [planned]",(_x+105),(_y+27),5,"normal","start",null,"italic");
+	
+	gLegend.append("circle").attr("r",10)
+		.style("opacity",0.5)
+		.style("fill","grey")
+		.attr("transform","translate ("+(_x+100)+","+(_y+35)+") scale(0.30) ");
+	_drawText(svg,"... initiative [future]",(_x+105),(_y+37),5,"normal","start",null,"italic");
+	
+	
+	
+	gLegend.append("use").attr("xlink:href","#target")
+		.attr("transform","translate ("+_x+","+(_y+42)+") scale(0.30) ");
+	_drawText(svg,"... pulling goal",_x+12,(_y+47),5,"normal","start",null,"italic");
+	
+	
+	_drawLegendLine(svg,-280,-120,_y);
+		
+	//title
+	//_drawText(gVersion,"strategic portfolio kanban board",WIDTH-42,(_y-(_offset-9)),9,"bold","end");
+
+	var i=0;
+
+	t = [	{"name":"context: ","value": CONTEXT},
+			{"name":"URL: ","value": document.URL},
+			{"name":"version: ","value": new Date().toString('yyyy-MM-dd_hh:mm:ss')},
+			{"name":"package: ","value":PACKAGE_VERSION},
+			{"name":"author: ","value":"@cactus | twitter.com/gkathan"}
+			
+		];
+
+/*
+	for (var j in t){ 
+		_drawVersionText(gVersion,t[j],WIDTH-140,(_y+_offset+(j*_line)),6);
+		i++;
+	}
+*/	
+	//bottom disclaimer
+	i++;
+
+	_drawLegendLine(svg,WIDTH-200,WIDTH-42,height+43);
+	
+/*
+	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,height+48,5,"normal","end");
+	
+	_drawText(gVersion,TITLE_TEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-180,24,"normal","middle",COLOR_BPTY,"italic");
+	_drawText(gVersion,TITLE_SUBTEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-160,16,"normal","middle",COLOR_BPTY,"italic");
+*/	
+}
+
+
 /**
  */
 function _drawLegendLine(svg,x1,x2,y){
@@ -2290,6 +2431,8 @@ function _drawLegendLine(svg,x1,x2,y){
 	.attr("y2", y)
 	.attr("class", "legendLine");
 }
+
+
 
 
 
@@ -3085,3 +3228,9 @@ var PACKAGE_VERSION="20140124_1520";
 var PACKAGE_VERSION="20140124_1551";
 var PACKAGE_VERSION="20140124_1753";
 var PACKAGE_VERSION="20140124_1831";
+var PACKAGE_VERSION="20140128_1034";
+var PACKAGE_VERSION="20140128_1331";
+var PACKAGE_VERSION="20140128_1915";
+var PACKAGE_VERSION="20140128_1920";
+var PACKAGE_VERSION="20140128_1936";
+var PACKAGE_VERSION="20140128_1937";
