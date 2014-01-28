@@ -16,7 +16,6 @@
 
 <script src="js/underscore-min.js"></script>
 <script src="js/underscore.nest.min.js"></script>
-<script src="js/simplestatistics.js"></script>
 
 
 
@@ -52,10 +51,17 @@
 
 	//percentages is for override => if not specified it uses mode to auto layout
 	itemDataConfig = [	
+						{"level":"bm", "mode": "auto","percentages":
+								[
+									{"name":"b2c gaming","value"	:70},
+									{"name":"new biz.enabling","value"		:30}
+									
+								]
+						},
 						{"level":"theme", "mode": "auto","percentages":
 								[
-									{"name":"b2c gaming.topline","value"	:64},
-									{"name":"b2c gaming.enabling","value"	:36},
+									{"name":"b2c gaming.topline","value"	:80},
+									{"name":"b2c gaming.enabling","value"	:20},
 									{"name":"new biz.topline","value"		:100},
 									{"name":"new biz.enabling","value"		:0}
 									
@@ -69,8 +75,8 @@
 									{"name":"topline.foxy","value"		:16},
 									{"name":"topline.premium","value"	:14},
 									{"name":"topline.casino","value"	:20},
-									{"name":"enabling.techdebt","value"	:45},
-									{"name":"enabling.shared","value"	:55},
+									{"name":"enabling.techdebt","value"	:30},
+									{"name":"enabling.shared","value"	:70},
 									{"name":"topline.kalixa","value"	:50},
 									{"name":"topline.wincom","value"	:35},
 									{"name":"topline.conspo","value"	:15}
