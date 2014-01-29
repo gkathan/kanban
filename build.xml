@@ -53,7 +53,7 @@
 		
 		<fileset dir="${src}" includes="data/*.svg"/>
 		<fileset dir="${src}" includes="img/*"/>
-		
+		  
 		<fileset dir="${src}/" includes="*.html"/>
 		<fileset dir="${src}/" includes="*.version"/>
 		<fileset dir="${src}/" includes="index.php"/>
@@ -77,5 +77,17 @@
 	<sshexec host="cloud.ea.bwinparty.corp" username="gkathan" password="bwin123" command="./deploy.sh" trust="true" port="8080"/>
   
   </target>
+
+  <!-- DB stuff
+  
+  EXPORT
+  ======
+  dump full DB:      mysqldump -u kanban -p kanban > kanban_dump.sql  
+  dump table:		 mysqldump -u kanban -p kanban metrics > kanban_metrics_dump.sql
+ 
+  IMPORT
+  ======
+					mysql -u kanban -p -D kanban < kanban_metrics_dump.sql
+  -->
   
 </project>
