@@ -53,33 +53,35 @@
 	itemDataConfig = [	
 						{"level":"bm", "mode": "auto","percentages":
 								[
-									{"name":"b2c gaming","value"	:70},
-									{"name":"new biz.enabling","value"		:30}
+									{"context":"holding","name":"b2c gaming","value"	:70},
+									{"context":"holding","name":"new biz","value"		:30}
 									
 								]
 						},
 						{"level":"theme", "mode": "auto","percentages":
 								[
-									{"name":"b2c gaming.topline","value"	:80},
-									{"name":"b2c gaming.enabling","value"	:20},
-									{"name":"new biz.topline","value"		:100},
-									{"name":"new biz.enabling","value"		:0}
+									{"context":"b2c gaming", "name":"topline","value"	:60},
+									{"context":"b2c gaming","name":"enabling","value"	:40},
+									{"context":"holding", "name":"b2c gaming.topline","value"	:50},
+									{"context":"holding","name":"b2c gaming.enabling","value"	:50},
+									{"context":"new biz","name":"topline","value"		:100},
+									{"context":"new biz","name":"enabling","value"		:0}
 									
 								]
 						},
 						{"level":"lane","mode": "auto","percentages":
 								
 								[
-									{"name":"topline.bwin","value"		:28},
-									{"name":"topline.pp","value"		:22},
-									{"name":"topline.foxy","value"		:16},
-									{"name":"topline.premium","value"	:14},
-									{"name":"topline.casino","value"	:20},
-									{"name":"enabling.techdebt","value"	:30},
-									{"name":"enabling.shared","value"	:70},
-									{"name":"topline.kalixa","value"	:50},
-									{"name":"topline.wincom","value"	:35},
-									{"name":"topline.conspo","value"	:15}
+									{"context":"*","name":"topline.bwin","value"		:28},
+									{"context":"*","name":"topline.pp","value"		:22},
+									{"context":"*","name":"topline.foxy","value"		:16},
+									{"context":"*","name":"topline.premium","value"	:14},
+									{"context":"*","name":"topline.casino","value"	:20},
+									{"context":"*","name":"enabling.techdebt","value"	:30},
+									{"context":"*","name":"enabling.shared","value"	:70},
+									{"context":"*","name":"topline.kalixa","value"	:50},
+									{"context":"*","name":"topline.wincom","value"	:35},
+									{"context":"*","name":"topline.conspo","value"	:15}
 
 								]
 									
@@ -87,21 +89,23 @@
 						// selective override only for one sublane works too ;-)
 						{"level":"sublane","mode":"equal","percentages":
 								[
-									{"name":"bwin.touch","value"	:30},
-									{"name":"bwin.market","value"	:20},
-									{"name":"bwin.product","value"	:20},
-									{"name":"bwin.enabling","value":30}
+									{"context":"*","name":"bwin.touch","value"	:30},
+									{"context":"*","name":"bwin.market","value"	:20},
+									{"context":"*","name":"bwin.product","value"	:20},
+									{"context":"*","name":"bwin.enabling","value":30}
 								]
 						}];		
 						
 	
 	// pie chart sustainable vs. uusustainable business
 	PIE_BASELINE =[{"type":"sustainable","percentage":65},{"type":"notsustainable","percentage":35}];
-	PIE_TARGET =[{"type":"sustainable","percentage":75},{"type":"notsustainable","percentage":25}];
+	PIE_TARGET1 =[{"type":"sustainable","percentage":70},{"type":"notsustainable","percentage":30}];
+	PIE_TARGET2 =[{"type":"sustainable","percentage":75},{"type":"notsustainable","percentage":25}];
 	
 	// percentage 
 	MARKETSHARE_BASELINE=8;
-	MARKETSHARE_TARGET=9;
+	MARKETSHARE_TARGET1=8.5;
+	MARKETSHARE_TARGET2=9;
 	
 	//cx metrics
 	RECOMMENDATION_BASELINE = -1;
@@ -110,7 +114,7 @@
 	LOYALTYINDEX_BASELINE = 67
 	LOYALTYINDEX_TARGET = 75;
 		
-	render("external.svg","lanetext","initiatives","metrics","releases");
+	render("external.svg","lanetext","initiatives","metrics","releases","postits");
 	//render("initiatives_v20.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 	//render("initiatives_v19.csv","metrics.csv","releases.txt","external.svg","lanes.csv");
 	
