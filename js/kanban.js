@@ -72,6 +72,7 @@ var METRIC_LEVEL="lane";
 
 var releaseData;
 var laneTextData;
+var postitData;
 
 var itemData;
 
@@ -90,11 +91,13 @@ var ITEMDATA_DEPTH_LEVEL;
 
 
 var PIE_BASELINE;
-var PIE_TARGET; 
+var PIE_TARGET1; 
+var PIE_TARGET2; 
 
 // percentage 
 var MARKETSHARE_BASELINE;
-var MARKETSHARE_TARGET;
+var MARKETSHARE_TARGET1;
+var MARKETSHARE_TARGET2;
 
 //cx metrics
 var RECOMMENDATION_BASELINE; 
@@ -119,7 +122,7 @@ var itemDataConfig;
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 200, right: 200, bottom: 50, left: 300};
+var margin = {top: 200, right: 450, bottom: 100, left: 300};
 var width,height;
 
 
@@ -150,8 +153,10 @@ var KANBAN_END = new Date("2015-01-31");
 var Y_MAX =100; 
 var Y_MIN=0;
 
-var METRIC_BASLINE = new Date("2013-12-31");
-var METRIC_FORECAST = new Date("2015-12-31");
+var METRIC_DATE_BASELINE = new Date("2013-12-31");
+var METRIC_DATE_FORECAST1 = new Date("2014-12-31");
+var METRIC_DATE_FORECAST2 = new Date("2015-12-31");
+var METRIC_DATE_GOAL = new Date("2015-12-31");
 
 // queue metrics
 var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
@@ -159,7 +164,9 @@ var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
 var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
 
-var LANE_LABELBOX_WIDTH =100;
+var LANE_LABELBOX_LEFT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_WIDTH =200;
+
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
 var ITEM_SCALE=0.8;
@@ -237,15 +244,16 @@ function init(){
 /** main etry point
  * 
  */
-function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable){
+function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,postitTable){
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
 		$.when($.getJSON("/data/data.php?type="+laneTextTable),
 				$.getJSON("/data/data.php?type="+initiativeTable),
 				$.getJSON("/data/data.php?type="+metricsTable),
-				$.getJSON("/data/data.php?type="+releaseTable))
-			.done(function(lanetext,initiatives,metrics,releases){
+				$.getJSON("/data/data.php?type="+releaseTable),
+				$.getJSON("/data/data.php?type="+postitTable))
+			.done(function(lanetext,initiatives,metrics,releases,postits){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -254,6 +262,8 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable)
 					else throw new Exception("error loading metrics");
 					if (releases[1]=="success") releaseData=releases[0];
 					else throw new Exception("error loading releases");
+					if (postits[1]=="success") postitData=postits[0];
+					else throw new Exception("error loading postits");
 					
 					renderB2CGaming();
 					//renderHolding();
@@ -275,8 +285,9 @@ function renderB2CGaming() {
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
+					drawCustomPostits();
 					initHandlers();
-					initHandlers();
+					
 				});
 }
 
@@ -292,6 +303,7 @@ function renderBwin(){
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
+					
 					initHandlers();
 				});
 }
@@ -410,12 +422,23 @@ function renderTechdebt(){
 
 
 
+function drawCustomPostits(){
+	
+	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
+	for (var i in postitData){
+		var p = new Postit(postitData[i].id,postitData[i].text,postitData[i].x,postitData[i].y,postitData[i].scale,postitData[i].size,postitData[i].color,postitData[i].textcolor);
+		p.draw(gCustomPostits);
+	}
+}
+	
+
 /**
 */
 function drawInitiatives(){
 	drawAxes();
 	drawLanes();
 	drawQueues();
+	drawWC2014();
 	
 	drawItems();
 	drawPostits();
@@ -427,11 +450,12 @@ function drawAll(){
 	createLaneHierarchy();
 	
 	drawInitiatives();
+
 	drawMetrics();
 	drawReleases();
 	drawVersion();
-	drawWC2014();
 	drawLegend();
+
 }
 
 
@@ -555,16 +579,16 @@ function drawAxes(){
 
 
 gAxes.append("line")
-		.attr("x1", 0-LANE_LABELBOX_WIDTH)
+		.attr("x1", 0-LANE_LABELBOX_LEFT_WIDTH)
 		.attr("y1", -20)
-		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_WIDTH)
+		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH)
 		.attr("y2", -20)
 		.attr("class","gridTop");
 
 gAxes.append("line")
-		.attr("x1", 0-LANE_LABELBOX_WIDTH)
+		.attr("x1", 0-LANE_LABELBOX_LEFT_WIDTH)
 		.attr("y1", height+20)
-		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_WIDTH)
+		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH)
 		.attr("y2", height+20)
 		.attr("class","gridTop");
 
@@ -612,7 +636,7 @@ function drawLanes(){
 	 * this would be level-0 in a generic view
 	 * in this concrete view this would be the "businessmodel=b2c gaming" umbrell box
 	 * */
-	_drawLaneContext(lanes,CONTEXT,-LANE_LABELBOX_WIDTH-200,0,LANE_LABELBOX_WIDTH/6,height,"treemap.html")
+	_drawLaneContext(lanes,CONTEXT,-LANE_LABELBOX_LEFT_WIDTH-200,0,LANE_LABELBOX_LEFT_WIDTH/6,height,"treemap.html")
 	
 	
 	var i=0;
@@ -636,7 +660,7 @@ function drawLanes(){
 		var _laneOpacity;
 
 		//left box
-		_drawLaneBox(d3.select(this),-LANE_LABELBOX_WIDTH,_y,LANE_LABELBOX_WIDTH,_height,_lane);
+		_drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane);
 
 		//baseline box text
 		drawLaneText(lanes,_lane,"baseline");
@@ -646,7 +670,7 @@ function drawLanes(){
 		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_height,i)
 
 		//target box	
-		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_WIDTH,_height,_lane);
+		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane);
 		
 		//target box text
 		drawLaneText(lanes,_lane,"target");
@@ -654,7 +678,7 @@ function drawLanes(){
 
 		// laneside descriptors
 		var _laneName = _.last(_lane.split("."))
-		_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_WIDTH-2,_y+3,"5px","start");
+		_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
 
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
@@ -686,13 +710,13 @@ function drawLanes(){
 			// no demarcation line in the end ;-)
 			if (t<getThemesNEW().length-1){
 				d3.select(this).append("line")
-				.attr("x1", x(KANBAN_START)-LANE_LABELBOX_WIDTH-200)
+				.attr("x1", x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH-200)
 				.attr("y1", _t)
-				.attr("x2", x(KANBAN_END)+LANE_LABELBOX_WIDTH+200)
+				.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+200)
 				.attr("y2", _t)
 				.attr("class", "themeLine");
 
-				//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_WIDTH-10,_t,"5px","middle");
+				//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_LEFT_WIDTH-10,_t,"5px","middle");
 			}
 		}
 		i++;
@@ -713,7 +737,7 @@ function drawLaneText(svg,lane,side)
 	lane = _.last(lane.split("."))
 	
 	var _xBase;
-	if (side=="baseline") _xBase= -LANE_LABELBOX_WIDTH+10
+	if (side=="baseline") _xBase= -LANE_LABELBOX_LEFT_WIDTH+10
 	else if (side=="target") _xBase= x(KANBAN_END)+10;
 	
 	console.log("*****drawLaneText(): svg="+svg);
@@ -837,10 +861,14 @@ function drawQueues(){
 	var _xFutureX = x(WIP_END);
 	var _xFutureWidth = x(KANBAN_END) - _xFutureX;
 
-	var _yMetricBase = -75;
+	var _yMetricBaseTop = -75; //top
+	var _yMetricBase = height+75; //bottom
+	
 	var _yMetricDetailsOffset = 10;
 	var _yMetricDetails2Offset = 8;
-	var _yMetricBracketOffset = -50	;
+	
+	//var _yMetricBracketOffset = -50; //top
+	var _yMetricBracketOffset = _yMetricBase-40;
 	var gQueue = svg.append("g").attr("id","queues");
 	
 	//---------------- DONE queue --------------------
@@ -851,8 +879,7 @@ function drawQueues(){
 
 	// --------------- DONE METRICS ---------------------
 	var _metric = {"text":"DONE" ,"items":ITEMS_DONE ,"swag": SIZING_DONE}
-
-	_drawQueueMetric(gQueueDone,_metric,x(KANBAN_START),_yMetricBracketOffset,_xWIPStart,_xWIPStart/2,_yMetricBase,_yMetricDetailsOffset);
+	_drawQueueMetric(gQueueDone,_metric,x(KANBAN_START),_yMetricBracketOffset,_xWIPStart,_xWIPStart/2,_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
 	//---------------- wip queue --------------------
 	var gQueueWip = gQueue.append("g").attr("id","wip");
@@ -861,11 +888,13 @@ function drawQueues(){
 	
 	// --------------- WIP METRICS ---------------------
 	_metric = {"text":"WIP" ,"items":ITEMS_WIP ,"swag": SIZING_WIP}
-
-	_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset);
+	_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
 	//-------------- TODAY markerlines ----------------
 	_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-30);
+	
+	_drawTodayMarker(gQueueWip,x(WIP_START),_yMetricBaseTop,"TODAY");
+	
 		
 	// ------------- WIP marker lines ---------------------
 	_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-30);
@@ -877,25 +906,38 @@ function drawQueues(){
 	
 	//---------------- FUTURE METRICS --------------------
 	_metric = {"text":"FUTURE" ,"items":ITEMS_FUTURE ,"swag": SIZING_FUTURE}
-
-	_drawQueueMetric(gQueueFuture,_metric,_xFutureX,_yMetricBracketOffset,_xFutureWidth,(_xFutureWidth/2+x(WIP_END)),_yMetricBase,_yMetricDetailsOffset);
+	_drawQueueMetric(gQueueFuture,_metric,_xFutureX,_yMetricBracketOffset,_xFutureWidth,(_xFutureWidth/2+x(WIP_END)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
 	//---------------- TOTAL METRICS --------------------
 	_metric = {"text":"TOTAL" ,"items":ITEMS_TOTAL ,"swag": SIZING_TOTAL}
-
-	_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth),_yMetricBase,_yMetricDetailsOffset);
+	_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
 	//---------------- TOTAL DELAYED METRICS --------------------
 	_metric = {"text":"DELAY" ,"items":ITEMS_DELAYED ,"swag": DAYS_DELAYED}
-	
+
 	if (ITEMS_DELAYED){
-		_drawQueueMetric(gQueue,_metric,null,null,null,(_xWIPStart),_yMetricBase,_yMetricDetailsOffset,"red");
+		_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth)+80,_yMetricBase,_yMetricDetailsOffset,"red","bottom");
 	}
 } //end drawQueues
 
 
 
 /* ------------------------------------------------- drawQueues() helper functions ----------------------------------------------------------- */
+		function _drawTodayMarker(svg,x,y,text){
+			svg.append("use").attr("xlink:href","#today_marker")
+			.attr("transform","translate("+(x-5.5)+",-70) scale(1.1)");
+			
+			svg.append("text")
+			.text(text)
+			.attr("transform","translate("+(x)+","+y+") scale(1)")
+			.style("text-anchor","middle")
+			.style("font-size","18px")
+			.style("fill","red")
+			.style("font-weight","bold");
+			
+			
+		}
+		
 		/**
 		 */
 		function _drawQueueArea(svg,x,y,w,h,css,offsetX){
@@ -940,11 +982,11 @@ function drawQueues(){
 
 		/**
 		 */
-		function _drawQueueMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space,color){
+		function _drawQueueMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space,color,orientation){
 			if(!color) color=COLOR_BPTY;
 			if (width){
 				svg.append("use")
-				.attr("xlink:href","#icon_bracket_top_blue")
+				.attr("xlink:href","#icon_bracket_"+orientation+"_blue")
 				.style("opacity",0.15)
 				.attr("transform","translate("+bracketX+","+bracketY+") scale("+(width/100)+",1) rotate(0)");
 			}
@@ -1512,16 +1554,42 @@ function drawMetrics(){
 		var i=0;
 		var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
 					
-		var _bracketXOffset = LANE_LABELBOX_WIDTH+80;
-		var _primaryXOffset = _bracketXOffset +50;
-		var _secondaryXOffset = LANE_LABELBOX_WIDTH+45;
-		var _tertiaryXOffset = LANE_LABELBOX_WIDTH+45;
+		//left			
+		var _bracketXOffset = LANE_LABELBOX_LEFT_WIDTH+80;
+		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +130;
+		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+45;
+		var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+45;
+		
+		//right
+		
+		
+		//1
+		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+80;
+		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +130;
+		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+35;
+		var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+35;
+
+		//2
+		var _2Offset = 180;
+		var _bracketXOffsetRight2 = _bracketXOffsetRight+_2Offset;
+		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
+		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
+		var _tertiaryXOffsetRight2 = _tertiaryXOffsetRight+_2Offset;
+
+		//goal
+		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +400;
+
+		
+		
+		
 		
 		// => this for sure should be refactored into ONE parametrized method
 		
 		// -------------------------- baseline -------------------------------
 		var _baselinePrimarySum=0;
-		var _targetPrimarySum=0;
+		var _targetPrimarySum1=0;
+		var _targetPrimarySum2=0;
+		
 		
 		gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
 		.selectAll("primary_baseline")
@@ -1609,13 +1677,14 @@ function drawMetrics(){
 		//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
 		var _yTotal =-35;
 		var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
+		
 		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,_yTotal,10);
 		
 
 		//pie baseline
-		var _primaryXOffsetPie = LANE_LABELBOX_WIDTH +130;
+		
 		var _yPie = -80;
-		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffsetPie,_yPie);
+		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset,_yPie);
 
 		// cx baseline 
 		var _yCX =-102;
@@ -1630,11 +1699,11 @@ function drawMetrics(){
 		
 		
 		
-		// -------------------------- target -------------------------------
+		// -------------------------- target 1-year (2014) -------------------------------
 		i=0;
 		
-		gMetrics.select("#primary").append("g").attr("id","target").selectAll("primary_future")
-		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast" }))
+		gMetrics.select("#primary").append("g").attr("id","target1").selectAll("primary_future")
+		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast1" }))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "1metric_"+d.id;})
@@ -1652,23 +1721,21 @@ function drawMetrics(){
 				var _bracketHeight = 100;
 				
 				
-				if (d.sustainable==1) _targetPrimarySum = _targetPrimarySum+parseInt(d.number);
+				if (d.sustainable==1) _targetPrimarySum1 = _targetPrimarySum1+parseInt(d.number);
 				
-				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffset),_y,(_height/_bracketHeight));
+				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffsetRight),_y,(_height/_bracketHeight));
 				
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffset,_y+_primTextYOffset,10);
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_y+_primTextYOffset,10);
 			}
 			i++;
 		});
 		
-		
-		
 		i=0;
 
 	//---------------------------- secondary ---------------------------------
-		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target")
+		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target1")
 		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast"}))
+		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast1"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "2metric_"+d.id;})
@@ -1681,16 +1748,16 @@ function drawMetrics(){
 				//secondary metrics
 				var _primTextYOffset = _height/2;
 				
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffset,_y+_primTextYOffset,6);
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight,_y+_primTextYOffset,6);
 			}
 			i++;
 		});
 
 		i=0;
 	//---------------------------- tertiary ---------------------------------
-		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target")
+		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target1")
 		.selectAll("tertiary_target")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast"}))
+		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast1"}))
 		.enter()
 		.append("g")
 		.attr("id",function(d){return "3metric_"+d.id;})
@@ -1703,19 +1770,109 @@ function drawMetrics(){
 				//tertiary metrics
 				var _tertTextYOffset = (_height/2)+20;
 			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffset,_y+_tertTextYOffset,6);
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight,_y+_tertTextYOffset,6);
 			}
 			i++;
 		});
 
 
 		// calculated sum
-		_total.number=_targetPrimarySum;
-		_drawTextMetric(gMetrics.select("#target"),_total,"metricBig",x(KANBAN_END)+_primaryXOffset,_yTotal,10);
+		_total.number=_targetPrimarySum1;
+		_drawTextMetric(gMetrics.select("#target1"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_yTotal,10);
 
 
-		//pie target
-		_drawPie(gMetrics,"target",PIE_TARGET,x(KANBAN_END)+_primaryXOffsetPie,_yPie);
+		
+		
+		
+		// -------------------------- target 2-years (2015)-------------------------------
+		i=0;
+		
+		gMetrics.select("#primary").append("g").attr("id","target2").selectAll("primary_future2")
+		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast2" }))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "1metric_"+d.id;})
+		.each(function(d){
+			var _l = getLaneByNameNEW(d.lane);
+			if (_l){
+			
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//primary metrics
+				var _primTextYOffset = _height/2;
+
+				// 100 is the height of the brackets svg
+				var _bracketHeight = 100;
+				
+				
+				if (d.sustainable==1) _targetPrimarySum2 = _targetPrimarySum2+parseInt(d.number);
+				
+				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffsetRight2),_y,(_height/_bracketHeight));
+				
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_y+_primTextYOffset,10);
+			}
+			i++;
+		});
+		
+		
+		
+		i=0;
+
+	//---------------------------- secondary ---------------------------------
+		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target2")
+		.selectAll("secondary_baseline")
+		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast2"}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "2metric_"+d.id;})
+		.each(function(d){
+			var _l = getLaneByNameNEW(d.lane);
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _primTextYOffset = _height/2;
+				
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight2,_y+_primTextYOffset,6);
+			}
+			i++;
+		});
+
+		i=0;
+	//---------------------------- tertiary ---------------------------------
+		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target2")
+		.selectAll("tertiary_target")
+		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast2"}))
+		.enter()
+		.append("g")
+		.attr("id",function(d){return "3metric_"+d.id;})
+		.each(function(d){
+			var _l = getLaneByNameNEW(d.lane);
+			if (_l){
+				var _y = y(_l.yt1);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//tertiary metrics
+				var _tertTextYOffset = (_height/2)+20;
+			
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight2,_y+_tertTextYOffset,6);
+			}
+			i++;
+		});
+
+
+		// calculated sum
+		_total.number=_targetPrimarySum2;
+		_drawTextMetric(gMetrics.select("#target2"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_yTotal,10);
+
+
+		//pie target 1
+		_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight,_yPie);
+
+		//pie target 2
+		_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2,_yPie);
 
 
 		// cx target 
@@ -1723,8 +1880,11 @@ function drawMetrics(){
 		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,_yCX);
 		
 		//market share
-		var _share = {"number":MARKETSHARE_TARGET ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_END)+_primaryXOffset,_yMarketShare,10);
+		var _share1 = {"number":MARKETSHARE_TARGET1 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_yMarketShare,10);
+		
+		var _share2 = {"number":MARKETSHARE_TARGET2 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_yMarketShare,10);
 		
 		
 	/* ----------------------------------------- risks ------------------------------------------------ */
@@ -1733,7 +1893,7 @@ function drawMetrics(){
 		else
 			var _yRisk = y(20)-30;
 		
-		var _xRisk = x(KANBAN_END)+LANE_LABELBOX_WIDTH+200;
+		var _xRisk = x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+400;
 		
 		_drawRisks(gMetrics,0,_xRisk,_yRisk);
 		
@@ -1748,13 +1908,22 @@ function drawMetrics(){
 
 		var METRIC_DATES_Y=-160;
 	/* ------------------------------------- metric dates ------- ------------------------------------*/
-		_drawMetricDate(gMetrics,x(KANBAN_START)-255,METRIC_DATES_Y,METRIC_BASLINE,"BASELINE","projection for");
-		_drawMetricDate(gMetrics,x(KANBAN_END)+155,METRIC_DATES_Y,METRIC_FORECAST,"FORECAST","best case for");
+		//baseline
+		_drawMetricDate(gMetrics,x(KANBAN_START)-255,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
+		
+		//target1
+		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-25),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
+		
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+45);
+		//target2
+		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-25),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
+		
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight2+45);
 		
 
 	/* ------------------------------------- goal column ------- ------------------------------------*/
-		var _goalXOffset=340;
-		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_FORECAST,"GOAL","norbert says");
+		
+		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_DATE_GOAL,"GOAL","norbert says");
 
 		i=0;
 		
@@ -1767,9 +1936,10 @@ function drawMetrics(){
 			var _lane = d.lane;
 
 			// goal total
-			_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,-37,10);
+			_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 		})
 
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+100);
 	 
 	/* ------------------------------------- linechart prototype ------------------------------------*/
 		drawLineChart();
@@ -1837,6 +2007,14 @@ function _drawTextMetric(svg,metric,css,x,y,space){
 			.attr("class",css+"Type");
 }
 
+function _drawMetricSeparator(svg,x){
+		svg.append("line")
+				.attr("x1", x)
+				.attr("y1", -180)
+				.attr("x2", x)
+				.attr("y2", height)
+				.attr("class", "themeLine");
+}
 
 
 /**
@@ -1886,7 +2064,7 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
 function _drawMetricDate(svg,x,y,date,name,type){
 	_drawText(svg,name,x,y,18,"bold","start",COLOR_BPTY,null);
 	_drawText(svg,type+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
-	_drawText(svg,date.toString('yyyy-MM-dd'),x,y+16,10,"bold","start",COLOR_BPTY,null);
+	_drawText(svg,date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
 	
 }
 
@@ -1989,7 +2167,7 @@ function _drawCX	(svg,data,x,y){
  */
 function drawWC2014(){
 	
-	var svg = d3.select("#items");
+	var svg = d3.select("#kanban");
 	var _x = x(new Date("2014-06-13"));
 	var _y = x(new Date("2014-07-13"));
 	
@@ -2052,6 +2230,18 @@ function drawReleases(){
 	});
 			
 }
+
+function Metric(id,type,scale,metric){
+	this.id =id;
+	this.type=type;
+	this.scale=scale;
+	this.metric=metric;
+}
+Postit.prototype.getInfo=function(){
+	return JSON.stringify(this);
+}
+
+
 
 /** ola - my first class in javascript ;-)
  */
@@ -2205,32 +2395,12 @@ Postit.prototype.draw=function(svg){
 }
 
 function loadPostits(){
-	d3.json("data/data.php?type=postits",handlePostits);
+	//d3.json("data/data.php?type=postits",handlePostits);
 }
 
 
 
-function handlePostits(data){
-	
-	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
-	console.log("posits:"+data);
-	for (var i in data){
-		console.log("id: "+data[i].id);
-		console.log("text: "+data[i].text);
-		console.log("x: "+data[i].x);
-		console.log("y: "+data[i].y);
-		console.log("size: "+data[i].size);
-		console.log("scale: "+data[i].scale);
-		console.log("id: "+data[i].id);
-		
-		var p = new Postit(data[i].id,data[i].text,data[i].x,data[i].y,data[i].scale,data[i].size,data[i].color,data[i].textcolor);
-		console.log(JSON.stringify(p));
-		p.draw(gCustomPostits);
-		
-	}
-	
-}
-	
+
 
 
 
@@ -2241,7 +2411,7 @@ function drawVersion(){
 	
 	var _line =7;
 	var _offset =28;
-	var _y = height-18;
+	var _y = height;
 	
 	var t;
 
@@ -2282,9 +2452,9 @@ function drawVersion(){
 	//bottom disclaimer
 	i++;
 
-	_drawLegendLine(svg,WIDTH-200,WIDTH-42,height+43);
+	_drawLegendLine(svg,WIDTH-200,WIDTH-42,_y+60);
 	
-	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,height+48,5,"normal","end");
+	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_y+67,5,"normal","end");
 	
 	_drawText(gVersion,TITLE_TEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-180,24,"normal","middle",COLOR_BPTY,"italic");
 	_drawText(gVersion,TITLE_SUBTEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-160,16,"normal","middle",COLOR_BPTY,"italic");
@@ -2319,8 +2489,9 @@ function _drawText(svg,text,x,y,size,weight,anchor,color,style){
 function drawLegend(){
 	var _line =7;
 	var _offset =28;
-	var _y = height;
+	var _y = height+20;
 	var _x = -280;
+	var _fontsize=4;
 	
 	var t;
 
@@ -2330,15 +2501,15 @@ function drawLegend(){
 	
 	gLegend.append("use").attr("xlink:href","#item")
 		.attr("transform","translate ("+_x+","+(_y+2)+") scale(0.30) ");
-	_drawText(svg,"... corporate initiative [planned finish]",_x+12,(_y+7),5,"normal","start",null,"italic");
+	_drawText(svg,"... corporate initiative [planned finish]",_x+12,(_y+7),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("use").attr("xlink:href","#tactic")
 		.attr("transform","translate ("+_x+","+(_y+12)+") scale(0.30) ");
-	_drawText(svg,"... tactical initiative [planned finish]",_x+12,(_y+17),5,"normal","start",null,"italic");
+	_drawText(svg,"... tactical initiative [planned finish]",_x+12,(_y+17),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("use").attr("xlink:href","#innovation")
 		.attr("transform","translate ("+_x+","+(_y+22)+") scale(0.30) ");
-	_drawText(svg,"... innovation initiative [planned finish]",_x+12,(_y+27),5,"normal","start",null,"italic");
+	_drawText(svg,"... innovation initiative [planned finish]",_x+12,(_y+27),_fontsize,"normal","start",null,"italic");
 
 	
 	gLegend.append("use").attr("xlink:href","#item")
@@ -2346,8 +2517,11 @@ function drawLegend(){
 	
 	gLegend.append("use").attr("xlink:href","#postit_yellow")
 		.attr("transform","translate ("+_x+","+(_y+30)+") scale(0.35) ");
-	_drawText(svg,"... fuzzy initiative [planned finish]",_x+12,(_y+37),5,"normal","start",null,"italic");
+	_drawText(svg,"... fuzzy initiative [planned finish]",_x+12,(_y+37),_fontsize,"normal","start",null,"italic");
 
+	gLegend.append("use").attr("xlink:href","#postit_blue")
+		.attr("transform","translate ("+_x+","+(_y+40)+") scale(0.35) ");
+	_drawText(svg,"... custom note",_x+12,(_y+47),_fontsize,"normal","start",null,"italic");
 
 
 			
@@ -2359,31 +2533,31 @@ function drawLegend(){
 		.style("opacity",0.5)
 		.attr("transform","translate ("+(_x+100)+","+(_y+5)+") scale(0.30) ");
 		
-	_drawText(svg,"... initiative [done]",(_x+105),(_y+7),5,"normal","start",null,"italic");
+	_drawText(svg,"... initiative [done]",(_x+105),(_y+7),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.attr("transform","translate ("+(_x+100)+","+(_y+15)+") scale(0.30) ")
 		.style("opacity",0.5)
 		.style("fill","red");
-	_drawText(svg,"... initiative [delayed]",(_x+105),(_y+17),5,"normal","start",null,"italic");
+	_drawText(svg,"... initiative [delayed]",(_x+105),(_y+17),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","gold")
 		.attr("transform","translate ("+(_x+100)+","+(_y+25)+") scale(0.30) ");
-	_drawText(svg,"... initiative [planned]",(_x+105),(_y+27),5,"normal","start",null,"italic");
+	_drawText(svg,"... initiative [planned]",(_x+105),(_y+27),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","grey")
 		.attr("transform","translate ("+(_x+100)+","+(_y+35)+") scale(0.30) ");
-	_drawText(svg,"... initiative [future]",(_x+105),(_y+37),5,"normal","start",null,"italic");
+	_drawText(svg,"... initiative [future]",(_x+105),(_y+37),_fontsize,"normal","start",null,"italic");
 	
 	
 	
 	gLegend.append("use").attr("xlink:href","#target")
-		.attr("transform","translate ("+_x+","+(_y+42)+") scale(0.30) ");
-	_drawText(svg,"... pulling goal",_x+12,(_y+47),5,"normal","start",null,"italic");
+		.attr("transform","translate ("+(_x+96)+","+(_y+42)+") scale(0.30) ");
+	_drawText(svg,"... pulling goal",_x+105,(_y+47),_fontsize,"normal","start",null,"italic");
 	
 	
 	_drawLegendLine(svg,-280,-120,_y);
@@ -2410,7 +2584,6 @@ function drawLegend(){
 	//bottom disclaimer
 	i++;
 
-	_drawLegendLine(svg,WIDTH-200,WIDTH-42,height+43);
 	
 /*
 	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,height+48,5,"normal","end");
@@ -2548,7 +2721,7 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 					var _name = _itemData.children[i].name;
 					for (var p in _config.percentages){
 						console.log("...name:"+_name);
-						if (_name.indexOf(_config.percentages[p].name)>=0){
+						if (_name.indexOf(_config.percentages[p].name)>=0 &&(CONTEXT==_config.percentages[p].context ||_config.percentages[p].context=="*") ){
 							_y2=_config.percentages[p].value;
 							console.log("_y2 override:"+_y2);
 						}
@@ -3234,3 +3407,6 @@ var PACKAGE_VERSION="20140128_1915";
 var PACKAGE_VERSION="20140128_1920";
 var PACKAGE_VERSION="20140128_1936";
 var PACKAGE_VERSION="20140128_1937";
+var PACKAGE_VERSION="20140129_1135";
+var PACKAGE_VERSION="20140129_1156";
+var PACKAGE_VERSION="20140129_1750";
