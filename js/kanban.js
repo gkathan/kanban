@@ -468,12 +468,14 @@ function timeMachine(date){
 	else {
 		TIMEMACHINE = null;
 		// and reload();
-		d3.tsv("data/"+dataversions.itemFile,handleInitiatives);
+		//d3.tsv("data/"+dataversions.itemFile,handleInitiatives);
 	}
 	setTODAY();
 	setWIP();
+	drawAll();
 	calculateQueueMetrics();
 	drawAll();
+	
 }
 
 /** whenever we use the TODAY.add() function we need to set back TODAY to original value...
@@ -3333,9 +3335,8 @@ function calculateQueueMetrics(){
 		var _sizingPD = parseInt(_item.Swag);
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
-		ITEMS_TOTAL++;
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_date)<WIP_START &&_item.state=="done"){
+		if (new Date(_date)<WIP_START && new Date(_item.planDate)>KANBAN_START && _item.state=="done"){
 			ITEMS_DONE++;
 			if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
 		}
@@ -3344,7 +3345,7 @@ function calculateQueueMetrics(){
  			if (!isNaN(_sizingPD)) SIZING_WIP+=_sizingPD;
 
 		}
-		else {
+		else if (new Date(_date)>WIP_END && new Date(_item.planDate)>KANBAN_START){
 			ITEMS_FUTURE++;
 			
 			if (!isNaN(_sizingPD)) SIZING_FUTURE+=_sizingPD;
@@ -3352,13 +3353,16 @@ function calculateQueueMetrics(){
 		}
 		
 		//calculate delays
-		if (_delay>0){
+		if (_delay>0 && new Date(_item.planDate)>KANBAN_START){
 			ITEMS_DELAYED++;
 			DAYS_DELAYED = DAYS_DELAYED+_delay;
 		}
 		
 	}
+	ITEMS_TOTAL=ITEMS_DONE+ITEMS_WIP+ITEMS_FUTURE;
+	SIZING_TOTAL = SIZING_DONE+SIZING_WIP+SIZING_FUTURE;	
 }
+
 
 
 /* --------------------------------------------------------- auto layout section ------------------------------------------------------------*/
