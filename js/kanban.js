@@ -122,7 +122,7 @@ var itemDataConfig;
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 200, right: 450, bottom: 100, left: 300};
+var margin = {top: 200, right: 300, bottom: 100, left: 300};
 var width,height;
 
 
@@ -721,6 +721,123 @@ function drawLanes(){
 		}
 		i++;
 	});
+	
+	
+	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
+			var _color = COLOR_BPTY;
+			var _headlineSize = "10px";
+			var _xBase = x(KANBAN_END)+100;
+			var _yBase = -90;
+			var _width = 25;
+			var _height = height+90;//y(getThemesNEW()[0].yt2)-_yBase;//;
+			var _spacer = 3;
+			var _textOffset = 12;
+			
+			var i = 0;
+			
+		_drawBracket(lanes,"blue","right",680,-200,1.3,"triangle",1);
+		lanes.append("text")
+			.text("* strategy statements....")
+			.attr("x",720)
+			.attr("y",-180)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("font-size","12px");
+		
+		
+		
+		lanes.append("text")
+			.text("HOW")
+			.attr("x",_xBase+15)
+			.attr("y",_yBase-5)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("font-size","20px");
+		
+		lanes.append("text")
+			.text("WHERE")
+			.attr("x",_xBase-90)
+			.attr("y",_yBase+60)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("font-size","20px");
+		
+		lanes.append("rect")
+			.attr("x",_xBase-95)
+			.attr("y",_yBase+65)
+			.attr("width",(_width*3)+15)
+			.attr("height",_height-65)
+			.style("fill","grey")
+			.style("opacity",0.2);
+			
+			
+			lanes.append("rect")
+			.attr("x",_xBase)
+			.attr("y",_yBase)
+			.attr("width",_width)
+			.attr("height",_height)
+			.style("fill","grey")
+			.style("opacity",0.2);
+			
+			lanes.append("text")
+			.text("ACCESS")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
+			.attr("y",_yBase+10)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("writing-mode","tb")
+			.style("font-size",_headlineSize);
+	
+	// bwin example
+	lanes.append("text")
+			.text("TOUCH: native+HTML5 etc etc ...")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer))+5+_textOffset)
+			.attr("y",_yBase+100)
+			.style("fill","white")
+			.style("font-weight","bold")
+			.style("writing-mode","tb")
+			.style("font-size","6px");
+	
+		
+			i++;
+			
+		lanes.append("rect")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer)))
+			.attr("y",_yBase)
+			.attr("width",_width)
+			.attr("height",_height)
+			.style("fill","grey")
+			.style("opacity",0.2);
+			
+			lanes.append("text")
+			.text("APPEAL")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
+			.attr("y",_yBase+10)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("writing-mode","tb")
+			.style("font-size",_headlineSize);
+			i++;
+			
+	lanes.append("rect")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer)))
+			.attr("y",_yBase)
+			.attr("width",_width)
+			.attr("height",_height)
+			.style("fill","grey")
+			.style("opacity",0.2);
+			
+			lanes.append("text")
+			.text("USP")
+			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
+			.attr("y",_yBase+10)
+			.style("fill",_color)
+			.style("font-weight","bold")
+			.style("writing-mode","tb")
+			.style("font-size",_headlineSize);
+			
+			
+	
 }
 
 
@@ -731,7 +848,7 @@ function drawLaneText(svg,lane,side)
 	var _color = "black";
 	if (lane.indexOf("bwin") !=-1 || lane.indexOf("premium") !=-1) _color="white";
 	
-	var _yBase = y((getLaneByNameNEW(lane).yt1))+35;
+	var _yBase = y((getLaneByNameNEW(lane).yt1))+40;
 	
 	// just get the last element in a FQN
 	lane = _.last(lane.split("."))
@@ -815,6 +932,7 @@ function drawLaneText(svg,lane,side)
 				.attr("y",y+_y_offset);
 			}
 		}
+		
 		
 		function _drawLaneArea(svg,x,y,width,height,i){
 			if (i%2 ==0) _laneOpacity=0.22;
@@ -1556,28 +1674,28 @@ function drawMetrics(){
 					
 		//left			
 		var _bracketXOffset = LANE_LABELBOX_LEFT_WIDTH+80;
-		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +130;
-		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+45;
-		var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+45;
+		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
+		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
+		var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
 		
 		//right
 		
 		
 		//1
-		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+80;
-		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +130;
-		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+35;
-		var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+35;
+		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH;
+		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
+		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
+		var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
 
 		//2
-		var _2Offset = 180;
+		var _2Offset = 150;
 		var _bracketXOffsetRight2 = _bracketXOffsetRight+_2Offset;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
 		var _tertiaryXOffsetRight2 = _tertiaryXOffsetRight+_2Offset;
 
 		//goal
-		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +400;
+		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +300;
 
 		
 		
@@ -1590,6 +1708,7 @@ function drawMetrics(){
 		var _targetPrimarySum1=0;
 		var _targetPrimarySum2=0;
 		
+		var _bOffset = 60;
 		
 		gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
 		.selectAll("primary_baseline")
@@ -1605,16 +1724,19 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//primary metrics
-				var _primTextYOffset = _height/2;
+				var _primTextYOffset = 50;//_height/2;
 
 				// 100 is the height of the brackets svg
 				var _bracketHeight = 100;
 
 				if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
 
-				_drawBracket(d3.select(this),d,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
+				var _color;
+				if (d.sustainable==1) _color="blue";
+				else _color="grey";
+				//_drawBracket(d3.select(this),_color,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
 
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_y+_primTextYOffset,10,"left");
 			}
 
 			i++;
@@ -1641,9 +1763,9 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//secondary metrics
-				var _secTextYOffset = _height/2;
+				var _secTextYOffset = 10;//_height/2;
 			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6);
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6,"right");
 			}
 			i++;
 		});
@@ -1663,9 +1785,9 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//tertiary metrics
-				var _tertTextYOffset = (_height/2)+20;
+				var _tertTextYOffset = 25;//(_height/2)+20;
 			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6);
+				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6,"right");
 			}
 			i++;
 		});
@@ -1678,29 +1800,31 @@ function drawMetrics(){
 		var _yTotal =-35;
 		var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
 		
-		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset,_yTotal,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yTotal,10);
 		
 
 		//pie baseline
 		
 		var _yPie = -80;
-		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset,_yPie);
+		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset+_bOffset,_yPie);
 
 		// cx baseline 
 		var _yCX =-102;
 		var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180,_yCX);
+		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180-_bOffset,_yCX);
 		
 		
 		//market share
 		var _yMarketShare =-120;
 		var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset,_yMarketShare,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yMarketShare,10);
 		
 		
 		
 		// -------------------------- target 1-year (2014) -------------------------------
 		i=0;
+		
+		var _1Offset = 70;
 		
 		gMetrics.select("#primary").append("g").attr("id","target1").selectAll("primary_future")
 		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast1" }))
@@ -1715,7 +1839,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//primary metrics
-				var _primTextYOffset = _height/2;
+				var _primTextYOffset = 50;//_height/2;
 
 				// 100 is the height of the brackets svg
 				var _bracketHeight = 100;
@@ -1723,9 +1847,12 @@ function drawMetrics(){
 				
 				if (d.sustainable==1) _targetPrimarySum1 = _targetPrimarySum1+parseInt(d.number);
 				
-				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffsetRight),_y,(_height/_bracketHeight));
+				var _color;
+				if (d.sustainable==1) _color="blue";
+				else _color="grey";
+				//_drawBracket(d3.select(this),_color,"right",(x(KANBAN_END)+_bracketXOffsetRight),_y,(_height/_bracketHeight));
 				
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_y+_primTextYOffset,10);
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_y+_primTextYOffset,10,"right");
 			}
 			i++;
 		});
@@ -1746,7 +1873,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//secondary metrics
-				var _primTextYOffset = _height/2;
+				var _primTextYOffset = 10;//_height/2;
 				
 				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight,_y+_primTextYOffset,6);
 			}
@@ -1768,7 +1895,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//tertiary metrics
-				var _tertTextYOffset = (_height/2)+20;
+				var _tertTextYOffset = 25;//(_height/2)+20;
 			
 				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight,_y+_tertTextYOffset,6);
 			}
@@ -1778,7 +1905,7 @@ function drawMetrics(){
 
 		// calculated sum
 		_total.number=_targetPrimarySum1;
-		_drawTextMetric(gMetrics.select("#target1"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_yTotal,10);
+		_drawTextMetric(gMetrics.select("#target1"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_yTotal,10,"right");
 
 
 		
@@ -1786,6 +1913,8 @@ function drawMetrics(){
 		
 		// -------------------------- target 2-years (2015)-------------------------------
 		i=0;
+		
+		var _2Offset = 70;
 		
 		gMetrics.select("#primary").append("g").attr("id","target2").selectAll("primary_future2")
 		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast2" }))
@@ -1800,7 +1929,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//primary metrics
-				var _primTextYOffset = _height/2;
+				var _primTextYOffset = 50;//_height/2;
 
 				// 100 is the height of the brackets svg
 				var _bracketHeight = 100;
@@ -1808,9 +1937,13 @@ function drawMetrics(){
 				
 				if (d.sustainable==1) _targetPrimarySum2 = _targetPrimarySum2+parseInt(d.number);
 				
-				_drawBracket(d3.select(this),d,"right",(x(KANBAN_END)+_bracketXOffsetRight2),_y,(_height/_bracketHeight));
+				var _color;
+				if (d.sustainable==1) _color="blue";
+				else _color="grey";
+		
+				//_drawBracket(d3.select(this),_color,"right",(x(KANBAN_END)+_bracketXOffsetRight2),_y,(_height/_bracketHeight));
 				
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_y+_primTextYOffset,10);
+				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_y+_primTextYOffset,10,"right");
 			}
 			i++;
 		});
@@ -1833,7 +1966,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//secondary metrics
-				var _primTextYOffset = _height/2;
+				var _primTextYOffset = 10;//_height/2;
 				
 				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight2,_y+_primTextYOffset,6);
 			}
@@ -1855,7 +1988,7 @@ function drawMetrics(){
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//tertiary metrics
-				var _tertTextYOffset = (_height/2)+20;
+				var _tertTextYOffset = 25;//(_height/2)+20;
 			
 				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight2,_y+_tertTextYOffset,6);
 			}
@@ -1865,26 +1998,26 @@ function drawMetrics(){
 
 		// calculated sum
 		_total.number=_targetPrimarySum2;
-		_drawTextMetric(gMetrics.select("#target2"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_yTotal,10);
+		_drawTextMetric(gMetrics.select("#target2"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yTotal,10,"right");
 
 
 		//pie target 1
-		_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight,_yPie);
+		_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight-70,_yPie);
 
 		//pie target 2
-		_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2,_yPie);
+		_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yPie);
 
 
 		// cx target 
 		var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+150,_yCX);
+		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+_secondaryXOffsetRight2-40,_yCX);
 		
 		//market share
 		var _share1 = {"number":MARKETSHARE_TARGET1 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight,_yMarketShare,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-70,_yMarketShare,10);
 		
 		var _share2 = {"number":MARKETSHARE_TARGET2 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2,_yMarketShare,10);
+		_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yMarketShare,10);
 		
 		
 	/* ----------------------------------------- risks ------------------------------------------------ */
@@ -1893,32 +2026,52 @@ function drawMetrics(){
 		else
 			var _yRisk = y(20)-30;
 		
-		var _xRisk = x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+400;
+		var _xRisk = x(KANBAN_END)+_goalXOffset+10;
 		
-		_drawRisks(gMetrics,0,_xRisk,_yRisk);
+		_drawSign(gMetrics,_xRisk,_yRisk,"risks");
 		
 		var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
 		var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
 		var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":-1 };
+		var _risk4 = {"number":-30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":-1 };
 		
-		_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk+25,_yRisk+65,10);
-		_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk+25,_yRisk+85,10);
-		_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk+25,_yRisk+105,10);
 		
+		_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk,_yRisk+65,10);
+		_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk,_yRisk+85,10);
+		_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk,_yRisk+105,10);
+		_drawTextMetric(gMetrics.select("#target"),_risk4,"metricBig",_xRisk,_yRisk+125,10);
+
+
+	/* ----------------------------------------- opportunities -----------------------------------------*/
+	
+		_yRisk=_yRisk-200;
+	_drawSign(gMetrics,_xRisk,_yRisk+100,"opportunities");
+		
+		var _opp1 = {"number":+55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":2 };
+		var _opp2 = {"number":+18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":2 };
+		var _opp3 = {"number":+25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":2 };
+		var _opp4 = {"number":+30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":2 };
+		
+		
+		_drawTextMetric(gMetrics.select("#target"),_opp1,"metricBig",_xRisk,_yRisk+25,10);
+		_drawTextMetric(gMetrics.select("#target"),_opp2,"metricBig",_xRisk,_yRisk+45,10);
+		_drawTextMetric(gMetrics.select("#target"),_opp3,"metricBig",_xRisk,_yRisk+65,10);
+		_drawTextMetric(gMetrics.select("#target"),_opp4,"metricBig",_xRisk,_yRisk+85,10);
+
+
 
 		var METRIC_DATES_Y=-160;
 	/* ------------------------------------- metric dates ------- ------------------------------------*/
 		//baseline
-		_drawMetricDate(gMetrics,x(KANBAN_START)-255,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
+		_drawMetricDate(gMetrics,x(KANBAN_START)-215,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
 		
 		//target1
-		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-25),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-40),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
 		
-		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+45);
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+5);
 		//target2
-		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-25),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
+		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-40),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
 		
-		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight2+45);
 		
 
 	/* ------------------------------------- goal column ------- ------------------------------------*/
@@ -1926,6 +2079,18 @@ function drawMetrics(){
 		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_DATE_GOAL,"GOAL","norbert says");
 
 		i=0;
+		
+		//delta symbol
+		_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-30,_yTotal+20,"icon_delta",0.4);
+		
+		var _diff = 700-_targetPrimarySum2;
+		
+		var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
+		_drawTextMetric(gMetrics.select("#target"),_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
+		
+		// delta end
+		
+		
 		
 		gMetrics.select("#primary").append("g").attr("id","goal").selectAll("primary_future")
 		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="goal" }))
@@ -1939,7 +2104,7 @@ function drawMetrics(){
 			_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 		})
 
-		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+100);
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
 	 
 	/* ------------------------------------- linechart prototype ------------------------------------*/
 		drawLineChart();
@@ -1948,9 +2113,10 @@ function drawMetrics(){
 
 } //end drawMetrics
 
-function _drawRisks(svg,metric,x,y){
-		svg.append("use").attr("xlink:href","#risks")
-		.attr("transform","translate ("+x+","+y+") scale(1)");
+function _drawSign(svg,x,y,type,scale){
+		if (!scale) scale = 1;
+		svg.append("use").attr("xlink:href","#"+type)
+		.attr("transform","translate ("+x+","+y+") scale("+scale+")");
 }
 
 
@@ -1960,43 +2126,60 @@ function _drawRisks(svg,metric,x,y){
 /**
  * icon_bracket<direction><type>
  */
-function _drawBracket(svg,metric,direction,x,y,scaleY){
-		if (metric.sustainable==1){
-			 _bracketType="_blue";
-		}
-		else{
-			 _bracketType="_grey";
-		}
-		
-		svg.append("use").attr("xlink:href","#icon_bracket_"+direction+_bracketType)
-		.style("opacity",0.15)
+function _drawBracket(svg,color,direction,x,y,scaleY,type,opacity){
+		if (!type) type="bracket";
+		if (!opacity) opacity = 0.15;
+		//svg.append("use").attr("xlink:href","#icon_triangle_"+direction+_bracketType)
+		svg.append("use").attr("xlink:href","#icon_"+type+"_"+direction+"_"+color)
+		.style("opacity",opacity)
 		.attr("transform","translate ("+x+","+y+") scale(1,"+scaleY+")");
 	
 		
 }
 
 /**
- */
-function _drawTextMetric(svg,metric,css,x,y,space){
+ *@direction can be "left" = default or "right" 
+ * => left = first number then scale
+ * => right = first scale then number*/
+function _drawTextMetric(svg,metric,css,x,y,space,direction){
 		var _metricColor;
 		if (metric.sustainable==1) _metricColor="174D75";
 		//risks
 		else if (metric.sustainable==-1) _metricColor="ED1C24";
 		
+		//opportunities
+		else if (metric.sustainable==2) _metricColor="00A14B";
+		
 		else _metricColor="grey";
 
+		
+		
+		var _anchor = "end";
+		var _xNumber = x;
+		if (direction=="right") {
+			_anchor = "start";
+			_xNumber = _xNumber+space;
+		}
+		
 		svg	.append("text")
 			.text(metric.number)
-			.attr("x",x)
+			.attr("x",_xNumber)
 			.attr("y",y+space/2)
 			.style("fill",_metricColor)
+			.style("text-anchor",_anchor)
+			
 			.attr("class",css+"Number");
 			
+		_anchor = "start";
+		if (direction=="right") _anchor = "end";
+		
 		svg	.append("text")
 			.text(metric.scale)
 			.attr("x",x+space/2)
 			.attr("y",y-space/2)
 			.style("fill",_metricColor)
+			.style("text-anchor",_anchor)
+			
 			.attr("class",css+"Scale");
 
 		svg	.append("text")
@@ -2004,6 +2187,7 @@ function _drawTextMetric(svg,metric,css,x,y,space){
 			.attr("x",x+space/2)
 			.attr("y",y+space/2)
 			.style("fill",_metricColor)
+			.style("text-anchor",_anchor)
 			.attr("class",css+"Type");
 }
 
@@ -2062,7 +2246,7 @@ function _drawMetricBlock(svg,side,type,yTextOffset){
 /**date marker for metrics
  * */
 function _drawMetricDate(svg,x,y,date,name,type){
-	_drawText(svg,name,x,y,18,"bold","start",COLOR_BPTY,null);
+	_drawText(svg,name,x,y,16,"bold","start",COLOR_BPTY,null);
 	_drawText(svg,type+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
 	_drawText(svg,date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
 	
@@ -3410,3 +3594,5 @@ var PACKAGE_VERSION="20140128_1937";
 var PACKAGE_VERSION="20140129_1135";
 var PACKAGE_VERSION="20140129_1156";
 var PACKAGE_VERSION="20140129_1750";
+var PACKAGE_VERSION="20140130_1811";
+var PACKAGE_VERSION="20140130_1930";
