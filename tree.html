@@ -63,9 +63,8 @@ var svg = d3.select("body").append("svg")
 
 //d3.tsv("data/backlog.csv",function(data){
 //d3.tsv("data/initiatives_v20.csv",function(data){
-d3.json("/data/data.php?type=initiatives",function(data){
+	d3.json("/data/data.php?type=initiatives",function(data){
 
-//	root = _.nest(data,["Lane","BusinessBacklog"]);
 	root = _.nest(data,["bm","theme","lane","sublane"]);
 
 //  root = flare;
