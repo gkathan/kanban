@@ -1977,14 +1977,14 @@ function drawMetrics(){
 	var _diff = 700-_targetResultSum2;
 	
 	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#target"),_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
+	_drawTextMetric(gMetrics,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
 	
 	// delta end
 	
 	
 	
-	gMetrics.select("#primary").append("g").attr("id","goal").selectAll("primary_future")
-	.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="goal" }))
+	gMetrics.append("g").attr("id","goal").selectAll("result_future")
+	.data(metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" }))
 	.enter()
 	.append("g")
 	.attr("id",function(d){return "1metric_"+d.id;})
@@ -1992,7 +1992,7 @@ function drawMetrics(){
 		var _lane = d.lane;
 
 		// goal total
-		_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
+		_drawTextMetric(gMetrics,d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 	})
 
 	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
