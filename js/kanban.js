@@ -122,7 +122,7 @@ var itemDataConfig;
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 200, right: 300, bottom: 100, left: 300};
+var margin = {top: 250, right: 300, bottom: 100, left: 300};
 var width,height;
 
 
@@ -662,20 +662,20 @@ function drawLanes(){
 		var _laneOpacity;
 
 		//left box
-		_drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane);
+		_drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
 
 		//baseline box text
-		drawLaneText(lanes,_lane,"baseline");
+		_drawLaneText(lanes,_lane,"baseline");
 	
 		
 		// lane area
 		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_height,i)
 
 		//target box	
-		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane);
+		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
 		
 		//target box text
-		drawLaneText(lanes,_lane,"target");
+		_drawLaneText(lanes,_lane,"target");
 	
 
 		// laneside descriptors
@@ -726,138 +726,172 @@ function drawLanes(){
 	
 	
 	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
-			var _color = COLOR_BPTY;
-			var _headlineSize = "10px";
-			var _xBase = x(KANBAN_END)+100;
-			var _yBase = -90;
-			var _width = 25;
-			var _height = height+90;//y(getThemesNEW()[0].yt2)-_yBase;//;
-			var _spacer = 3;
-			var _textOffset = 12;
-			
-			var i = 0;
-			
-		_drawBracket(lanes,"blue","right",680,-200,1.3,"triangle",1);
-		lanes.append("text")
-			.text("* strategy statements....")
-			.attr("x",720)
-			.attr("y",-180)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("font-size","12px");
+		var _pillarColumns = [{"name":"ACCESS"},{"name":"APPEAL"},{"name":"USP"}];
+
+
+
+		var _pillarElements =[{"lane":"bwin","category":"ACCESS","title":"TOUCH","content":
+								[{"text":"* native+HTML5 etc etc ..."},
+								 {"text":"* state of the art mobile offer"},
+								 {"text":"* 9-12 month cycle time"},
+								]},
+							  {"lane":"bwin","category":"APPEAL","title":"CONTENT","content":
+								[{"text":"* sports driven 360° offer"},
+								 {"text":"* full real money gaming offering"},
+									]},
+							  {"lane":"bwin","category":"USP","title":"SOCIAL","content":
+									[{"text":"* gamification & social mechanics"},
+									 {"text":"* infotainment"},
+									]},
+							{"lane":"pp","category":"ACCESS","title":"TOUCH","content":
+								[{"text":"* native+HTML5 "},
+								 {"text":"* mobile distribution"},
+								]},
+							  {"lane":"pp","category":"APPEAL","title":"CONTENT","content":
+								[{"text":"* game variance"},
+								 {"text":"* tournament offer"},
+								 {"text":"* live gaming integration"}
+									]},
+							  {"lane":"pp","category":"USP","title":"SOCIAL","content":
+									[{"text":"* exploitation"},
+									 {"text":"* improved .NET strategy"},
+									]},
+							{"lane":"foxy","category":"ACCESS","title":"TOUCH","content":
+								[{"text":"* HTML5 "}
+								]},
+							  {"lane":"foxy","category":"APPEAL","title":"CONTENT","content":
+								[{"text":"* bingo"},
+								 {"text":"* games variance & refresh"}
+									]},
+							  {"lane":"foxy","category":"USP","title":"SOCIAL","content":
+									[{"text":"* ?"}
+									]},
+				
+								];
 		
-		
-		
-		lanes.append("text")
-			.text("HOW")
-			.attr("x",_xBase+15)
-			.attr("y",_yBase-5)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("font-size","20px");
-		
-		lanes.append("text")
-			.text("WHERE")
-			.attr("x",_xBase-90)
-			.attr("y",_yBase+60)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("font-size","20px");
-		
-		lanes.append("rect")
-			.attr("x",_xBase-95)
-			.attr("y",_yBase+65)
-			.attr("width",(_width*3)+15)
-			.attr("height",_height-65)
-			.style("fill","grey")
-			.style("opacity",0.2);
-			
-			
-			lanes.append("rect")
-			.attr("x",_xBase)
-			.attr("y",_yBase)
-			.attr("width",_width)
-			.attr("height",_height)
-			.style("fill","grey")
-			.style("opacity",0.2);
-			
-			lanes.append("text")
-			.text("ACCESS")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
-			.attr("y",_yBase+10)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("writing-mode","tb")
-			.style("font-size",_headlineSize);
+		var _xBase = x(KANBAN_END)+2;
+		var _yBase = -90;
+		var _width = LANE_LABELBOX_RIGHT_WIDTH-100;						
+							
+	  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
+	  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
+
+}	
 	
-	// bwin example
-	lanes.append("text")
-			.text("TOUCH: native+HTML5 etc etc ...")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer))+5+_textOffset)
-			.attr("y",_yBase+100)
-			.style("fill","white")
-			.style("font-weight","bold")
-			.style("writing-mode","tb")
-			.style("font-size","6px");
+function _drawPillarColumns(svg,data,x,y,width){
+
+		var _spacer = 3;
+		var _color = COLOR_BPTY;
+		var _length = data.length;
+		var _pillarWidth = (width/_length)-_spacer;
+		var _headlineHeight= 90;
+		var _height = height+_headlineHeight;
+		var _headlineSize = "10px";
 	
-		
-			i++;
+	for (var i in data){
+		//1) pillar header
+			var _offset = (getInt(i)*_pillarWidth)+_pillarWidth/2;
+			svg.append("text")
+				.text(data[i].name)
+				.attr("x",x+_offset+(i*_spacer))
+				.attr("y",y+_spacer)
+				.style("fill",_color)
+				.style("font-weight","bold")
+				.style("writing-mode","tb")
+				.style("font-size",_headlineSize);
 			
-		lanes.append("rect")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer)))
-			.attr("y",_yBase)
-			.attr("width",_width)
-			.attr("height",_height)
-			.style("fill","grey")
-			.style("opacity",0.2);
-			
-			lanes.append("text")
-			.text("APPEAL")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
-			.attr("y",_yBase+10)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("writing-mode","tb")
-			.style("font-size",_headlineSize);
-			i++;
-			
-	lanes.append("rect")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer)))
-			.attr("y",_yBase)
-			.attr("width",_width)
-			.attr("height",_height)
-			.style("fill","grey")
-			.style("opacity",0.2);
-			
-			lanes.append("text")
-			.text("USP")
-			.attr("x",(_xBase+(i*_width)+(i*_spacer))+_textOffset)
-			.attr("y",_yBase+10)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("writing-mode","tb")
-			.style("font-size",_headlineSize);
-			
-			
+			//2) pillar rect
+			svg.append("rect")
+				.attr("x",x+(i*_pillarWidth)+(i*_spacer))
+				.attr("y",y-_spacer)
+				.attr("width",_pillarWidth)
+				.attr("height",_height)
+				.style("fill","grey")
+				.style("opacity",0.2);
+	}
 	
 }
 
+function _drawHowPillars(svg,data,x,y,width){
+	var _spacer = 2;
+	var _color = COLOR_BPTY;
+	var _headlineSize = "12px";
+	var _textSize="5px";
+	
+	var _d = _.nest(data,"lane");
+	
+	//0 HOW
+	svg.append("text")
+			.text("HOW")
+			.attr("x",x+width/2)
+			.attr("y",y-(3*_spacer))
+			.style("fill",_color)
+			.style("text-anchor","middle")
+			.style("font-weight","bold")
+			.style("font-size","20px");
+	
+	// for each lane
+	for (l in _d.children){
+		var _data = _d.children[l];
 
-function drawLaneText(svg,lane,side)
+		var _length = _data.children.length;
+		var _pillarWidth = (width/_length)-_spacer;
+		var _headlineHeight= 90;
+		var _height = height+_headlineHeight;
+		var _y = this.y(getLaneByNameNEW(_data.name).yt1);
+		
+		var _color = "black";
+		if (_data.name.indexOf("bwin") !=-1 || _data.name.indexOf("premium") !=-1) _color="white";
+		
+		//for each pillar
+		for (var i in _data.children){
+			var _offset = (getInt(i)*_pillarWidth)+_pillarWidth/2;
+			
+			//3) content title
+			svg.append("text")
+				.text(_data.children[i].title)
+				.attr("x",x+_offset+(i*_spacer))
+				.attr("y",_y+10)
+				.style("fill",_color)
+				.style("text-anchor","middle")
+				
+				.style("font-weight","bold")
+				.style("font-size","5px");
+				
+			//4) content / text
+			for (var c in _data.children[i].content){
+				var _text = _data.children[i].content[c].text;
+				svg.append("text")
+				.text(_text)
+				.attr("x",(x-6+((getInt(i)+1)*_pillarWidth)+(i*_spacer)-(c*6)))
+				.attr("y",_y+12)
+				.style("fill",_color)
+				.style("font-weight","normal")
+				.style("writing-mode","tb")
+				.style("font-size",_textSize);
+			}
+		}
+	}
+}
+
+
+
+
+function _drawLaneText(svg,lane,side)
 {
 	var i=0;
 	
 	var _color = "black";
 	if (lane.indexOf("bwin") !=-1 || lane.indexOf("premium") !=-1) _color="white";
 	
-	var _yBase = y((getLaneByNameNEW(lane).yt1))+40;
+	var _yBase = y((getLaneByNameNEW(lane).yt1))+30;
 	
 	// just get the last element in a FQN
 	lane = _.last(lane.split("."))
 	
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_LEFT_WIDTH+10
-	else if (side=="target") _xBase= x(KANBAN_END)+10;
+	else if (side=="target") _xBase= x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH-90;
 	
 	console.log("*****drawLaneText(): svg="+svg);
 	
@@ -909,7 +943,7 @@ function drawLaneText(svg,lane,side)
 
 		/**
 		 */
-		function _drawLaneBox(svg,x,y,width,height,lane){
+		function _drawLaneBox(svg,x,y,width,height,lane,side){
 			var _x_offset=10;
 			var _y_offset=4;
 			// if it comes in FQ format 
@@ -928,10 +962,16 @@ function drawLaneText(svg,lane,side)
 			
 			// only append logo if we have declared on in external.svg
 			if (document.getElementById(lane)){
+				var _x = x+_x_offset;
+				var _y = y+_y_offset;
+				
+				if (side=="right"){
+					_x= x+LANE_LABELBOX_RIGHT_WIDTH-90;
+				}
 				svg.append("use")
 				.attr("xlink:href","#"+lane)
-				.attr("x",x+_x_offset)
-				.attr("y",y+_y_offset);
+				.attr("x",_x)
+				.attr("y",_y);
 			}
 		}
 		
@@ -1674,11 +1714,14 @@ function drawMetrics(){
 		var i=0;
 		var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
 					
+		// y space between KPIs
+		var _kpiYOffset = 15;
+		
 		//left			
 		var _bracketXOffset = LANE_LABELBOX_LEFT_WIDTH+80;
 		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
 		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
-		var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
+		//var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
 		
 		//right
 		
@@ -1687,429 +1730,275 @@ function drawMetrics(){
 		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH;
 		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
 		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
-		var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
+		//var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
 
 		//2
 		var _2Offset = 150;
 		var _bracketXOffsetRight2 = _bracketXOffsetRight+_2Offset;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
-		var _tertiaryXOffsetRight2 = _tertiaryXOffsetRight+_2Offset;
+		//var _tertiaryXOffsetRight2 = _tertiaryXOffsetRight+_2Offset;
 
 		//goal
 		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +300;
-
 		
-		
-		
-		
-		// => this for sure should be refactored into ONE parametrized method
-		
-		// -------------------------- baseline -------------------------------
-		var _baselinePrimarySum=0;
-		var _targetPrimarySum1=0;
-		var _targetPrimarySum2=0;
-		
-		var _bOffset = 60;
-		
-		gMetrics.append("g").attr("id","primary").append("g").attr("id","baseline")
-		.selectAll("primary_baseline")
-		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="baseline"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "1metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//primary metrics
-				var _primTextYOffset = 50;//_height/2;
-
-				// 100 is the height of the brackets svg
-				var _bracketHeight = 100;
-
-				if (d.sustainable==1) _baselinePrimarySum = _baselinePrimarySum+parseInt(d.number);
-
-				var _color;
-				if (d.sustainable==1) _color="blue";
-				else _color="grey";
-				//_drawBracket(d3.select(this),_color,"left",(x(KANBAN_START)-_bracketXOffset),_y,(_height/_bracketHeight));
-
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_y+_primTextYOffset,10,"left");
-			}
-
-			i++;
-		});
-
 		i=0;
 
-
-		//_drawMetricBlock(gMetrics,"baseline","secondary",0);
-
-
-	//---------------------------- secondary ---------------------------------
-		gMetrics.append("g").attr("id","secondary").append("g").attr("id","baseline")
-		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="baseline"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "2metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-
-				var _y = y(_l.yt1);
+	// all KPIs & results in baseline
+	
+		var _baselineResultSum=0;
+		var _targetResultSum1=0;
+		var _targetResultSum2=0;
+		
+		var _bOffset = 60;
+		var _primTextYOffset=18; 
+	
+	
+	// ----------------------------------- baseline -----------------------------------------------
+	var _met = metricData.filter(function(d){return d.dimension=="baseline"});
+	var _metByLane = _.nest(_met,"lane");
+	
+	for (var m in _metByLane.children){
+		var _l = getLaneByNameNEW(_metByLane.children[m].name);
+		if (_l){
+			i=0;
+			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
+						return a.class > b.class?1:-1;	
+					});
+			for (k in sortedMetrics){
+				var _mm = _metByLane.children[m].children[k];
+				var _y = y(_l.yt1)+(i*_kpiYOffset);
 				var _height = y(_l.yt2-_l.yt1);
 				
 				//secondary metrics
 				var _secTextYOffset = 10;//_height/2;
 			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6,"right");
+				if (_mm.class=="kpi") {
+					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6,"right");
+				}
+				else if (_mm.class=="result") {
+					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_y+_primTextYOffset,10,"left");
+					if (_mm.sustainable==1) _baselineResultSum = _baselineResultSum+parseInt(_mm.number);
+				}
+				i++
 			}
-			i++;
-		});
-		 
-		i=0;
-	//---------------------------- tertiary ---------------------------------
-		gMetrics.append("g").attr("id","tertiary").append("g").attr("id","baseline")
-		.selectAll("tertiary_baseline")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="baseline"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "3metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//tertiary metrics
-				var _tertTextYOffset = 25;//(_height/2)+20;
-			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_START)-_tertiaryXOffset,_y+_tertTextYOffset,6,"right");
-			}
-			i++;
-		});
-
-
-		
-		// calculated sum
-		
-		//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
-		var _yTotal =-35;
-		var _total = {"number":_baselinePrimarySum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
-		
-		_drawTextMetric(gMetrics.select("#baseline"),_total,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yTotal,10);
-		
-
-		//pie baseline
-		
-		var _yPie = -80;
-		_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset+_bOffset,_yPie);
-
-		// cx baseline 
-		var _yCX =-102;
-		var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-		_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180-_bOffset,_yCX);
-		
-		
-		//market share
-		var _yMarketShare =-120;
-		var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yMarketShare,10);
-		
-		
-		
-		// -------------------------- target 1-year (2014) -------------------------------
-		i=0;
-		
-		var _1Offset = 70;
-		
-		gMetrics.select("#primary").append("g").attr("id","target1").selectAll("primary_future")
-		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast1" }))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "1metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-			
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//primary metrics
-				var _primTextYOffset = 50;//_height/2;
-
-				// 100 is the height of the brackets svg
-				var _bracketHeight = 100;
-				
-				
-				if (d.sustainable==1) _targetPrimarySum1 = _targetPrimarySum1+parseInt(d.number);
-				
-				var _color;
-				if (d.sustainable==1) _color="blue";
-				else _color="grey";
-				//_drawBracket(d3.select(this),_color,"right",(x(KANBAN_END)+_bracketXOffsetRight),_y,(_height/_bracketHeight));
-				
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_y+_primTextYOffset,10,"right");
-			}
-			i++;
-		});
-		
-		i=0;
-
-	//---------------------------- secondary ---------------------------------
-		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target1")
-		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast1"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "2metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//secondary metrics
-				var _primTextYOffset = 10;//_height/2;
-				
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight,_y+_primTextYOffset,6);
-			}
-			i++;
-		});
-
-		i=0;
-	//---------------------------- tertiary ---------------------------------
-		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target1")
-		.selectAll("tertiary_target")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast1"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "3metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//tertiary metrics
-				var _tertTextYOffset = 25;//(_height/2)+20;
-			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight,_y+_tertTextYOffset,6);
-			}
-			i++;
-		});
-
-
-		// calculated sum
-		_total.number=_targetPrimarySum1;
-		_drawTextMetric(gMetrics.select("#target1"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_yTotal,10,"right");
-
-
-		
-		
-		
-		// -------------------------- target 2-years (2015)-------------------------------
-		i=0;
-		
-		var _2Offset = 70;
-		
-		gMetrics.select("#primary").append("g").attr("id","target2").selectAll("primary_future2")
-		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="forecast2" }))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "1metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-			
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//primary metrics
-				var _primTextYOffset = 50;//_height/2;
-
-				// 100 is the height of the brackets svg
-				var _bracketHeight = 100;
-				
-				
-				if (d.sustainable==1) _targetPrimarySum2 = _targetPrimarySum2+parseInt(d.number);
-				
-				var _color;
-				if (d.sustainable==1) _color="blue";
-				else _color="grey";
-		
-				//_drawBracket(d3.select(this),_color,"right",(x(KANBAN_END)+_bracketXOffsetRight2),_y,(_height/_bracketHeight));
-				
-				_drawTextMetric(d3.select(this),d,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_y+_primTextYOffset,10,"right");
-			}
-			i++;
-		});
-		
-		
-		
-		i=0;
-
-	//---------------------------- secondary ---------------------------------
-		gMetrics.select("#secondary").append("g").attr("id","secondary").append("g").attr("id","target2")
-		.selectAll("secondary_baseline")
-		.data(metricData.filter(function(d){return d.class=="secondary" && d.dimension=="forecast2"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "2metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//secondary metrics
-				var _primTextYOffset = 10;//_height/2;
-				
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight2,_y+_primTextYOffset,6);
-			}
-			i++;
-		});
-
-		i=0;
-	//---------------------------- tertiary ---------------------------------
-		gMetrics.select("#tertiary").append("g").attr("id","tertiary").append("g").attr("id","target2")
-		.selectAll("tertiary_target")
-		.data(metricData.filter(function(d){return d.class=="tertiary" && d.dimension=="forecast2"}))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "3metric_"+d.id;})
-		.each(function(d){
-			var _l = getLaneByNameNEW(d.lane);
-			if (_l){
-				var _y = y(_l.yt1);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//tertiary metrics
-				var _tertTextYOffset = 25;//(_height/2)+20;
-			
-				_drawTextMetric(d3.select(this),d,"metricSmall",x(KANBAN_END)+_tertiaryXOffsetRight2,_y+_tertTextYOffset,6);
-			}
-			i++;
-		});
-
-
-		// calculated sum
-		_total.number=_targetPrimarySum2;
-		_drawTextMetric(gMetrics.select("#target2"),_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yTotal,10,"right");
-
-
-		//pie target 1
-		_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight-70,_yPie);
-
-		//pie target 2
-		_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yPie);
-
-
-		// cx target 
-		var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-		_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+_secondaryXOffsetRight2-40,_yCX);
-		
-		//market share
-		var _share1 = {"number":MARKETSHARE_TARGET1 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-70,_yMarketShare,10);
-		
-		var _share2 = {"number":MARKETSHARE_TARGET2 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yMarketShare,10);
-		
-		
-	/* ----------------------------------------- risks ------------------------------------------------ */
-		if (getLaneByNameNEW("foxy")) 
-			var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
-		else
-			var _yRisk = y(20)-30;
-		
-		var _xRisk = x(KANBAN_END)+_goalXOffset+10;
-		
-		_drawSign(gMetrics,_xRisk,_yRisk,"risks");
-		
-		var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
-		var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
-		var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":-1 };
-		var _risk4 = {"number":-30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":-1 };
-		
-		
-		_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk,_yRisk+65,10);
-		_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk,_yRisk+85,10);
-		_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk,_yRisk+105,10);
-		_drawTextMetric(gMetrics.select("#target"),_risk4,"metricBig",_xRisk,_yRisk+125,10);
-
-
-	/* ----------------------------------------- opportunities -----------------------------------------*/
+		}
+	}
+	// calculated sum
 	
-		_yRisk=_yRisk-200;
-	_drawSign(gMetrics,_xRisk,_yRisk+100,"opportunities");
+	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
+	var _yTotal =-35;
+	var _total = {"number":_baselineResultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
+	
+	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yTotal,10);
+	
+
+	//pie baseline
+	
+	var _yPie = -80;
+	_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset+_bOffset,_yPie);
+
+	// cx baseline 
+	var _yCX =-102;
+	var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
+	_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180-_bOffset,_yCX);
+	
+	
+	//market share
+	var _yMarketShare =-120;
+	var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yMarketShare,10);
 		
-		var _opp1 = {"number":+55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":2 };
-		var _opp2 = {"number":+18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":2 };
-		var _opp3 = {"number":+25 ,"scale":"mio EUR" ,"type":"mobile", "sustainable":2 };
-		var _opp4 = {"number":+30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":2 };
+	// -------------------------- target 1-year (2014) -------------------------------
+	i=0;
+	
+	var _1Offset = 70;
 		
+	var _met = metricData.filter(function(d){return d.dimension=="forecast1"});
+	var _metByLane = _.nest(_met,"lane");
+	
+	for (var m in _metByLane.children){
+		var _l = getLaneByNameNEW(_metByLane.children[m].name);
+		if (_l){
+			i=0;
+			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
+						return a.class > b.class?1:-1;	
+					});
+			for (k in sortedMetrics){
+				var _mm = _metByLane.children[m].children[k];
+				var _y = y(_l.yt1)+(i*_kpiYOffset);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _secTextYOffset = 10;//_height/2;
+			
+				if (_mm.class=="kpi") {
+					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight,_y+_secTextYOffset,6);
+				}
+				else if (_mm.class=="result") {
+					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_y+_primTextYOffset,10,"right");
+					if (_mm.sustainable==1) _targetResultSum1 = _targetResultSum1+parseInt(_mm.number);
+				}
+				i++
+			}
+		}
+	}
+	// calculated sum
+	_total.number=_targetResultSum1;
+	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_yTotal,10,"right");
+
 		
-		_drawTextMetric(gMetrics.select("#target"),_opp1,"metricBig",_xRisk,_yRisk+25,10);
-		_drawTextMetric(gMetrics.select("#target"),_opp2,"metricBig",_xRisk,_yRisk+45,10);
-		_drawTextMetric(gMetrics.select("#target"),_opp3,"metricBig",_xRisk,_yRisk+65,10);
-		_drawTextMetric(gMetrics.select("#target"),_opp4,"metricBig",_xRisk,_yRisk+85,10);
+	// -------------------------- target 2-years (2015)-------------------------------
+	i=0;
+	
+	var _2Offset = 70;
+		
+	var _met = metricData.filter(function(d){return d.dimension=="forecast2"});
+	var _metByLane = _.nest(_met,"lane");
+	
+	for (var m in _metByLane.children){
+		var _l = getLaneByNameNEW(_metByLane.children[m].name);
+		if (_l){
+			i=0;
+			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
+						return a.class > b.class?1:-1;	
+					});
+			for (k in sortedMetrics){
+				var _mm = _metByLane.children[m].children[k];
+				var _y = y(_l.yt1)+(i*_kpiYOffset);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _secTextYOffset = 10;//_height/2;
+			
+				if (_mm.class=="kpi") {
+					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight2,_y+_secTextYOffset,6);
+				}
+				else if (_mm.class=="result") {
+					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_y+_primTextYOffset,10,"right");
+					if (_mm.sustainable==1) _targetResultSum2 = _targetResultSum2+parseInt(_mm.number);
+				}
+				i++
+			}
+		}
+	}
+		
+	// calculated sum
+	_total.number=_targetResultSum2;
+	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yTotal,10,"right");
+
+
+	//pie target 1
+	_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight-70,_yPie);
+
+	//pie target 2
+	_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yPie);
+
+
+	// cx target 
+	var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
+	_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+_secondaryXOffsetRight2-40,_yCX);
+	
+	//market share
+	var _share1 = {"number":MARKETSHARE_TARGET1 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-70,_yMarketShare,10);
+	
+	var _share2 = {"number":MARKETSHARE_TARGET2 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yMarketShare,10);
+	
+	
+/* ----------------------------------------- risks ------------------------------------------------ */
+	if (getLaneByNameNEW("foxy")) 
+		var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
+	else
+		var _yRisk = y(20)-30;
+	
+	var _xRisk = x(KANBAN_END)+_goalXOffset+10;
+	
+	_drawSign(gMetrics,_xRisk,_yRisk,"risks");
+	
+	var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
+	var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
+	var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile(too slow)", "sustainable":-1 };
+	var _risk4 = {"number":-30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":-1 };
+	var _risk5 = {"number":-25 ,"scale":"mio EUR" ,"type":"operations", "sustainable":-1 };
+	
+	
+	_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk,_yRisk+65,10);
+	_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk,_yRisk+85,10);
+	_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk,_yRisk+105,10);
+	_drawTextMetric(gMetrics.select("#target"),_risk4,"metricBig",_xRisk,_yRisk+125,10);
+	_drawTextMetric(gMetrics.select("#target"),_risk5,"metricBig",_xRisk,_yRisk+145,10);
+
+
+/* ----------------------------------------- opportunities -----------------------------------------*/
+
+	_yRisk=_yRisk-200;
+	_drawSign(gMetrics,_xRisk,_yRisk+120,"opportunities");
+	
+	var _opp1 = {"number":+45 ,"scale":"mio EUR" ,"type":"US (calif)", "sustainable":2 };
+	var _opp2 = {"number":+50 ,"scale":"mio EUR" ,"type":"UK (bwin)", "sustainable":2 };
+	var _opp3 = {"number":+40 ,"scale":"mio EUR" ,"type":"mobile (faster)", "sustainable":2 };
+	var _opp4 = {"number":+15 ,"scale":"mio EUR" ,"type":"availability", "sustainable":2 };
+	var _opp5 = {"number":+40 ,"scale":"mio EUR" ,"type":"RUS (licence)", "sustainable":2 };
+	
+	
+	_drawTextMetric(gMetrics.select("#target"),_opp1,"metricBig",_xRisk,_yRisk+25,10);
+	_drawTextMetric(gMetrics.select("#target"),_opp2,"metricBig",_xRisk,_yRisk+45,10);
+	_drawTextMetric(gMetrics.select("#target"),_opp3,"metricBig",_xRisk,_yRisk+65,10);
+	_drawTextMetric(gMetrics.select("#target"),_opp4,"metricBig",_xRisk,_yRisk+85,10);
+	_drawTextMetric(gMetrics.select("#target"),_opp5,"metricBig",_xRisk,_yRisk+105,10);
 
 
 
-		var METRIC_DATES_Y=-160;
-	/* ------------------------------------- metric dates ------- ------------------------------------*/
-		//baseline
-		_drawMetricDate(gMetrics,x(KANBAN_START)-215,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
-		
-		//target1
-		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-40),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
-		
-		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+5);
-		//target2
-		_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-40),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
-		
-		
+	var METRIC_DATES_Y=-160;
+/* ------------------------------------- metric dates ------- ------------------------------------*/
+	//baseline
+	_drawMetricDate(gMetrics,x(KANBAN_START)-215,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
+	
+	//target1
+	_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-40),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
+	
+	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+5);
+	//target2
+	_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-40),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
+	
+	
 
-	/* ------------------------------------- goal column ------- ------------------------------------*/
-		
-		_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_DATE_GOAL,"GOAL","norbert says");
+/* ------------------------------------- goal column ------- ------------------------------------*/
+	
+	_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_DATE_GOAL,"GOAL","norbert says");
 
-		i=0;
-		
-		//delta symbol
-		_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-30,_yTotal+20,"icon_delta",0.4);
-		
-		var _diff = 700-_targetPrimarySum2;
-		
-		var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
-		_drawTextMetric(gMetrics.select("#target"),_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
-		
-		// delta end
-		
-		
-		
-		gMetrics.select("#primary").append("g").attr("id","goal").selectAll("primary_future")
-		.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="goal" }))
-		.enter()
-		.append("g")
-		.attr("id",function(d){return "1metric_"+d.id;})
-		.each(function(d){
-			var _lane = d.lane;
+	i=0;
+	
+	//delta symbol
+	_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-30,_yTotal+20,"icon_delta",0.4);
+	
+	var _diff = 700-_targetResultSum2;
+	
+	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
+	_drawTextMetric(gMetrics.select("#target"),_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
+	
+	// delta end
+	
+	
+	
+	gMetrics.select("#primary").append("g").attr("id","goal").selectAll("primary_future")
+	.data(metricData.filter(function(d){return d.class=="primary" && d.dimension=="goal" }))
+	.enter()
+	.append("g")
+	.attr("id",function(d){return "1metric_"+d.id;})
+	.each(function(d){
+		var _lane = d.lane;
 
-			// goal total
-			_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
-		})
+		// goal total
+		_drawTextMetric(gMetrics.select("#target"),d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
+	})
 
-		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
-	 
-	/* ------------------------------------- linechart prototype ------------------------------------*/
-		drawLineChart();
+	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
+ 
+/* ------------------------------------- linechart prototype ------------------------------------*/
+	drawLineChart();
 	
 	}	
 
@@ -2128,13 +2017,13 @@ function _drawSign(svg,x,y,type,scale){
 /**
  * icon_bracket<direction><type>
  */
-function _drawBracket(svg,color,direction,x,y,scaleY,type,opacity){
+function _drawBracket(svg,color,direction,x,y,scaleX,scaleY,type,opacity){
 		if (!type) type="bracket";
 		if (!opacity) opacity = 0.15;
 		//svg.append("use").attr("xlink:href","#icon_triangle_"+direction+_bracketType)
 		svg.append("use").attr("xlink:href","#icon_"+type+"_"+direction+"_"+color)
 		.style("opacity",opacity)
-		.attr("transform","translate ("+x+","+y+") scale(1,"+scaleY+")");
+		.attr("transform","translate ("+x+","+y+") scale("+scaleX+","+scaleY+")");
 	
 		
 }
@@ -2642,8 +2531,46 @@ function drawVersion(){
 	
 	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_y+67,5,"normal","end");
 	
-	_drawText(gVersion,TITLE_TEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-180,24,"normal","middle",COLOR_BPTY,"italic");
-	_drawText(gVersion,TITLE_SUBTEXT,x(KANBAN_START.getTime()+((KANBAN_END.getTime()-KANBAN_START.getTime())/2)),-160,16,"normal","middle",COLOR_BPTY,"italic");
+
+
+	// ----- vision statement ------
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
+	var _y = -200;
+	
+	_drawText(gVersion,TITLE_TEXT,_x,_y,30,"normal","middle",COLOR_BPTY,"italic");
+	_drawText(gVersion,TITLE_SUBTEXT,_x,_y+20,16,"normal","middle",COLOR_BPTY,"italic");
+	
+	// --- mission strategy stuff ------
+		
+	//_drawBracket(gVersion,"blue","bottom",350,-180,2,.8,"triangle",1);
+	_drawBracket(gVersion,"blue","bottom",300,_y+90,3,.8,"triangle",1);
+	
+	
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
+	//var _x = 460;
+	gVersion.append("text")
+		.text("::focus in BWIN via agressive sports mobile aquisition in europe")
+		.attr("x",_x)
+		.attr("y",_y+40)
+		.style("fill",COLOR_BPTY)
+		.style("text-anchor","middle")
+		.style("font-style","italic")
+		.style("font-size","8px")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::position partypoker and our b2b services as leading online gaming biz in US")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::establish lean engineering culture to  build ‘right’ software solution and IP")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::re-establish entrepreneurial thinking & leadership (ownership");
+	
+	
+	
 	
 }
 
@@ -3600,3 +3527,7 @@ var PACKAGE_VERSION="20140129_1156";
 var PACKAGE_VERSION="20140129_1750";
 var PACKAGE_VERSION="20140130_1811";
 var PACKAGE_VERSION="20140130_1930";
+var PACKAGE_VERSION="20140131_0828";
+	
+var PACKAGE_VERSION="20140131_1820";
+	
