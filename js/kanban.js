@@ -1796,55 +1796,18 @@ function drawMetrics(){
 	
 	
 
-/* ----------------------------------------- risks ------------------------------------------------ */
+// ------------------------------ potentials ------------------------------------------------
+
 	var gMetricsRisk = gMetricsTarget2.append("g").attr("id","metrics_risk");
 
-	var _risks= metricData.filter(function(d){return (d.dimension=="forecast2") && (d.class=="risk")});
-	
-
-	if (getLaneByNameNEW("foxy")) 
-		var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
-	else
-		var _yRisk = y(20)-30;
-	
+	var _yRisk = 50;
 	var _xRisk = x(KANBAN_END)+_goalXOffset+30;
-	
-	_drawSign(gMetricsRisk,_xRisk,_yRisk,"risks");
-	
-	var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
-	var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
-	var _risk3 = {"number":-25 ,"scale":"mio EUR" ,"type":"mobile(too slow)", "sustainable":-1 };
-	var _risk4 = {"number":-30 ,"scale":"mio EUR" ,"type":"availability", "sustainable":-1 };
-	var _risk5 = {"number":-25 ,"scale":"mio EUR" ,"type":"operations", "sustainable":-1 };
-	
-	
-	_drawTextMetric(gMetricsRisk,_risk1,"metricBig",_xRisk,_yRisk+65,10);
-	_drawTextMetric(gMetricsRisk,_risk2,"metricBig",_xRisk,_yRisk+85,10);
-	_drawTextMetric(gMetricsRisk,_risk3,"metricBig",_xRisk,_yRisk+105,10);
-	_drawTextMetric(gMetricsRisk,_risk4,"metricBig",_xRisk,_yRisk+125,10);
-	_drawTextMetric(gMetricsRisk,_risk5,"metricBig",_xRisk,_yRisk+145,10);
-
-
 /* ----------------------------------------- opportunities -----------------------------------------*/
+	_drawPotentials(gMetricsRisk,"forecast2","opportunity",_xRisk,_yRisk);
 
-	var _opps= metricData.filter(function(d){return (d.dimension=="forecast2") && (d.class=="opportunity")});
+/* ----------------------------------------- risks ------------------------------------------------ */
+	_drawPotentials(gMetricsRisk,"forecast2","risk",_xRisk,_yRisk+220);
 	
-	_yRisk=_yRisk-200;
-	_drawSign(gMetricsRisk,_xRisk,_yRisk+120,"opportunities");
-	
-	var _opp1 = {"number":+45 ,"scale":"mio EUR" ,"type":"US (calif)", "sustainable":2 };
-	var _opp2 = {"number":+50 ,"scale":"mio EUR" ,"type":"UK (bwin)", "sustainable":2 };
-	var _opp3 = {"number":+40 ,"scale":"mio EUR" ,"type":"mobile (faster)", "sustainable":2 };
-	var _opp4 = {"number":+15 ,"scale":"mio EUR" ,"type":"availability", "sustainable":2 };
-	var _opp5 = {"number":+40 ,"scale":"mio EUR" ,"type":"RUS (licence)", "sustainable":2 };
-	
-	
-	_drawTextMetric(gMetricsRisk,_opp1,"metricBig",_xRisk,_yRisk+25,10);
-	_drawTextMetric(gMetricsRisk,_opp2,"metricBig",_xRisk,_yRisk+45,10);
-	_drawTextMetric(gMetricsRisk,_opp3,"metricBig",_xRisk,_yRisk+65,10);
-	_drawTextMetric(gMetricsRisk,_opp4,"metricBig",_xRisk,_yRisk+85,10);
-	_drawTextMetric(gMetricsRisk,_opp5,"metricBig",_xRisk,_yRisk+105,10);
-
 
 
 /* ------------------------------------- goal column ------- ------------------------------------*/
@@ -1885,6 +1848,26 @@ function drawMetrics(){
 	}	
 
 } //end drawMetrics
+
+
+/** risks and opportunitis from metricData
+ */
+function _drawPotentials(svg,dimension,type,xBase,yBase){
+	var _data= metricData.filter(function(d){return (d.dimension==dimension) && (d.class==type)});
+	var _ySign;
+	
+	for (var i in _data){
+		_drawTextMetric(svg,_data[i],"metricBig",xBase,yBase+(i*20),10);
+	}
+
+	if (type=="risk")_ySign = yBase-65;
+	else if (type=="opportunity")_ySign= yBase+(i*20)+10;
+	
+	_drawSign(svg,xBase+5,_ySign,type);
+}
+
+
+
 
 
 /** helper function to return array element of  json structure by specified name
@@ -1975,6 +1958,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	//market share
 	var _yMarketShare =-120;
 	var _share = {"number":_getDataBy("dimension",dimension,MARKETSHARE_DATA).data ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	
 	
 	_drawTextMetric(gMetrics,_share,"metricBig",x1Base,_yMarketShare,10);
 	
