@@ -1430,7 +1430,7 @@ function drawItems(){
 					   .attr("x",_x)
 					   .attr("y",_y);
 	
-					textarea(_text,d.name,_x,_y,20,5);
+					textarea(_text,d.name,_x,_y,20,_textSize-1);
 	
 					
 					
@@ -3445,12 +3445,14 @@ function textarea(svg,caption, x, y,maxChars,lineHeight) {
 
 	for (var n = 0; n < words.length; n++) {
 		var testLine = line + words[n] + " ";
-		if (testLine.length > maxChars)
+		if (testLine.length > maxChars || words[n]=="|")
 		{
 			svg.append("tspan")
 			.attr("x",x)
 			.attr("y",y)
 			.text(line);
+  
+			if (words[n]=="|") words[n]="";
   
 			line = words[n] + " ";
 			y += lineHeight;
