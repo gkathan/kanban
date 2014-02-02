@@ -89,24 +89,20 @@ var ITEMDATA_DEPTH_LEVEL;
 
 
 
+var PIE_DATA;
 
-var PIE_BASELINE;
-var PIE_TARGET1; 
-var PIE_TARGET2; 
 
 // percentage 
-var MARKETSHARE_BASELINE;
-var MARKETSHARE_TARGET1;
-var MARKETSHARE_TARGET2;
+var MARKETSHARE_DATA;
 
 //cx metrics
-var RECOMMENDATION_BASELINE; 
-var RECOMMENDATION_TARGET;
+var RECOMMENDATION_DATA;
 	
-var LOYALTYINDEX_BASELINE;
-var LOYALTYINDEX_TARGET; 
-	
+var LOYALTYINDEX_DATA;
 
+// metric dates
+
+var METRICDATES_DATA;
 
 
 /**
@@ -165,7 +161,7 @@ var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
 
 var LANE_LABELBOX_LEFT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_WIDTH =200;
+var LANE_LABELBOX_RIGHT_WIDTH =100;
 
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
@@ -672,7 +668,7 @@ function drawLanes(){
 	
 		
 		// lane area
-		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_height,i)
+		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+280,_height,i)
 
 		//target box	
 		_metrics =_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
@@ -717,7 +713,7 @@ function drawLanes(){
 				d3.select(this).append("line")
 				.attr("x1", x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH-200)
 				.attr("y1", _t)
-				.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+200)
+				.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+400)
 				.attr("y2", _t)
 				.attr("class", "themeLine");
 
@@ -785,9 +781,11 @@ function drawLanes(){
 		var _yBase = -70;
 		var _width = LANE_LABELBOX_RIGHT_WIDTH-90;						
 							
-	  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
-	  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
+	  if (_width >100) {
+		  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
+		  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
 
+	}
 }	
 	
 function _drawPillarColumns(svg,data,x,y,width){
@@ -819,7 +817,7 @@ function _drawPillarColumns(svg,data,x,y,width){
 				.attr("width",_pillarWidth)
 				.attr("height",_height)
 				.style("fill","grey")
-				.style("opacity",0.2);
+				.style("opacity",0.1);
 	}
 	
 }
@@ -837,10 +835,11 @@ function _drawHowPillars(svg,data,x,y,width){
 			.text("HOW")
 			.attr("x",x+width/2)
 			.attr("y",y-(3*_spacer))
-			.style("fill",_color)
+			.style("fill","grey")
+			.style("opacity",0.1)
 			.style("text-anchor","middle")
 			.style("font-weight","bold")
-			.style("font-size","20px");
+			.style("font-size","40px");
 	
 	// for each lane
 	for (l in _d.children){
@@ -1739,46 +1738,38 @@ function onTooltipOutHandler(d,tooltip,highlight){
 
 
 
+
+
 function drawMetrics(){
 	d3.select("#metrics").remove();
 	
 	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
 	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" )){
 
-		console.log("----------------------------->drawMetrics:svg="+svg);
+		//console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
 		var gMetrics= svg.append("g").attr("id","metrics");//.style("visibility","hidden");
 					
 		// y space between KPIs
 		var _kpiYOffset = 15;
-		
+		var _yTotal =-35;
 		//left			
 		var _bracketXOffset = LANE_LABELBOX_LEFT_WIDTH+80;
 		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
 		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
-		//var _tertiaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
-		
 		//right
-		
-		
 		//1
 		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH;
 		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
 		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
-		//var _tertiaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
-
 		//2
 		var _2Offset = 150;
 		var _bracketXOffsetRight2 = _bracketXOffsetRight+_2Offset;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
-		//var _tertiaryXOffsetRight2 = _tertiaryXOffsetRight+_2Offset;
-
 		//goal
 		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +300;
 		
-		i=0;
-
 	// all KPIs & results in baseline
 	
 		var _baselineResultSum=0;
@@ -1788,161 +1779,34 @@ function drawMetrics(){
 		var _bOffset = 60;
 		var _primTextYOffset=18; 
 	
+// -------------------------- baseline -----------------------------------------------
+	var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
+	_renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset));
 	
-	// ----------------------------------- baseline -----------------------------------------------
-	var _met = metricData.filter(function(d){return d.dimension=="baseline"});
-	var _metByLane = _.nest(_met,"lane");
-	
-	for (var m in _metByLane.children){
-		var _l = getLaneByNameNEW(_metByLane.children[m].name);
-		if (_l){
-			i=0;
-			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
-						return a.class > b.class?1:-1;	
-					});
-			for (k in sortedMetrics){
-				var _mm = _metByLane.children[m].children[k];
-				var _y = y(_l.yt1)+(i*_kpiYOffset);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//secondary metrics
-				var _secTextYOffset = 10;//_height/2;
-			
-				if (_mm.class=="kpi") {
-					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_START)-_secondaryXOffset,_y+_secTextYOffset,6,"right");
-				}
-				else if (_mm.class=="result") {
-					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_y+_primTextYOffset,10,"left");
-					if (_mm.sustainable==1) _baselineResultSum = _baselineResultSum+parseInt(_mm.number);
-				}
-				i++
-			}
-		}
-	}
-	// calculated sum
-	
-	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
-	var _yTotal =-35;
-	var _total = {"number":_baselineResultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
-	
-	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yTotal,10);
-	
-
-	//pie baseline
-	
-	var _yPie = -80;
-	_drawPie(gMetrics,"baseline",PIE_BASELINE,x(KANBAN_START)-_primaryXOffset+_bOffset,_yPie);
-
-	// cx baseline 
-	var _yCX =-102;
-	var _cxBase = {"recommendation":RECOMMENDATION_BASELINE,"loyalty":LOYALTYINDEX_BASELINE}
-	_drawCX(gMetrics,_cxBase,x(KANBAN_START)-180-_bOffset,_yCX);
-	
-	
-	//market share
-	var _yMarketShare =-120;
-	var _share = {"number":MARKETSHARE_BASELINE ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_share,"metricBig",x(KANBAN_START)-_primaryXOffset+_bOffset,_yMarketShare,10);
-		
-	// -------------------------- target 1-year (2014) -------------------------------
-	i=0;
-	
+// -------------------------- target 1-year (2014) -------------------------------
 	var _1Offset = 70;
-		
-	var _met = metricData.filter(function(d){return d.dimension=="forecast1"});
-	var _metByLane = _.nest(_met,"lane");
-	
-	for (var m in _metByLane.children){
-		var _l = getLaneByNameNEW(_metByLane.children[m].name);
-		if (_l){
-			i=0;
-			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
-						return a.class > b.class?1:-1;	
-					});
-			for (k in sortedMetrics){
-				var _mm = _metByLane.children[m].children[k];
-				var _y = y(_l.yt1)+(i*_kpiYOffset);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//secondary metrics
-				var _secTextYOffset = 10;//_height/2;
-			
-				if (_mm.class=="kpi") {
-					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight,_y+_secTextYOffset,6);
-				}
-				else if (_mm.class=="result") {
-					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_y+_primTextYOffset,10,"right");
-					if (_mm.sustainable==1) _targetResultSum1 = _targetResultSum1+parseInt(_mm.number);
-				}
-				i++
-			}
-		}
-	}
-	// calculated sum
-	_total.number=_targetResultSum1;
-	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,_yTotal,10,"right");
 
+	var gMetricsTarget1 = gMetrics.append("g").attr("id","metrics_target1");
+	_renderMetrics(gMetricsBaseline,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight);
+
+	d3.select("#metrics_forecast1").style("opacity",0.5);
+
+	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight2-35);
 		
-	// -------------------------- target 2-years (2015)-------------------------------
-	i=0;
-	
+// -------------------------- target 2-years (2015)-------------------------------
 	var _2Offset = 70;
-		
-	var _met = metricData.filter(function(d){return d.dimension=="forecast2"});
-	var _metByLane = _.nest(_met,"lane");
-	
-	for (var m in _metByLane.children){
-		var _l = getLaneByNameNEW(_metByLane.children[m].name);
-		if (_l){
-			i=0;
-			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
-						return a.class > b.class?1:-1;	
-					});
-			for (k in sortedMetrics){
-				var _mm = _metByLane.children[m].children[k];
-				var _y = y(_l.yt1)+(i*_kpiYOffset);
-				var _height = y(_l.yt2-_l.yt1);
-				
-				//secondary metrics
-				var _secTextYOffset = 10;//_height/2;
-			
-				if (_mm.class=="kpi") {
-					_drawTextMetric(gMetrics,_mm,"metricSmall",x(KANBAN_END)+_secondaryXOffsetRight2,_y+_secTextYOffset,6);
-				}
-				else if (_mm.class=="result") {
-					_drawTextMetric(gMetrics,_mm,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_y+_primTextYOffset,10,"right");
-					if (_mm.sustainable==1) _targetResultSum2 = _targetResultSum2+parseInt(_mm.number);
-				}
-				i++
-			}
-		}
-	}
-		
-	// calculated sum
-	_total.number=_targetResultSum2;
-	_drawTextMetric(gMetrics,_total,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yTotal,10,"right");
-
-
-	//pie target 1
-	_drawPie(gMetrics,"target",PIE_TARGET1,x(KANBAN_END)+_primaryXOffsetRight-70,_yPie);
-
-	//pie target 2
-	_drawPie(gMetrics,"target",PIE_TARGET2,x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yPie);
-
-
-	// cx target 
-	var _cxTarget = {"recommendation":RECOMMENDATION_TARGET,"loyalty":LOYALTYINDEX_TARGET}
-	_drawCX(gMetrics,_cxTarget,x(KANBAN_END)+_secondaryXOffsetRight2-40,_yCX);
-	
-	//market share
-	var _share1 = {"number":MARKETSHARE_TARGET1 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_share1,"metricBig",x(KANBAN_END)+_primaryXOffsetRight-70,_yMarketShare,10);
-	
-	var _share2 = {"number":MARKETSHARE_TARGET2 ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	_drawTextMetric(gMetrics.select("#baseline"),_share2,"metricBig",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,_yMarketShare,10);
+	var gMetricsTarget2 = gMetrics.append("g").attr("id","metrics_target2");
+	_renderMetrics(gMetricsBaseline,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
 	
 	
+	
+
 /* ----------------------------------------- risks ------------------------------------------------ */
+	var gMetricsRisk = gMetricsTarget2.append("g").attr("id","metrics_risk");
+
+	var _risks= metricData.filter(function(d){return (d.dimension=="forecast2") && (d.class=="risk")});
+	
+
 	if (getLaneByNameNEW("foxy")) 
 		var _yRisk = y(getLaneByNameNEW("foxy").yt2)-30;
 	else
@@ -1950,7 +1814,7 @@ function drawMetrics(){
 	
 	var _xRisk = x(KANBAN_END)+_goalXOffset+30;
 	
-	_drawSign(gMetrics,_xRisk,_yRisk,"risks");
+	_drawSign(gMetricsRisk,_xRisk,_yRisk,"risks");
 	
 	var _risk1 = {"number":-55 ,"scale":"mio EUR" ,"type":"germany", "sustainable":-1 };
 	var _risk2 = {"number":-18 ,"scale":"mio EUR" ,"type":"nj", "sustainable":-1 };
@@ -1959,17 +1823,19 @@ function drawMetrics(){
 	var _risk5 = {"number":-25 ,"scale":"mio EUR" ,"type":"operations", "sustainable":-1 };
 	
 	
-	_drawTextMetric(gMetrics.select("#target"),_risk1,"metricBig",_xRisk,_yRisk+65,10);
-	_drawTextMetric(gMetrics.select("#target"),_risk2,"metricBig",_xRisk,_yRisk+85,10);
-	_drawTextMetric(gMetrics.select("#target"),_risk3,"metricBig",_xRisk,_yRisk+105,10);
-	_drawTextMetric(gMetrics.select("#target"),_risk4,"metricBig",_xRisk,_yRisk+125,10);
-	_drawTextMetric(gMetrics.select("#target"),_risk5,"metricBig",_xRisk,_yRisk+145,10);
+	_drawTextMetric(gMetricsRisk,_risk1,"metricBig",_xRisk,_yRisk+65,10);
+	_drawTextMetric(gMetricsRisk,_risk2,"metricBig",_xRisk,_yRisk+85,10);
+	_drawTextMetric(gMetricsRisk,_risk3,"metricBig",_xRisk,_yRisk+105,10);
+	_drawTextMetric(gMetricsRisk,_risk4,"metricBig",_xRisk,_yRisk+125,10);
+	_drawTextMetric(gMetricsRisk,_risk5,"metricBig",_xRisk,_yRisk+145,10);
 
 
 /* ----------------------------------------- opportunities -----------------------------------------*/
 
+	var _opps= metricData.filter(function(d){return (d.dimension=="forecast2") && (d.class=="opportunity")});
+	
 	_yRisk=_yRisk-200;
-	_drawSign(gMetrics,_xRisk,_yRisk+120,"opportunities");
+	_drawSign(gMetricsRisk,_xRisk,_yRisk+120,"opportunities");
 	
 	var _opp1 = {"number":+45 ,"scale":"mio EUR" ,"type":"US (calif)", "sustainable":2 };
 	var _opp2 = {"number":+50 ,"scale":"mio EUR" ,"type":"UK (bwin)", "sustainable":2 };
@@ -1978,48 +1844,34 @@ function drawMetrics(){
 	var _opp5 = {"number":+40 ,"scale":"mio EUR" ,"type":"RUS (licence)", "sustainable":2 };
 	
 	
-	_drawTextMetric(gMetrics.select("#target"),_opp1,"metricBig",_xRisk,_yRisk+25,10);
-	_drawTextMetric(gMetrics.select("#target"),_opp2,"metricBig",_xRisk,_yRisk+45,10);
-	_drawTextMetric(gMetrics.select("#target"),_opp3,"metricBig",_xRisk,_yRisk+65,10);
-	_drawTextMetric(gMetrics.select("#target"),_opp4,"metricBig",_xRisk,_yRisk+85,10);
-	_drawTextMetric(gMetrics.select("#target"),_opp5,"metricBig",_xRisk,_yRisk+105,10);
+	_drawTextMetric(gMetricsRisk,_opp1,"metricBig",_xRisk,_yRisk+25,10);
+	_drawTextMetric(gMetricsRisk,_opp2,"metricBig",_xRisk,_yRisk+45,10);
+	_drawTextMetric(gMetricsRisk,_opp3,"metricBig",_xRisk,_yRisk+65,10);
+	_drawTextMetric(gMetricsRisk,_opp4,"metricBig",_xRisk,_yRisk+85,10);
+	_drawTextMetric(gMetricsRisk,_opp5,"metricBig",_xRisk,_yRisk+105,10);
 
 
-
-	var METRIC_DATES_Y=-160;
-/* ------------------------------------- metric dates ------- ------------------------------------*/
-	//baseline
-	_drawMetricDate(gMetrics,x(KANBAN_START)-215,METRIC_DATES_Y,METRIC_DATE_BASELINE,"BASELINE 2013","projection for");
-	
-	//target1
-	_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight-40),METRIC_DATES_Y,METRIC_DATE_FORECAST1,"FORECAST 2014","best case for");
-	
-	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_primaryXOffsetRight+5);
-	//target2
-	_drawMetricDate(gMetrics,x(KANBAN_END)+(_secondaryXOffsetRight2-40),METRIC_DATES_Y,METRIC_DATE_FORECAST2,"FORECAST 2015","best case for");
-	
-	
 
 /* ------------------------------------- goal column ------- ------------------------------------*/
+	var gMetricsGoal = gMetricsTarget2.append("g").attr("id","metrics_goal");
 	
-	_drawMetricDate(gMetrics,x(KANBAN_END)+_goalXOffset,METRIC_DATES_Y,METRIC_DATE_GOAL,"GOAL","norbert says");
+	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,-160,_getDataBy("dimension","goal",METRICDATES_DATA).data);
 
 	i=0;
 	
 	//delta symbol
-	_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
-	_drawBracket(gMetrics,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
+	_drawSign(gMetricsGoal,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
+	_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
 	
 	var _diff = 700-_targetResultSum2;
 	
 	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
-	_drawTextMetric(gMetrics,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
+	_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
 	
 	// delta end
 	
-	
-	
-	gMetrics.append("g").attr("id","goal").selectAll("result_future")
+	//gMetrics.append("g").attr("id","goal").selectAll("result_future")
+	gMetricsGoal.selectAll("result_future")
 	.data(metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" }))
 	.enter()
 	.append("g")
@@ -2028,10 +1880,9 @@ function drawMetrics(){
 		var _lane = d.lane;
 
 		// goal total
-		_drawTextMetric(gMetrics,d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
+		_drawTextMetric(gMetricsGoal,d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 	})
 
-	//_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
  
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
@@ -2039,6 +1890,102 @@ function drawMetrics(){
 	}	
 
 } //end drawMetrics
+
+
+/** helper function to return array element of  json structure by specified name
+ */
+function _getDataBy(name,value,data){
+	for (var i in data){
+		if (data[i][name]==value) return data[i];
+	}
+}
+
+
+/**
+ * @dimension "baseline,targe1,target2
+ */
+function _renderMetrics(svg,dimension,x1Base,x2Base){
+		// y space between KPIs
+		var _kpiYOffset = 15;
+		var _primTextYOffset=18; 
+		var _yPie = -80;
+		var METRIC_DATES_Y=-160;
+		
+	var _met = metricData.filter(function(d){return d.dimension==dimension && ( (d.class=="result") || (d.class=="kpi"))});
+	var _metByLane = _.nest(_met,"lane");
+	
+	var _kpiDir = "left";
+	var _resultDir="right";
+	
+	if (dimension=="baseline"){
+			_kpiDir="right";
+			_resultDir="left";
+		}
+	
+	
+	var gMetrics = svg.append("g").attr("id","metrics_"+dimension);
+	
+	var _resultSum=0;
+	
+	for (var m in _metByLane.children){
+		var _l = getLaneByNameNEW(_metByLane.children[m].name);
+		if (_l){
+			i=0;
+			var sortedMetrics = _metByLane.children[m].children.sort(function(a, b) { 
+						return a.class > b.class?1:-1;	
+					});
+			for (k in sortedMetrics){
+				var _mm = _metByLane.children[m].children[k];
+				var _y = y(_l.yt1)+(i*_kpiYOffset);
+				var _height = y(_l.yt2-_l.yt1);
+				
+				//secondary metrics
+				var _secTextYOffset = 10;//_height/2;
+			
+				if (_mm.class=="kpi") {
+					_drawTextMetric(gMetrics,_mm,"metricSmall",x2Base,_y+_secTextYOffset,6,_kpiDir);
+				}
+				else if (_mm.class=="result") {
+					_drawTextMetric(gMetrics,_mm,"metricBig",x1Base,_y+_primTextYOffset,10,_resultDir);
+					if (_mm.sustainable==1) _resultSum = _resultSum+parseInt(_mm.number);
+				}
+				i++
+			}
+		}
+	}
+
+	//metric date 
+	_drawMetricDate(gMetrics,x1Base-50,METRIC_DATES_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
+
+
+	// calculated sum
+	
+	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
+	var _yTotal =-35;
+	var _total = {"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
+	
+	_drawTextMetric(gMetrics,_total,"metricBig",x1Base,_yTotal,10,_resultDir);
+	
+
+	// pie
+	_drawPie(gMetrics,dimension,_getDataBy("dimension",dimension,PIE_DATA).data,x1Base,_yPie);
+
+
+	// cx baseline 
+	var _yCX =-102;
+	var _cxBase = {"recommendation":_getDataBy("dimension",dimension,RECOMMENDATION_DATA).data,"loyalty":_getDataBy("dimension",dimension,LOYALTYINDEX_DATA).data}
+	_drawCX(gMetrics,_cxBase,x1Base+35,_yCX);
+	
+	
+	//market share
+	var _yMarketShare =-120;
+	var _share = {"number":_getDataBy("dimension",dimension,MARKETSHARE_DATA).data ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
+	
+	_drawTextMetric(gMetrics,_share,"metricBig",x1Base,_yMarketShare,10);
+	
+}
+
+
 
 function _drawSign(svg,x,y,type,scale){
 		if (!scale) scale = 1;
@@ -2127,10 +2074,10 @@ function _drawMetricSeparator(svg,x){
 
 /**date marker for metrics
  * */
-function _drawMetricDate(svg,x,y,date,name,type){
-	_drawText(svg,name,x,y,16,"bold","start",COLOR_BPTY,null);
-	_drawText(svg,type+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
-	_drawText(svg,date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
+function _drawMetricDate(svg,x,y,data){
+	_drawText(svg,data.title,x,y,16,"bold","start",COLOR_BPTY,null);
+	_drawText(svg,data.sub+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
+	_drawText(svg,data.date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
 	
 }
 
