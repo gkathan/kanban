@@ -1776,13 +1776,13 @@ function drawMetrics(){
 	
 // -------------------------- baseline -----------------------------------------------
 	var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
-	_renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset));
+	_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset));
 	
 // -------------------------- target 1-year (2014) -------------------------------
 	var _1Offset = 70;
 
 	var gMetricsTarget1 = gMetrics.append("g").attr("id","metrics_target1");
-	_renderMetrics(gMetricsBaseline,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight);
+	_targetResultSum1 = _renderMetrics(gMetricsBaseline,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight);
 
 	d3.select("#metrics_forecast1").style("opacity",0.5);
 
@@ -1791,7 +1791,7 @@ function drawMetrics(){
 // -------------------------- target 2-years (2015)-------------------------------
 	var _2Offset = 70;
 	var gMetricsTarget2 = gMetrics.append("g").attr("id","metrics_target2");
-	_renderMetrics(gMetricsBaseline,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
+	_targetResultSum2 = _renderMetrics(gMetricsBaseline,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
 	
 	
 	
@@ -1815,32 +1815,19 @@ function drawMetrics(){
 	
 	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,-160,_getDataBy("dimension","goal",METRICDATES_DATA).data);
 
-	i=0;
+	 var _goalData = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
+
+	_drawTextMetric(gMetricsGoal,_goalData[0],"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 	
 	//delta symbol
 	_drawSign(gMetricsGoal,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
 	_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
 	
-	var _diff = 700-_targetResultSum2;
-	
+	var _diff = _goalData[0].number-_targetResultSum2;
 	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
+
 	_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
-	
 	// delta end
-	
-	//gMetrics.append("g").attr("id","goal").selectAll("result_future")
-	gMetricsGoal.selectAll("result_future")
-	.data(metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" }))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return "1metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-
-		// goal total
-		_drawTextMetric(gMetricsGoal,d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
-	})
-
  
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
@@ -1962,6 +1949,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	
 	_drawTextMetric(gMetrics,_share,"metricBig",x1Base,_yMarketShare,10);
 	
+	return _resultSum;
 }
 
 
