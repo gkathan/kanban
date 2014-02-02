@@ -156,7 +156,7 @@ var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
 
 var LANE_LABELBOX_LEFT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_WIDTH =200;
+var LANE_LABELBOX_RIGHT_WIDTH =100;
 
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
@@ -267,6 +267,8 @@ function renderB2CGaming() {
 	HEIGHT=1100;
 	WIDTH=1500;
 	ITEM_SCALE=0.8;
+	LANE_LABELBOX_RIGHT_WIDTH =200;
+	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
 	CONTEXT=ITEMDATA_FILTER.value;
@@ -285,6 +287,8 @@ function renderB2CGaming() {
 function renderBwin(){
 	HEIGHT=600;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
+	
 	ITEM_SCALE=1.3;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
@@ -302,6 +306,8 @@ function renderBwin(){
 function renderBwinSecondLevel(){
 	HEIGHT=800;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
+	
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -310,7 +316,7 @@ function renderBwinSecondLevel(){
 	//ITEMDATA_NEST= ["lane","sublane"];
 	//ITEMDATA_NEST= ["theme","themesl","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	CONTEXT=ITEMDATA_FILTER.value+".drill-in";
 	
 	console.log("*************************************************************************************calling getJSON..");
 	
@@ -326,6 +332,8 @@ function renderBwinSecondLevel(){
 function renderEntIT(){
 	HEIGHT=600;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
+	
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -334,7 +342,7 @@ function renderEntIT(){
 	//ITEMDATA_NEST= ["lane","sublane"];
 	//ITEMDATA_NEST= ["theme","themesl","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	CONTEXT=ITEMDATA_FILTER.value+".drill-in";
 	
 	console.log("*************************************************************************************calling getJSON..");
 	
@@ -349,6 +357,8 @@ function renderEntIT(){
 function renderHolding(){
 	HEIGHT=1000;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
+
 	ITEM_SCALE=0.6;
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
@@ -365,6 +375,7 @@ function renderHolding(){
 function renderShared(){
 	HEIGHT=600;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
@@ -382,6 +393,7 @@ function renderShared(){
 function renderNewBiz(){
 	HEIGHT=500;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
@@ -398,6 +410,7 @@ function renderNewBiz(){
 function renderTechdebt(){
 	HEIGHT=450;
 	WIDTH=1500;
+	LANE_LABELBOX_RIGHT_WIDTH =100;
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
@@ -1741,8 +1754,8 @@ function onTooltipOutHandler(d,tooltip,highlight){
 function drawMetrics(){
 	d3.select("#metrics").remove();
 	
-	//UGLY :_)hack by now to not try to draw metrics on "new biz" 
-	if (!ITEMDATA_FILTER || (ITEMDATA_FILTER.value!="new biz" )){
+	//only show metrics in b2c business model view
+	if (CONTEXT!="new biz" && _.last(CONTEXT.split("."))!="drill-in"){
 
 		//console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
