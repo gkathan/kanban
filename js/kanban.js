@@ -1413,9 +1413,11 @@ function drawItems(){
 					}
 					
 					
-					d3.select(this)
+					var _x = _itemXPlanned;
+					var _y = (_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE);
+					var _text =d3.select(this)
 					   .append("text")
-					   .text(d.name)
+					   //.text(d.name)
 					   .attr("font-size",_textSize+"px")
 					   .attr("text-anchor","middle")
 					   .style("font-weight",_textWeight)
@@ -1425,20 +1427,26 @@ function drawItems(){
 					   //google font
 					   .style("font-family","Open Sans Condensed,arial, sans-serif")
 					   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else return"black";})
-					   .attr("x",_itemXPlanned)
-					   .attr("y",(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
+					   .attr("x",_x)
+					   .attr("y",_y);
+	
+					textarea(_text,d.name,_x,_y,20,5);
+	
 					
 					
 					// ------------- labels for sizing view -------------
-					gLabels
+					_text = gLabels
 					   .append("text")
 					   .attr("id","label_"+d.id)
-					   .text(d.name)
+					   //.text(d.name)
 					   .style("font-size",5+d.Swag/500+"px")
 					   //.style("font-weight","bold")
 					   .attr("text-anchor","middle")
 					   .attr("x",_itemXPlanned)
 					   .attr("y",_itemY);
+					
+					textarea(_text,d.name,_itemXPlanned,_itemY,15,(5+d.Swag/500));
+	
 					
 					// ------------  dependencies --------------
 					if (!isNaN(parseInt(d.dependsOn))){
@@ -2441,6 +2449,9 @@ Postit.prototype.draw=function(svg){
 		.style("cursor","pointer")		
 		.attr("transform","translate("+this.x+","+this.y+") scale("+this.scale+") rotate("+_rotate+")");
 		
+	var _x = (getInt(this.x)+Math.sqrt(this.scale)+1);
+	var _y = (getInt(this.y)+Math.sqrt(this.scale)-1);
+	
 	var t =postit.append("text")
 	.style("text-anchor","start")
 		.style("font-size",this.size+"px")
@@ -2452,21 +2463,23 @@ Postit.prototype.draw=function(svg){
 		
 		.style("text-anchor","start")
 		.style("fill",this.textcolor)
-			.attr("transform","translate("+(getInt(this.x)+Math.sqrt(this.scale)+1)+","+(getInt(this.y)+Math.sqrt(this.scale)-1)+") scale("+this.scale+") rotate("+_rotate+")");
+			.attr("transform","translate("+_x+","+_y+") scale("+this.scale+") rotate("+_rotate+")");
 	
-	for (i in _split){
-			
+	
+	/*for (i in _split){
 		t.append("tspan")
 		.text(_split[i])
 		.attr("dy",4+Math.sqrt(this.scale/5))
 		.attr("x",0);
-
-		postit.append("path").
-		attr("transform","translate("+((22*this.scale)+getInt(this.x))+","+(getInt(this.y)+(2*this.scale))+") rotate("+(45+_rotate)+") scale("+(0.25*this.scale)+")")
-		.attr("d",d3.svg.symbol().type("cross"))
-		.style("fill","grey")
-		.on("click",function(d){postit.remove();p.remove()});
-	}	
+	}*/
+	
+	textarea(t,this.text,0,4,10,4);
+	
+	postit.append("path")
+	.attr("transform","translate("+((22*this.scale)+getInt(this.x))+","+(getInt(this.y)+(2*this.scale))+") rotate("+(45+_rotate)+") scale("+(0.25*this.scale)+")")
+	.attr("d",d3.svg.symbol().type("cross"))
+	.style("fill","grey")
+	.on("click",function(d){postit.remove();p.remove()});	
 }
 
 function loadPostits(){
@@ -3416,6 +3429,43 @@ function layout(elements){
 		i+=get_metrics(d3.select(this).node()).height+_space;
 	})
 }
+
+
+/**
+    This function attempts to create a new svg "text" element, chopping 
+     it up into "tspan" pieces, if the caption is too long
+    => expects a text element and will add the tspans accordingly !
+*/
+function textarea(svg,caption, x, y,maxChars,lineHeight) {
+	if (!maxChars) maxChars = 20;
+	if (!lineHeight) lineHeight = 12;
+
+	var words = caption.split(" ");
+	var line = "";
+
+	for (var n = 0; n < words.length; n++) {
+		var testLine = line + words[n] + " ";
+		if (testLine.length > maxChars)
+		{
+			svg.append("tspan")
+			.attr("x",x)
+			.attr("y",y)
+			.text(line);
+  
+			line = words[n] + " ";
+			y += lineHeight;
+		}
+		else {
+			line = testLine;
+		}
+	}
+	svg.append("tspan")
+	.attr("x",x)
+	.attr("y",y)
+	.text(line);
+}
+
+
 
 /**
 http://stackoverflow.com/questions/13046811/how-to-determine-size-of-raphael-object-after-scaling-rotating-it/13111598#13111598
