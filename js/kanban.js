@@ -122,7 +122,7 @@ var itemDataConfig;
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 250, right: 300, bottom: 100, left: 300};
+var margin = {top: 250, right: 320, bottom: 100, left: 300};
 var width,height;
 
 
@@ -660,22 +660,25 @@ function drawLanes(){
 		var _x_offset = 5;
 		var _y_offset = 4;
 		var _laneOpacity;
+		
+		var _metrics;
 
 		//left box
-		_drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
+		_metrics = _drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
+
 
 		//baseline box text
-		_drawLaneText(lanes,_lane,"baseline");
+		_drawLaneText(lanes,_lane,"baseline",_metrics.height+12);
 	
 		
 		// lane area
 		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_height,i)
 
 		//target box	
-		_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
+		_metrics =_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
 		
 		//target box text
-		_drawLaneText(lanes,_lane,"target");
+		_drawLaneText(lanes,_lane,"target",_metrics.height+12);
 	
 
 		// laneside descriptors
@@ -766,12 +769,21 @@ function drawLanes(){
 							  {"lane":"foxy","category":"USP","title":"SOCIAL","content":
 									[{"text":"* ?"}
 									]},
+							{"lane":"premium","category":"ACCESS","title":"","content":
+								[]},
+							  {"lane":"premium","category":"APPEAL","title":"CONTENT","content":
+								[{"text":"* full offer"},
+								 {"text":"* invite only"},
+								 {"text":"* personalized"}
+									]},
+							  {"lane":"premium","category":"USP","title":"","content":
+									[]},
 				
 								];
 		
 		var _xBase = x(KANBAN_END)+2;
-		var _yBase = -90;
-		var _width = LANE_LABELBOX_RIGHT_WIDTH-100;						
+		var _yBase = -70;
+		var _width = LANE_LABELBOX_RIGHT_WIDTH-90;						
 							
 	  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
 	  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
@@ -877,23 +889,26 @@ function _drawHowPillars(svg,data,x,y,width){
 
 
 
-function _drawLaneText(svg,lane,side)
+function _drawLaneText(svg,lane,side,logoHeight)
 {
 	var i=0;
+	var _anchor ="start";
+	if (side=="target") _anchor ="end";
 	
 	var _color = "black";
 	if (lane.indexOf("bwin") !=-1 || lane.indexOf("premium") !=-1) _color="white";
-	
-	var _yBase = y((getLaneByNameNEW(lane).yt1))+30;
+
+	var _yBase = y((getLaneByNameNEW(lane).yt1))+logoHeight+5;
 	
 	// just get the last element in a FQN
 	lane = _.last(lane.split("."))
 	
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_LEFT_WIDTH+10
-	else if (side=="target") _xBase= x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH-90;
+	else if (side=="target") _xBase= x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH-10;
 	
-	console.log("*****drawLaneText(): svg="+svg);
+				
+	
 	
 	if (laneTextData){
 	var _lanetext = laneTextData.filter(function(d){return (d.lane==lane && d.side==side)});
@@ -908,6 +923,7 @@ function _drawLaneText(svg,lane,side)
 					.attr("y",_yBase+(i*(parseInt(_lanetext[i].size)+1)))
 					.style("font-size",_lanetext[i].size+"px")
 					.style("font-weight",_lanetext[i].format)
+					.style("text-anchor",_anchor)
 					.style("fill",_color);
 			}
 		}
@@ -917,6 +933,7 @@ function _drawLaneText(svg,lane,side)
 
 /* ------------------------------------------------- drawLanes() helper functions ----------------------------------------------------------- */
 		/**
+		 
 		 */
 		function _drawLaneContext(svg,context,x,y,width,height,link){
 			var _textOffsetX = 7;
@@ -942,10 +959,12 @@ function _drawLaneText(svg,lane,side)
 		}
 
 		/**
+		 * returns the metrics of logo
 		 */
 		function _drawLaneBox(svg,x,y,width,height,lane,side){
 			var _x_offset=10;
 			var _y_offset=4;
+			var _metrics;
 			// if it comes in FQ format 
 			lane = _.last(lane.split("."));
 
@@ -965,14 +984,22 @@ function _drawLaneText(svg,lane,side)
 				var _x = x+_x_offset;
 				var _y = y+_y_offset;
 				
-				if (side=="right"){
-					_x= x+LANE_LABELBOX_RIGHT_WIDTH-90;
-				}
-				svg.append("use")
+				var _logo = svg.append("use")
 				.attr("xlink:href","#"+lane)
-				.attr("x",_x)
-				.attr("y",_y);
+				.attr("transform","translate("+0+","+0+") scale(1)");
+				
+				_metrics = get_metrics(_logo.node());
+				// i need to know the width of the logo....
+				if (side=="right"){
+					
+					_x= x+LANE_LABELBOX_RIGHT_WIDTH-_metrics.width-10;
+				}
+				_logo
+				.attr("transform","translate("+_x+","+_y+") scale(1)");
+				
 			}
+		console.log("metrics: "+_metrics);
+		return _metrics;
 		}
 		
 		
@@ -1921,7 +1948,7 @@ function drawMetrics(){
 	else
 		var _yRisk = y(20)-30;
 	
-	var _xRisk = x(KANBAN_END)+_goalXOffset+10;
+	var _xRisk = x(KANBAN_END)+_goalXOffset+30;
 	
 	_drawSign(gMetrics,_xRisk,_yRisk,"risks");
 	
@@ -1980,7 +2007,8 @@ function drawMetrics(){
 	i=0;
 	
 	//delta symbol
-	_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-30,_yTotal+20,"icon_delta",0.4);
+	_drawSign(gMetrics,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
+	_drawBracket(gMetrics,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
 	
 	var _diff = 700-_targetResultSum2;
 	
@@ -2003,7 +2031,7 @@ function drawMetrics(){
 		_drawTextMetric(gMetrics,d,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 	})
 
-	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
+	//_drawMetricSeparator(gMetrics,x(KANBAN_END)+_goalXOffset+80);
  
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
@@ -2032,8 +2060,6 @@ function _drawBracket(svg,color,direction,x,y,scaleX,scaleY,type,opacity){
 		svg.append("use").attr("xlink:href","#icon_"+type+"_"+direction+"_"+color)
 		.style("opacity",opacity)
 		.attr("transform","translate ("+x+","+y+") scale("+scaleX+","+scaleY+")");
-	
-		
 }
 
 /**
@@ -2050,8 +2076,6 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction){
 		else if (metric.sustainable==2) _metricColor="00A14B";
 		
 		else _metricColor="grey";
-
-		
 		
 		var _anchor = "end";
 		var _xNumber = x;
@@ -2100,47 +2124,6 @@ function _drawMetricSeparator(svg,x){
 }
 
 
-/**
- * class: <baseline> or <target>
- * type: <primary>, <secondary> or <tertiary>
- */
-/* _drawMetricBlock TRY
-function _drawMetricBlock(svg,side,type,yTextOffset){
-	
-	var _bracket; 
-	var _style;
-	
-	if (side=="baseline") _bracket ="left";
-	else if (side=="target") _bracket ="right";
-	
-	if (type=="primary") _style="metricBig";
-	else _style="metricSmall";
-	
-	
-	
-	svg.append("g").attr("id",type).append("g").attr("id",side)
-	.selectAll(type+"_baseline")
-	.data(metricData.filter(function(d){return d.class==type && new Date(d.date) <= METRIC_BASLINE}))
-	.enter()
-	.append("g")
-	.attr("id",function(d){return type+"_metric_"+d.id;})
-	.each(function(d){
-		var _lane = d.lane;
-		
-		var _l = getLanesNEW()[i];
-		var _y = y(_l.y1);
-		var _height = y(_l.y2-_l.y1);
-		
-		//primary metrics
-		var _primTextYOffset = (_height/2)+yTextOffset;
-
-		_drawTextMetric(d3.select(this),d,_style,x(KANBAN_START)-_primaryXOffset,_y+_primTextYOffset,10);
-
-
-		i++;
-	});
-}
-*/
 
 /**date marker for metrics
  * */
