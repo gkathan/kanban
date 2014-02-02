@@ -149,11 +149,6 @@ var KANBAN_END = new Date("2015-01-31");
 var Y_MAX =100; 
 var Y_MIN=0;
 
-var METRIC_DATE_BASELINE = new Date("2013-12-31");
-var METRIC_DATE_FORECAST1 = new Date("2014-12-31");
-var METRIC_DATE_FORECAST2 = new Date("2015-12-31");
-var METRIC_DATE_GOAL = new Date("2015-12-31");
-
 // queue metrics
 var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
 	
@@ -161,7 +156,7 @@ var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
 
 var LANE_LABELBOX_LEFT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_WIDTH =200;
 
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
@@ -662,9 +657,12 @@ function drawLanes(){
 		//left box
 		_metrics = _drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
 
+		var _yTextOffset;
+		if (_metrics) _yTextOffset=_metrics.height+15;
+		else _yTextOffset=15;
 
 		//baseline box text
-		_drawLaneText(lanes,_lane,"baseline",_metrics.height+12);
+		_drawLaneText(lanes,_lane,"baseline",_yTextOffset);
 	
 		
 		// lane area
@@ -674,7 +672,7 @@ function drawLanes(){
 		_metrics =_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
 		
 		//target box text
-		_drawLaneText(lanes,_lane,"target",_metrics.height+12);
+		_drawLaneText(lanes,_lane,"target",_yTextOffset);
 	
 
 		// laneside descriptors
@@ -781,7 +779,7 @@ function drawLanes(){
 		var _yBase = -70;
 		var _width = LANE_LABELBOX_RIGHT_WIDTH-90;						
 							
-	  if (_width >100) {
+	  if (_width >100 & CONTEXT=="b2c gaming") {
 		  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
 		  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
 
@@ -1754,17 +1752,14 @@ function drawMetrics(){
 		var _kpiYOffset = 15;
 		var _yTotal =-35;
 		//left			
-		var _bracketXOffset = LANE_LABELBOX_LEFT_WIDTH+80;
 		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
 		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
 		//right
 		//1
-		var _bracketXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH;
 		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
 		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
 		//2
 		var _2Offset = 150;
-		var _bracketXOffsetRight2 = _bracketXOffsetRight+_2Offset;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
 		//goal
@@ -2194,7 +2189,8 @@ function drawWC2014(){
 	
 	
 	svg.append("use").attr("xlink:href","#wc2014")
-	.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ");
+	.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ")
+	.style("opacity",0.5);
 	
 }
 
