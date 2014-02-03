@@ -88,20 +88,7 @@ var ITEMDATA_FILTER;
 var ITEMDATA_DEPTH_LEVEL;
 
 
-
-var PIE_DATA;
-
-
-// percentage 
-var MARKETSHARE_DATA;
-
-//cx metrics
-var RECOMMENDATION_DATA;
-	
-var LOYALTYINDEX_DATA;
-
 // metric dates
-
 var METRICDATES_DATA;
 
 
@@ -1933,6 +1920,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	}
 
 	//metric date 
+	
 	_drawMetricDate(gMetrics,x1Base-50,METRIC_DATES_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
 
 
@@ -1946,21 +1934,24 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	
 
 	// pie
-	_drawPie(gMetrics,dimension,_getDataBy("dimension",dimension,PIE_DATA).data,x1Base,_yPie);
+	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% sustainable"});
+
+	_drawPie(gMetrics,dimension,_met[0],x1Base,_yPie);
 
 
 	// cx baseline 
 	var _yCX =-102;
-	var _cxBase = {"recommendation":_getDataBy("dimension",dimension,RECOMMENDATION_DATA).data,"loyalty":_getDataBy("dimension",dimension,LOYALTYINDEX_DATA).data}
-	_drawCX(gMetrics,_cxBase,x1Base+35,_yCX);
+	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="loyaltyindex"});
+    var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
+	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
+
+	_drawCX(gMetrics,_cxData,x1Base+35,_yCX);
 	
 	
-	//market share
+	//market share overall
 	var _yMarketShare =-120;
-	var _share = {"number":_getDataBy("dimension",dimension,MARKETSHARE_DATA).data ,"scale":"marketshare" ,"type":"%", "sustainable":1 };
-	
-	
-	_drawTextMetric(gMetrics,_share,"metricBig",x1Base,_yMarketShare,10);
+	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% overall"});
+	_drawTextMetric(gMetrics,_met[0],"metricBig",x1Base,_yMarketShare,10);
 	
 	return _resultSum;
 }
@@ -2065,9 +2056,11 @@ function _drawMetricDate(svg,x,y,data){
 
 /** helper function
  * */
-function _drawPie(svg,id,data,x,y){
+function _drawPie(svg,id,_data,x,y){
 	var radius =40;
 
+    var data = [{"type":"sustainable","percentage":_data.number},{"type":"notsustainable","percentage":100-_data.number}];
+    
 	var arc = d3.svg.arc()
 		.outerRadius(radius - 10)
 		.innerRadius(0);
@@ -2114,7 +2107,7 @@ function _drawCX	(svg,data,x,y){
 		.attr("transform","translate ("+x+","+y+") scale(.5)");
 	
 		svg.append("text")
-		.text(data.recommendation)
+		.text(data.promoter)
 		.style("font-size","8px")
 		.style("font-weight","bold")
 		.style("fill","white")
