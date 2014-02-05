@@ -57,8 +57,8 @@
 // global variables
 var CONTEXT="CONTEXT";
 
-var TITLE_TEXT = "\"let the world play for real\"";
-var TITLE_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"";
+var VISION_TEXT = "\"let the world play for real\"";
+var VISION_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"";
 
 
 //the data as it is read on init
@@ -149,6 +149,9 @@ var LANE_LABELBOX_RIGHT_WIDTH =100;
 // scaling of graphical elements (itemblock,circle, circle icon)	
 var ITEM_SCALE=0.8;
 var ITEM_FONTSCALE=1.5;
+// when to wrap name of item
+var ITEM_TEXT_MAX_CHARS = 30;
+var ITEM_TEXT_SWAG_MAX_CHARS =20;
 
 // the relative scaling compared to ITEM 
 // if set to 1 = TACTICS are in same SIZE than corp ITEMS
@@ -291,7 +294,7 @@ function renderBwin(){
 }
 
 function renderBwinSecondLevel(){
-	HEIGHT=800;
+	HEIGHT=1000;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	
@@ -443,6 +446,7 @@ function drawAll(){
 	drawInitiatives();
 
 	drawMetrics();
+	drawVision();
 	drawReleases();
 	drawVersion();
 	drawLegend();
@@ -676,11 +680,13 @@ function drawLanes(){
 	
 
 		// laneside descriptors
-		var _laneName = _.last(_lane.split("."))
-		_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
-
+		if (_.last(CONTEXT.split("."))=="drill-in"){
+			var _laneName = _.last(_lane.split("."))
+			_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
+		}
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
+		
 		for (var s in _sublanes){
 			var _y = y(_sublanes[s].yt1);
 			var _h = y(_sublanes[s].yt2-_sublanes[s].yt1); 
@@ -689,7 +695,7 @@ function drawLanes(){
 			var _sublane = _.last((_sublanes[s].name).split("."))
 			
 			_drawLaneSideText(d3.select(this),_sublane,1,_y+_h/2,"4px","middle");
-
+		
 			//no lines for first and last sublane
 			if (s>0 && s<_sublanes.length){
 				d3.select(this).append("line")
@@ -1454,11 +1460,12 @@ function drawItems(){
 					   .attr("x",_x)
 					   .attr("y",_y);
 	
-					textarea(_text,d.name,_x,_y,20,_textSize-1);
+					
+					textarea(_text,d.name,_x,_y,ITEM_TEXT_MAX_CHARS,_textSize-1);
 	
 					
 					
-					// ------------- labels for sizing view -------------
+					// ------------- labels for Swag view -------------
 					_text = gLabels
 					   .append("text")
 					   .attr("id","label_"+d.id)
@@ -1469,7 +1476,7 @@ function drawItems(){
 					   .attr("x",_itemXPlanned)
 					   .attr("y",_itemY);
 					
-					textarea(_text,d.name,_itemXPlanned,_itemY,15,(5+d.Swag/500));
+					textarea(_text,d.name,_itemXPlanned,_itemY,ITEM_TEXT_SWAG_MAX_CHARS,(5+d.Swag/500));
 	
 					
 					// ------------  dependencies --------------
@@ -1757,7 +1764,7 @@ function drawMetrics(){
 		//right
 		//1
 		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
-		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+25;
+		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+30;
 		//2
 		var _2Offset = 150;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
@@ -1786,7 +1793,7 @@ function drawMetrics(){
 
 	d3.select("#metrics_forecast1").style("opacity",0.5);
 
-	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight2-35);
+	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight2-40);
 		
 // -------------------------- target 2-years (2015)-------------------------------
 	var _2Offset = 70;
@@ -2392,6 +2399,58 @@ function loadPostits(){
 
 
 
+function drawVision(){
+	d3.select("#vision").remove()
+
+	var gVision= svg.append("g")
+		.attr("id","vision");
+	
+	// ----- vision statement ------
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
+	var _y = -200;
+	
+//  text version	
+//	_drawText(gVersion,VISION_TEXT,_x,_y,30,"normal","middle",COLOR_BPTY,"italic");
+//	_drawText(gVersion,VISION_SUBTEXT,_x,_y+20,16,"normal","middle",COLOR_BPTY,"italic");
+
+	gVision.append("use").attr("xlink:href","#world")
+	.attr("transform","translate ("+(_x-175)+","+(_y+27)+") scale(1) ");
+
+	gVision.append("use").attr("xlink:href","#vision_statement")
+	.attr("transform","translate ("+(_x-160)+","+(_y-30)+") scale(2) ");
+
+	
+	// --- mission strategy stuff ------
+		
+	//_drawBracket(gVersion,"blue","bottom",350,-180,2,.8,"triangle",1);
+	_drawBracket(gVision,"blue","bottom",300,_y+90,3,.8,"triangle",1);
+	
+	
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-100;
+	//var _x = 460;
+	gVision.append("text")
+		.text("::focus in BWIN via agressive sports mobile aquisition in europe")
+		.attr("x",_x)
+		.attr("y",_y+40)
+		.style("fill",COLOR_BPTY)
+		.style("text-anchor","start")
+		.style("font-style","normal")
+		.style("font-weight","bold")
+		.style("font-size","8px")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::position partypoker and our b2b services as leading online gaming biz in US")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::establish lean engineering culture to  build ‘right’ software solution and IP")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::re-establish entrepreneurial thinking & leadership (ownership)");
+
+}
 
 
 
@@ -2449,46 +2508,6 @@ function drawVersion(){
 	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_y+67,5,"normal","end");
 	
 
-
-	// ----- vision statement ------
-	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
-	var _y = -200;
-	
-	_drawText(gVersion,TITLE_TEXT,_x,_y,30,"normal","middle",COLOR_BPTY,"italic");
-	_drawText(gVersion,TITLE_SUBTEXT,_x,_y+20,16,"normal","middle",COLOR_BPTY,"italic");
-	
-	// --- mission strategy stuff ------
-		
-	//_drawBracket(gVersion,"blue","bottom",350,-180,2,.8,"triangle",1);
-	_drawBracket(gVersion,"blue","bottom",300,_y+90,3,.8,"triangle",1);
-	
-	
-	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
-	//var _x = 460;
-	gVersion.append("text")
-		.text("::focus in BWIN via agressive sports mobile aquisition in europe")
-		.attr("x",_x)
-		.attr("y",_y+40)
-		.style("fill",COLOR_BPTY)
-		.style("text-anchor","middle")
-		.style("font-style","italic")
-		.style("font-size","8px")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::position partypoker and our b2b services as leading online gaming biz in US")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::establish lean engineering culture to  build ‘right’ software solution and IP")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::re-establish entrepreneurial thinking & leadership (ownership");
-	
-	
-	
-	
 }
 
 /**
@@ -2656,13 +2675,38 @@ function getConfigByLevel(level){
 	return null;
 }
 
+
+/** context sensitive config 
+ * */
+/* NEEDS more thinking ! :-)
+function getConfig(child){
+	for (var i in itemDataConfig){
+		console.log("* context: "+itemDataConfig[i].context);
+		if ((itemDataConfig[i].context==CONTEXT) && itemDataConfig[i].level==child.level){
+			 return itemDataConfig[i];
+		}
+	}
+	return null;
+}
+*/
+
+
 function getConfigModeByLevel(level){
 	_config = getConfigByLevel(level);
 	if (_config) return _config.mode;
 	return null;
 }
 
+function getConfigByName(name){
+	var _config = new Array();
+	for (var i in itemDataConfig){
+		if (itemDataConfig[i].name==name ||itemDataConfig[i].name=="*") _config.push(itemDataConfig[i])
+	}
+	return _config;
+}
 
+
+/*
 function getConfigByName(name){
 	for (var i in itemDataConfig){
 		for (p in itemDataConfig[i].percentages){
@@ -2671,7 +2715,7 @@ function getConfigByName(name){
 	}
 	return null;
 }
-
+*/
 
 /**
  * create hierarchical data structure from flat import table
@@ -2702,7 +2746,7 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 	if (_start==0){
 		_itemData.y1 = Y_MIN;
 		_itemData.y2 = Y_MAX;
-		_itemData.name="root";
+		_itemData.name=CONTEXT;
 		_itemData.depth=0;
 		_itemData.level="root";
 	}
@@ -2744,6 +2788,9 @@ function createRelativeCoordinates(_itemData,_start,_stop){
 			}
 			// check manual percentage override
 			var _config = getConfigByLevel(_itemData.children[i].level);
+			// 20140205 => needs more thinking 
+			//var _config = getConfig(_itemData.children[i]);
+			
 			if (_config){
 				// ok got a config for this level - now check whether we find a matching config 
 				// check for match in config.percentages
@@ -3134,7 +3181,8 @@ function timeFormat(formats) {
 function getFQName(d){
 	console.log("d:"+d);
 	if (d){
-			var _fq= NEST_ROOT;
+			//root node.name
+			var _fq= CONTEXT;//NEST_ROOT;
 			for (var i=0;i<ITEMDATA_NEST.length;i++){
 				_fq=_fq+"."+d[ITEMDATA_NEST[i]];
 			}
@@ -3486,4 +3534,8 @@ var PACKAGE_VERSION="20140130_1930";
 var PACKAGE_VERSION="20140131_0828";
 	
 var PACKAGE_VERSION="20140131_1820";
+	
+var PACKAGE_VERSION="20140204_0911";
+	
+var PACKAGE_VERSION="20140205_1820";
 	
