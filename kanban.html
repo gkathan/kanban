@@ -77,8 +77,8 @@
 									{"context":"*","name":"topline.foxy","value"		:18},
 									{"context":"*","name":"topline.premium","value"	:14},
 									{"context":"*","name":"topline.casino","value"	:20},
-									{"context":"*","name":"enabling.techdebt","value"	:30},
-									{"context":"*","name":"enabling.shared","value"	:70},
+									{"context":"*","name":"enabling.techdebt","value"	:40},
+									{"context":"*","name":"enabling.shared","value"	:60},
 									{"context":"*","name":"topline.kalixa","value"	:50},
 									{"context":"*","name":"topline.wincom","value"	:35},
 									{"context":"*","name":"topline.conspo","value"	:15}
@@ -89,12 +89,37 @@
 						// selective override only for one sublane works too ;-)
 						{"level":"sublane","mode":"equal","percentages":
 								[
-									{"context":"*","name":"bwin.touch","value"	:30},
+									{"context":"*","name":"bwin.touch","value"	:20},
+									{"context":"*","name":"bwin.click","value"	:20},
 									{"context":"*","name":"bwin.market","value"	:20},
 									{"context":"*","name":"bwin.product","value"	:20},
-									{"context":"*","name":"bwin.enabling","value":30}
+									{"context":"*","name":"bwin.enabling","value":20}
 								]
-						}];		
+						},
+						
+						// selective override only for one sublane works too ;-)
+						{"level":"themesl","mode":"equal","percentages":
+								[
+									{"context":"bwin.drill-in","name":"Markets","value"	:25},
+									{"context":"bwin.drill-in","name":"Product","value"	:25},
+									{"context":"bwin.drill-in","name":"Customer","value"	:15},
+									{"context":"bwin.drill-in","name":"Enabling","value"	:10},
+									{"context":"bwin.drill-in","name":"Supplier","value"	:10},
+									{"context":"bwin.drill-in","name":"Poker","value"	:5},
+									{"context":"bwin.drill-in","name":"Casino/Games","value"	:5},
+									{"context":"bwin.drill-in","name":"Cross - selling","value":5}
+								]
+						},
+						
+						{"level":"sublane","mode":"equal","percentages":
+								[
+									{"context":"bwin.drill-in","name":"regulated","value"	:60},
+									{"context":"bwin.drill-in","name":"com","value"	:40}
+								]
+						}
+						
+						
+						];		
 
 
 	METRICDATES_DATA=[
@@ -111,7 +136,7 @@
 	
 </script>
 
-<!-- ---------------------------------------------- BODY ------------------------------------------------------------->20
+<!-- ---------------------------------------------- BODY ------------------------------------------------------------->
 
 <body>
 
