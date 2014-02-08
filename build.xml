@@ -52,6 +52,7 @@
 		<fileset dir="${src}" includes="data/backlog.csv"/>
 		
 		<fileset dir="${src}" includes="data/*.svg"/>
+		<fileset dir="${src}" includes="data/*.json"/>
 		<fileset dir="${src}" includes="img/*"/>
 		  
 		<fileset dir="${src}/" includes="*.html"/>
