@@ -72,6 +72,8 @@ var METRIC_LEVEL="lane";
 
 var releaseData;
 var laneTextData;
+var pillarData;
+
 var postitData;
 
 var itemData;
@@ -126,8 +128,11 @@ setWIP();
 
 // equals 1377993600000 in ticks (date.getTime()
 var KANBAN_START = new Date("2013-09-01");
+var KANBAN_START_DEFAULT = new Date("2013-09-01");
+
 // equals 1422662400000 in ticks
 var KANBAN_END = new Date("2015-01-31");
+var KANBAN_END_DEFAULT = new Date("2015-01-31");
 
 // diff = 44.668.800.000
 // 1 pixel (WIDTH = 1500) would be 29.779.200 units
@@ -160,6 +165,8 @@ var TACTIC_SCALE=0.9;
 
 
 var POSTIT_SCALE=1;
+var CUSTUM_POSTIT_SCALE=1;
+
 
 var x,y,svg,drag,drag_x;
 
@@ -170,6 +177,15 @@ var COLOR_BPTY="#174D75";
 // size of white space around boxes
 var WIDTH_WHITESTROKE ="5px";
 
+
+var SHOW_METRICS = false;
+
+// additional buttons state
+var SHOW_ONLY_VERSION1=false;
+var SHOW_ONLY_NONVERSION1=false;
+
+// 
+METRIC_BASE_Y = -220;
 
 var TRANSCODE_URL;
 
@@ -233,8 +249,10 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 				$.getJSON("/data/data.php?type="+initiativeTable),
 				$.getJSON("/data/data.php?type="+metricsTable),
 				$.getJSON("/data/data.php?type="+releaseTable),
-				$.getJSON("/data/data.php?type="+postitTable))
-			.done(function(lanetext,initiatives,metrics,releases,postits){
+				$.getJSON("/data/data.php?type="+postitTable),
+				$.getJSON("/data/laneTextTargetPillars.json"))
+				
+			.done(function(lanetext,initiatives,metrics,releases,postits,pillars){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -245,6 +263,8 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 					else throw new Exception("error loading releases");
 					if (postits[1]=="success") postitData=postits[0];
 					else throw new Exception("error loading postits");
+					if (pillars[1]=="success") pillarData=pillars[0];
+					else throw new Exception("error loading pillars");
 					
 					renderB2CGaming();
 					//renderHolding();
@@ -253,11 +273,20 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 }
 
 
+function setKanbanDefaultDates(){
+	KANBAN_START = KANBAN_START_DEFAULT;
+	KANBAN_END = KANBAN_END_DEFAULT;
+}
+
+
 function renderB2CGaming() {
 	HEIGHT=1100;
 	WIDTH=1500;
 	ITEM_SCALE=0.8;
 	LANE_LABELBOX_RIGHT_WIDTH =200;
+	
+	setKanbanDefaultDates();
+	SHOW_METRICS=true;
 	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -274,10 +303,40 @@ function renderB2CGaming() {
 				});
 }
 
+function renderHistory() {
+	HEIGHT=1100;
+	WIDTH=1500;
+	ITEM_SCALE=0.8;
+	SHOW_METRICS=false;
+	LANE_LABELBOX_RIGHT_WIDTH =200;
+	KANBAN_START=new Date("2012-01-01");
+	KANBAN_END=new Date("2014-02-30");
+	LANE_LABELBOX_RIGHT_WIDTH =100;
+	
+	ITEMDATA_NEST= ["theme","lane","sublane"];
+	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	CONTEXT=ITEMDATA_FILTER.value;
+    loadPostits();
+
+	$.when($.getJSON("/data/data.php?type=initiatives"))
+			.done(function(initiatives){
+					initiativeData=initiatives;
+					drawAll();
+					drawCustomPostits();
+					initHandlers();
+					
+				});
+}
+
+
+
 function renderBwin(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	SHOW_METRICS=true;
+	
+	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.3;
 	ITEMDATA_NEST= ["lane","sublane"];
@@ -297,7 +356,10 @@ function renderBwinSecondLevel(){
 	HEIGHT=1000;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	
+
+	setKanbanDefaultDates();
+	SHOW_METRICS=false;
+
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -323,6 +385,9 @@ function renderEntIT(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	SHOW_METRICS=false;
+	
+	setKanbanDefaultDates();
 	
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
@@ -345,9 +410,12 @@ function renderEntIT(){
 }
 
 function renderHolding(){
-	HEIGHT=1000;
+	HEIGHT=1200;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	
+	setKanbanDefaultDates();
+	SHOW_METRICS=true;
 
 	ITEM_SCALE=0.6;
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
@@ -366,6 +434,10 @@ function renderShared(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	SHOW_METRICS=true;
+
+	setKanbanDefaultDates();
+	
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
@@ -384,6 +456,10 @@ function renderNewBiz(){
 	HEIGHT=500;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	SHOW_METRICS=false;
+
+	setKanbanDefaultDates();
+	
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
@@ -398,9 +474,13 @@ function renderNewBiz(){
 }
 
 function renderTechdebt(){
-	HEIGHT=450;
+	HEIGHT=550;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
+	SHOW_METRICS=true;
+
+	setKanbanDefaultDates();
+	
 	ITEM_SCALE=1.5;
 	ITEMDATA_NEST= ["lane","sublane"];
 	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
@@ -467,6 +547,7 @@ function timeMachine(date){
 	}
 	setTODAY();
 	setWIP();
+	//insanity check
 	drawAll();
 	calculateQueueMetrics();
 	drawAll();
@@ -626,6 +707,7 @@ function drawLanes(){
 	d3.select("#lanes").remove()
 
     var lanes = svg.append("g").attr("id","lanes");
+    
 	
 	
 	//------------ context box ----------------
@@ -731,63 +813,13 @@ function drawLanes(){
 	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
 		var _pillarColumns = [{"name":"ACCESS"},{"name":"APPEAL"},{"name":"USP"}];
 
-
-
-		var _pillarElements =[{"lane":"bwin","category":"ACCESS","title":"TOUCH","content":
-								[{"text":"* native+HTML5 etc etc ..."},
-								 {"text":"* state of the art mobile offer"},
-								 {"text":"* 9-12 month cycle time"},
-								]},
-							  {"lane":"bwin","category":"APPEAL","title":"CONTENT","content":
-								[{"text":"* sports driven 360° offer"},
-								 {"text":"* full real money gaming offering"},
-									]},
-							  {"lane":"bwin","category":"USP","title":"SOCIAL","content":
-									[{"text":"* gamification & social mechanics"},
-									 {"text":"* infotainment"},
-									]},
-							{"lane":"pp","category":"ACCESS","title":"TOUCH","content":
-								[{"text":"* native+HTML5 "},
-								 {"text":"* mobile distribution"},
-								]},
-							  {"lane":"pp","category":"APPEAL","title":"CONTENT","content":
-								[{"text":"* game variance"},
-								 {"text":"* tournament offer"},
-								 {"text":"* live gaming integration"}
-									]},
-							  {"lane":"pp","category":"USP","title":"SOCIAL","content":
-									[{"text":"* exploitation"},
-									 {"text":"* improved .NET strategy"},
-									]},
-							{"lane":"foxy","category":"ACCESS","title":"TOUCH","content":
-								[{"text":"* HTML5 "}
-								]},
-							  {"lane":"foxy","category":"APPEAL","title":"CONTENT","content":
-								[{"text":"* bingo"},
-								 {"text":"* games variance & refresh"}
-									]},
-							  {"lane":"foxy","category":"USP","title":"SOCIAL","content":
-									[{"text":"* ?"}
-									]},
-							{"lane":"premium","category":"ACCESS","title":"","content":
-								[]},
-							  {"lane":"premium","category":"APPEAL","title":"CONTENT","content":
-								[{"text":"* full offer"},
-								 {"text":"* invite only"},
-								 {"text":"* personalized"}
-									]},
-							  {"lane":"premium","category":"USP","title":"","content":
-									[]},
-				
-								];
-		
 		var _xBase = x(KANBAN_END)+2;
 		var _yBase = -70;
 		var _width = LANE_LABELBOX_RIGHT_WIDTH-90;						
 							
 	  if (_width >100 & CONTEXT=="b2c gaming") {
 		  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
-		  _drawHowPillars(lanes,_pillarElements,_xBase,_yBase,_width);							
+		  _drawHowPillars(lanes,pillarData,_xBase,_yBase,_width);							
 
 	}
 }	
@@ -1047,6 +1079,9 @@ function drawQueues(){
 	calculateQueueMetrics();
 
 	var _xWIPStart = x(WIP_START);
+	// in case we look to much into the future with the timemachine..
+	if (WIP_START>KANBAN_END) _xWIPStart = x(KANBAN_END);
+	
 	var _xWIPWidth = x(WIP_END)-x(WIP_START);
 	var _xFutureX = x(WIP_END);
 	var _xFutureWidth = x(KANBAN_END) - _xFutureX;
@@ -1071,42 +1106,51 @@ function drawQueues(){
 	var _metric = {"text":"DONE" ,"items":ITEMS_DONE ,"swag": SIZING_DONE}
 	_drawQueueMetric(gQueueDone,_metric,x(KANBAN_START),_yMetricBracketOffset,_xWIPStart,_xWIPStart/2,_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
-	//---------------- wip queue --------------------
-	var gQueueWip = gQueue.append("g").attr("id","wip");
-	
-	_drawQueueArea(gQueueWip,_xWIPStart,0,_xWIPWidth,height,"wip",0);
-	
-	// --------------- WIP METRICS ---------------------
-	_metric = {"text":"WIP" ,"items":ITEMS_WIP ,"swag": SIZING_WIP}
-	_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
-
-	//-------------- TODAY markerlines ----------------
-	_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-30);
-	
-	_drawTodayMarker(gQueueWip,x(WIP_START),_yMetricBaseTop,"TODAY");
-	
+	// prevent render queuareas over KANBAN_END border
+	if (WIP_START < KANBAN_END){
+		//---------------- wip queue --------------------
+		var gQueueWip = gQueue.append("g").attr("id","wip");
 		
-	// ------------- WIP marker lines ---------------------
-	_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-30);
+		// in case of going beyond ...
+		if (WIP_END > KANBAN_END) _xWIPWidth = x(KANBAN_END)-x(WIP_START)
+			_drawQueueArea(gQueueWip,_xWIPStart,0,_xWIPWidth,height,"wip",0);
+		
+		// --------------- WIP METRICS ---------------------
+		if (WIP_END<KANBAN_END){
+			_metric = {"text":"WIP" ,"items":ITEMS_WIP ,"swag": SIZING_WIP}
+			_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
+		}
+		
+		//-------------- TODAY markerlines ----------------
+		_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-30);
+		
+		_drawTodayMarker(gQueueWip,x(WIP_START),_yMetricBaseTop,"TODAY");
+		
+			
+		// ------------- WIP marker lines ---------------------
+		if (WIP_END < KANBAN_END){
+			_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-30);
+			//---------------- FUTURE queue --------------------
+			var gQueueFuture = gQueue.append("g").attr("id","future");
+			
+			_drawQueueArea(gQueueFuture,_xFutureX,0,_xFutureWidth,height,"future",0);
+		}
 
-	//---------------- FUTURE queue --------------------
-	var gQueueFuture = gQueue.append("g").attr("id","future");
-	
-	_drawQueueArea(gQueueFuture,_xFutureX,0,_xFutureWidth,height,"future",0);
-	
-	//---------------- FUTURE METRICS --------------------
-	_metric = {"text":"FUTURE" ,"items":ITEMS_FUTURE ,"swag": SIZING_FUTURE}
-	_drawQueueMetric(gQueueFuture,_metric,_xFutureX,_yMetricBracketOffset,_xFutureWidth,(_xFutureWidth/2+x(WIP_END)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
+		//---------------- FUTURE METRICS --------------------
+		if (WIP_END<KANBAN_END){
+			_metric = {"text":"FUTURE" ,"items":ITEMS_FUTURE ,"swag": SIZING_FUTURE}
+			_drawQueueMetric(gQueueFuture,_metric,_xFutureX,_yMetricBracketOffset,_xFutureWidth,(_xFutureWidth/2+x(WIP_END)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
+			//---------------- TOTAL METRICS --------------------
+			_metric = {"text":"TOTAL" ,"items":ITEMS_TOTAL ,"swag": SIZING_TOTAL}
+			_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 
-	//---------------- TOTAL METRICS --------------------
-	_metric = {"text":"TOTAL" ,"items":ITEMS_TOTAL ,"swag": SIZING_TOTAL}
-	_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
+			//---------------- TOTAL DELAYED METRICS --------------------
+			_metric = {"text":"DELAY" ,"items":ITEMS_DELAYED ,"swag": DAYS_DELAYED}
 
-	//---------------- TOTAL DELAYED METRICS --------------------
-	_metric = {"text":"DELAY" ,"items":ITEMS_DELAYED ,"swag": DAYS_DELAYED}
-
-	if (ITEMS_DELAYED){
-		_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth)+80,_yMetricBase,_yMetricDetailsOffset,"red","bottom");
+			if (ITEMS_DELAYED){
+				_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth)+80,_yMetricBase,_yMetricDetailsOffset,"red","bottom");
+			}
+		}
 	}
 } //end drawQueues
 
@@ -1114,18 +1158,16 @@ function drawQueues(){
 
 /* ------------------------------------------------- drawQueues() helper functions ----------------------------------------------------------- */
 		function _drawTodayMarker(svg,x,y,text){
-			svg.append("use").attr("xlink:href","#today_marker")
-			.attr("transform","translate("+(x-5.5)+",-70) scale(1.1)");
-			
-			svg.append("text")
-			.text(text)
-			.attr("transform","translate("+(x)+","+y+") scale(1)")
-			.style("text-anchor","middle")
-			.style("font-size","18px")
-			.style("fill","red")
-			.style("font-weight","bold");
-			
-			
+				svg.append("use").attr("xlink:href","#today_marker")
+				.attr("transform","translate("+(x-5.5)+",-70) scale(1.1)");
+				
+				svg.append("text")
+				.text(text)
+				.attr("transform","translate("+(x)+","+y+") scale(1)")
+				.style("text-anchor","middle")
+				.style("font-size","18px")
+				.style("fill","red")
+				.style("font-weight","bold");
 		}
 		
 		/**
@@ -1288,6 +1330,40 @@ function drawPostits(){
 	
 }
 
+
+function _drawItemName(svg,d,x,y,scale){
+	// ------------  item names --------------
+	if (!scale) scale=1;
+	var size = d.size*ITEM_SCALE*scale;
+	var _textWeight="bold";
+	var _textStyle="normal";
+	var _textSize = 5+(size/5)*ITEM_FONTSCALE;
+	if (!d.isCorporate) {
+		_textWeight = "normal";
+		_textStyle="italic";
+		_textSize =_textSize * TACTIC_SCALE;
+	}
+	var _textDecoration="";
+	//if (d.ExtId!="") _textDecoration="underline";
+
+	var _text =svg.append("text")
+	   .style("font-size",_textSize+"px")
+	   .style("text-anchor","middle")
+	   // !!!!! BOLD and anchor=MIDDLE is not correctly renderered by batik !!!!!
+	   //.style("font-weight",_textWeight)
+	   .style("font-style",_textStyle)
+	   .style("text-decoration",_textDecoration)
+	   .style("kerning",-0.25)
+	   //.style("letter-spacing",-.2)
+	   //google font
+	   .style("font-family","arial, sans-serif")
+	   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";  return"black";})
+	   .attr("x",x)
+	   .attr("y",y)
+	   //.text(d.name);
+		textarea(_text,d.name,x,y,ITEM_TEXT_MAX_CHARS,_textSize-1);
+}
+
 /** renders the items
 */
 function drawItems(){
@@ -1313,9 +1389,11 @@ function drawItems(){
 		.style("opacity",0);
 	
 	filteredInitiativeData = initiativeData.filter(function(d){
-					var _filter=new Date(d.planDate)>KANBAN_START;
+					var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
+					var _filterEnd=new Date(d.planDate)<=KANBAN_END;
+					
 					if (ITEMDATA_FILTER){
-						return _filter && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+						return _filterStart && _filterEnd && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 					}
 					return _filter;
 					
@@ -1337,6 +1415,8 @@ function drawItems(){
 					
 					var _itemXPlanned = x(new Date(d.planDate));
 					var _itemXActual = x(new Date(d.actualDate));
+					
+					
 					var _itemXStart = x(new Date(d.startDate));
 					var _itemX;
 					if (!d.actualDate) _itemX =_itemXPlanned; 
@@ -1359,7 +1439,31 @@ function drawItems(){
 
 					
 					// ------------  line if delayed  before plan--------------
-					if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_itemXPlanned,(_itemX-_size-(_size/2)),_itemY);
+					var _lineX1= _itemXPlanned;
+					var _lineX2= _itemX-_size-(_size/2);
+					// flags whether elements are beyond KANBAN_END, KANBAN_START (in case of timemachine or delays)
+					var _endBeyond=false;
+					var _startBeyond=false;
+					var _endActualBeyond=false;
+					var _startActualBeyond=false;
+					
+					if (new Date(d.planDate) < KANBAN_START){
+						 _lineX1 = x(KANBAN_START)+3; 
+						 _startBeyond=true;
+					 }
+					if (new Date(d.actualDate) < KANBAN_START){
+						 _startBeyond=true;
+					}
+					
+					if (new Date(d.actualDate) > KANBAN_END){
+						 _lineX2 = x(KANBAN_END)-3;
+						 _endActualBeyond=true;
+					}
+					if (new Date(d.actualDate) > KANBAN_END){
+						 _startActualBeyond=true;
+					}
+					
+					if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_lineX1,_lineX2,_itemY);
 					
 					// ------------  line if before plan--------------
 					else if (d.actualDate<d.planDate) _drawItemDelayLine(d3.select(this),_itemX,(_itemXPlanned-_size-(_size/2)),_itemY);
@@ -1369,42 +1473,56 @@ function drawItems(){
 						.style("opacity",d.accuracy/10);
 					
 					// ------------  circles --------------
+					
+					
 					if (d.Type !=="target"){
 
-						d3.select(this)
-							.append("circle")
-								.attr("id","item_circle_"+d.id)
-								.attr("cx",_itemX)
-								.attr("cy",_itemY)
-								.attr("r",_size)
-								.attr("class",function(d){
-								if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
-								else if (new Date(d.actualDate)>WIP_END) {return "future";} 
-								else {return d.state}});
-
-						// ----------- circle icons -------------
-						console.log("################################ id:"+d.id+" "+_itemXPlanned);
-						
-						// only append icon if we have declared on in external.svg
-						if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
+						// only draw circle if we are inside KANBAN_START/END 
+						if (!_startActualBeyond && !_endBeyond){
 							d3.select(this)
-								.append("use").attr("xlink:href","#icon_"+d.theme+"."+d.lane+"."+d.sublane)
-								.attr("transform","translate("+(_itemX-(1.2*_size/2))+","+(_itemY-(1.2*_size/2))+") scale("+_size/10+") ");
+								.append("circle")
+									.attr("id","item_circle_"+d.id)
+									.attr("cx",_itemX)
+									.attr("cy",_itemY)
+									.attr("r",_size)
+									.attr("class",function(d){
+									if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
+									else if (new Date(d.actualDate)>WIP_END) {return "future";} 
+									else {return d.state}});
+
+							// ----------- circle icons -------------
+							console.log("################################ id:"+d.id+" "+_itemXPlanned);
+							
+							// only append icon if we have declared on in external.svg
+							if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
+								d3.select(this)
+									.append("use").attr("xlink:href","#icon_"+d.theme+"."+d.lane+"."+d.sublane)
+									.attr("transform","translate("+(_itemX-(1.2*_size/2))+","+(_itemY-(1.2*_size/2))+") scale("+_size/10+") ");
+							}
 						}
 					} //end if d.Type!="target"
-
 					
 					// ------------  item blocks --------------
 					// if isCorporate flag is not set use "tactic" icon 
-					var _iconRef=d.Type;
-					if (!d.isCorporate) {
-						_iconRef = "tactic";
-					}
-					d3.select(this)
-						.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
-						.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
-
 					
+					if (new Date(d.planDate) >KANBAN_START){
+						var _iconRef=d.Type;
+						if (!d.isCorporate) {
+							_iconRef = "tactic";
+						}
+						d3.select(this)
+							.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
+							.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
+						
+						_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
+
+					} // end KANBAN_START check
+					// if plandate is beyon KANBAN_START - we have to draw the name below the circle (a bit smaller)
+					else if (new Date(d.actualDate)>KANBAN_START){
+						_drawItemName(d3.select(this),d,_itemXActual,(_itemY+_size+3),0.1);
+					}
+
+						
 					// transparent circle on top for the event listener
 					d3.select(this)
 						.append("circle")
@@ -1430,40 +1548,6 @@ function drawItems(){
 								.attr("r", _size);
 									//.transition().delay(0).duration(500)
 								onTooltipOutHandler(d,tooltip,"#item_");})
-															
-					
-					// ------------  item names --------------
-					var _textWeight="bold";
-					var _textStyle="normal";
-					var _textSize = 5+(_size/5)*ITEM_FONTSCALE;
-					if (!d.isCorporate) {
-						_textWeight = "normal";
-						_textStyle="italic";
-						_textSize =_textSize * TACTIC_SCALE;
-					}
-					
-					
-					var _x = _itemXPlanned;
-					var _y = (_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE);
-					var _text =d3.select(this)
-					   .append("text")
-					   //.text(d.name)
-					   .attr("font-size",_textSize+"px")
-					   .attr("text-anchor","middle")
-					   .style("font-weight",_textWeight)
-					   .style("font-style",_textStyle)
-					   //.style("kerning",-0.5)
-					   //.style("letter-spacing",-.2)
-					   //google font
-					   .style("font-family","Open Sans Condensed,arial, sans-serif")
-					   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else return"black";})
-					   .attr("x",_x)
-					   .attr("y",_y);
-	
-					
-					textarea(_text,d.name,_x,_y,ITEM_TEXT_MAX_CHARS,_textSize-1);
-	
-					
 					
 					// ------------- labels for Swag view -------------
 					_text = gLabels
@@ -1535,7 +1619,8 @@ function drawItems(){
 						.attr("class","sizings "+d.lane)
 						.style("opacity",0.4);
 					}
-   
+					
+				
 				}) //end each()
 
 /*
@@ -1635,7 +1720,13 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.state=="done") _indicator ="green";
 	else if (d.state=="planned") _indicator ="gold";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">status:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _health;
+	if (d.health=="green") _health="green";
+	else if (d.health=="amber") _health ="gold";
+	else if (d.health=="red") _health ="red";
+	
+	
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1650,6 +1741,20 @@ function onTooltipOverHandler(d,tooltip,highlight){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">DoR:</td><td class=\"small\" style=\"text-align:left\">"+d.DoR+"</td></tr>";
 		
 	}
+	
+	if (d.health!=""){
+		_htmlBase=_htmlBase+"<tr><td class=\"small\">health:</td><td><div class=\"health\" style=\"background-color:"+_health+"\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></td></tr>";
+	}
+	if (d.healthComment!=""){
+		_htmlBase=_htmlBase+"<tr><td class=\"small\">comment:</td><td>"+d.healthComment+" </td></tr>";
+	}
+
+	if (d.programLead!=""){
+		_htmlBase=_htmlBase+"<tr><td class=\"small\">lead:</td><td><b>"+d.programLead+"</b> </td></tr>";
+	}
+
+
+	
 	_htmlBase=_htmlBase+"<tr><td class=\"small\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr></table>";
 	tooltip.html(_htmlBase);
 	
@@ -1749,7 +1854,7 @@ function drawMetrics(){
 	d3.select("#metrics").remove();
 	
 	//only show metrics in b2c business model view
-	if (CONTEXT!="new biz" && _.last(CONTEXT.split("."))!="drill-in"){
+	if (SHOW_METRICS){
 
 		//console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
@@ -1800,8 +1905,6 @@ function drawMetrics(){
 	var gMetricsTarget2 = gMetrics.append("g").attr("id","metrics_target2");
 	_targetResultSum2 = _renderMetrics(gMetricsBaseline,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
 	
-	
-	
 
 // ------------------------------ potentials ------------------------------------------------
 
@@ -1820,17 +1923,23 @@ function drawMetrics(){
 /* ------------------------------------- goal column ------- ------------------------------------*/
 	var gMetricsGoal = gMetricsTarget2.append("g").attr("id","metrics_goal");
 	
-	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,-160,_getDataBy("dimension","goal",METRICDATES_DATA).data);
+	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,METRIC_BASE_Y,_getDataBy("dimension","goal",METRICDATES_DATA).data);
 
-	 var _goalData = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
+	
+	 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
+	_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
 
-	_drawTextMetric(gMetricsGoal,_goalData[0],"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10);
+	var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal" });
+	var _yTotalKpiBase = _yTotal-10;
+	for (var k in _goalKpis){
+		_drawTextMetric(gMetricsGoal,_goalKpis[k],"metricSmall",x(KANBAN_END)+_goalXOffset+30,_yTotalKpiBase-((getInt(k)+1)*15),6,"right");
+	}
 	
 	//delta symbol
 	_drawSign(gMetricsGoal,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
 	_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
 	
-	var _diff = _goalData[0].number-_targetResultSum2;
+	var _diff = _goalResult[0].number-_targetResultSum2;
 	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
 
 	_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+30,10);
@@ -1880,8 +1989,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 		// y space between KPIs
 		var _kpiYOffset = 15;
 		var _primTextYOffset=18; 
-		var _yPie = -80;
-		var METRIC_DATES_Y=-160;
+		//var METRIC_DATES_Y=-190;
 		
 	var _met = metricData.filter(function(d){return d.dimension==dimension && ( (d.class=="result") || (d.class=="kpi"))});
 	var _metByLane = _.nest(_met,"lane");
@@ -1927,8 +2035,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	}
 
 	//metric date 
-	
-	_drawMetricDate(gMetrics,x1Base-50,METRIC_DATES_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
+	_drawMetricDate(gMetrics,x1Base-50,METRIC_BASE_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
 
 
 	// calculated sum
@@ -1940,14 +2047,24 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	_drawTextMetric(gMetrics,_total,"metricBig",x1Base,_yTotal,10,_resultDir);
 	
 
+	// corp KPIs
+	var _corpKpis = metricData.filter(function(d){return d.dimension==dimension && d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
+
+	var _yTotalKpiBase = _yTotal-10;
+	for (var k in _corpKpis){
+		_drawTextMetric(gMetrics,_corpKpis[k],"metricSmall",x2Base,_yTotalKpiBase-((getInt(k)+1)*15),6,_kpiDir);
+	}
+
+
 	// pie
+	var _yPie = METRIC_BASE_Y+75;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% sustainable"});
 
 	_drawPie(gMetrics,dimension,_met[0],x1Base,_yPie);
 
 
 	// cx baseline 
-	var _yCX =-102;
+	var _yCX =METRIC_BASE_Y+50;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="loyaltyindex"});
     var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
 	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
@@ -1956,9 +2073,9 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	
 	
 	//market share overall
-	var _yMarketShare =-120;
+	var _yMarketShare = METRIC_BASE_Y+35;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% overall"});
-	_drawTextMetric(gMetrics,_met[0],"metricBig",x1Base,_yMarketShare,10);
+	_drawTextMetric(gMetrics,_met[0],"metricBig",x1Base,_yMarketShare,10,"left");
 	
 	return _resultSum;
 }
@@ -2160,23 +2277,25 @@ function _drawCX	(svg,data,x,y){
  */
 function drawWC2014(){
 	
-	var svg = d3.select("#kanban");
-	var _x = x(new Date("2014-06-13"));
-	var _y = x(new Date("2014-07-13"));
+	if (KANBAN_END > new Date("2014-07-13")){
 	
-	svg.append("rect")
-	.attr("x",_x)
-	.attr("width",(_y-_x))
-	.attr("y",0)
-	.attr("height",y(100))
-	.style("fill","white")
-	.style("opacity",0.75);
-	
-	
-	svg.append("use").attr("xlink:href","#wc2014")
-	.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ")
-	.style("opacity",0.5);
-	
+		var svg = d3.select("#kanban");
+		var _x = x(new Date("2014-06-13"));
+		var _y = x(new Date("2014-07-13"));
+		
+		svg.append("rect")
+		.attr("x",_x)
+		.attr("width",(_y-_x))
+		.attr("y",0)
+		.attr("height",y(100))
+		.style("fill","white")
+		.style("opacity",0.75);
+		
+		
+		svg.append("use").attr("xlink:href","#wc2014")
+		.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ")
+		.style("opacity",0.5);
+	}
 }
 
 
@@ -2480,6 +2599,8 @@ function drawVersion(){
 	var i=0;
 
 	t = [	{"name":"context: ","value": CONTEXT},
+			{"name":"owner: ","value": "joachim baca"},
+			{"name":"classification: ","value": "confidential"},
 			{"name":"URL: ","value": document.URL},
 			{"name":"version: ","value": new Date().toString('yyyy-MM-dd_hh:mm:ss')},
 			{"name":"package: ","value":PACKAGE_VERSION},
@@ -2487,9 +2608,10 @@ function drawVersion(){
 			
 		];
 
+	var _yRunning;
 	for (var j in t){ 
-		_drawVersionText(gVersion,t[j],WIDTH-140,(_y+_offset+(j*_line)),6);
-		i++;
+		_yRunning = _y+_offset+(j*_line);
+		_drawVersionText(gVersion,t[j],WIDTH-140,_yRunning,6);
 	}
 /*	
 	for (var _version in dataversions){
@@ -2501,11 +2623,10 @@ function drawVersion(){
 */		
 	
 	//bottom disclaimer
-	i++;
-
-	_drawLegendLine(svg,WIDTH-200,WIDTH-42,_y+60);
+	_yRunning+=5;
+	_drawLegendLine(svg,WIDTH-200,WIDTH-42,_yRunning);
 	
-	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_y+67,5,"normal","end");
+	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_yRunning+7,5,"normal","end");
 	
 
 }
@@ -3228,16 +3349,16 @@ function calculateQueueMetrics(){
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_date)<WIP_START && new Date(_item.planDate)>KANBAN_START && _item.state=="done"){
+		if (new Date(_date)<WIP_START && new Date(_date)>KANBAN_START && _item.state=="done" ){
 			ITEMS_DONE++;
 			if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
 		}
-		else if(new Date(_date)>WIP_START && new Date(_date)<WIP_END) {
+		else if(new Date(_date)>WIP_START && new Date(_date)<WIP_END && new Date(_date)<KANBAN_END) {
 			ITEMS_WIP++;
  			if (!isNaN(_sizingPD)) SIZING_WIP+=_sizingPD;
 
 		}
-		else if (new Date(_date)>WIP_END && new Date(_item.planDate)>KANBAN_START){
+		else if (new Date(_date)>WIP_END && new Date(_date)<KANBAN_END){
 			ITEMS_FUTURE++;
 			
 			if (!isNaN(_sizingPD)) SIZING_FUTURE+=_sizingPD;
@@ -3382,6 +3503,33 @@ function layout(elements){
 	})
 }
 
+
+
+function wrapText(caption,maxChars){
+	if (!maxChars) maxChars = 20;
+
+	var words = caption.split(" ");
+	var line = "";
+
+	var wrap = new Array();
+	
+	for (var n = 0; n < words.length; n++) {
+		var testLine = line + words[n] + " ";
+		if (testLine.length > maxChars || words[n]=="|")
+		{
+			wrap.push(line);
+  
+			if (words[n]=="|") words[n]="";
+  
+			line = words[n] + " ";
+		}
+		else {
+			line = testLine;
+		}
+	}
+	wrap.push(line);
+	return wrap;
+}
 
 /**
     This function attempts to create a new svg "text" element, chopping 
@@ -3538,4 +3686,14 @@ var PACKAGE_VERSION="20140131_1820";
 var PACKAGE_VERSION="20140204_0911";
 	
 var PACKAGE_VERSION="20140205_1820";
+	
+var PACKAGE_VERSION="20140206_0835";
+	
+var PACKAGE_VERSION="20140206_1704";
+	
+var PACKAGE_VERSION="20140207_1428";
+	
+var PACKAGE_VERSION="20140207_1803";
+	
+var PACKAGE_VERSION="20140207_1901";
 	
