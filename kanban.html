@@ -231,6 +231,7 @@ function show_svg_code()
 	  <button id="b78" type="button" class="btn btn-success">Shared</button>
 	  <button id="b74" type="button" class="btn btn-danger">Bwin Drill-in</button>
 	  <button id="b75" type="button" class="btn btn-danger">EntIT Drill-in</button>
+	  <button id="b79" type="button" class="btn btn-success">History</button>
 	  
 	  
 	</div>
@@ -285,6 +286,10 @@ function show_svg_code()
 	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
 	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
 	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
+	  
+	  <button id="b100" type="button" class="btn btn-default">Version1 items</button>
+	  <button id="b101" type="button" class="btn btn-default">Other items</button>
+	  
 	  
 	  
 
@@ -394,6 +399,34 @@ function initHandlers(){
 	});	
 
 
+	d3.select("#b100").on("click", function(){
+		
+		if (!SHOW_ONLY_VERSION1){
+			 console.log("hide");
+			 d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","hidden");
+			 SHOW_ONLY_VERSION1 = true;
+		 }
+		else {
+			d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","visible");
+			SHOW_ONLY_VERSION1 = false;
+		}
+	});	
+
+	d3.select("#b101").on("click", function(){
+		
+		if (!SHOW_ONLY_NONVERSION1){
+			 console.log("hide");
+			 d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","hidden");
+			 SHOW_ONLY_NONVERSION1 = true;
+		 }
+		else {
+			d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","visible");
+			SHOW_ONLY_NONVERSION1 = false;
+		}
+	});	
+
+
+
 	d3.select("#b8").on("click", function(){
 		if (d3.select("#releases").style("visibility") =="visible"){
 			 d3.select("#releases").style("visibility","hidden");
@@ -494,7 +527,9 @@ function initHandlers(){
 
 
 	d3.select("#b30").on("click", function(){
-		post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,2,4,"blue","red");
+		CUSTOM_POSTIT_SCALE = 1; 
+		
+		post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,CUSTOM_POSTIT_SCALE,4,"blue","black");
 		var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
 		
 		post.draw(gCustomPostits);
@@ -507,17 +542,31 @@ function initHandlers(){
 		timeMachine(document.getElementById("input_timemachine").value);
 	});	
 
-
+	var _newDate;
 	document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
 	d3.select("#b50").on("click", function(){
-		KANBAN_START=new Date(document.getElementById("input_kanbanstart").value);
-		drawAll();
+		_newDate = new Date(document.getElementById("input_kanbanstart").value);
+		if (_newDate<KANBAN_END){
+			KANBAN_START=_newDate;
+			drawAll();
+		}
+		else{
+			 alert("KANBAN_START should not be later than KANBAN_END sir !");
+			document.getElementById("input_kanbanstart").value=KANBAN_START.toString('yyyy-MM-dd');
+		 }
 	});	
 
 	document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
 	d3.select("#b51").on("click", function(){
-		KANBAN_END=new Date(document.getElementById("input_kanbanend").value);
-		drawAll();
+		_newDate = new Date(document.getElementById("input_kanbanend").value);
+		if (KANBAN_START<_newDate){
+			KANBAN_END=_newDate;
+			drawAll();
+		}
+		else{
+			alert("KANBAN_END should not be earlier than KANBAN_START sir !");
+			document.getElementById("input_kanbanend").value=KANBAN_END.toString('yyyy-MM-dd');
+		}
 	});	
 
 
@@ -555,6 +604,9 @@ function initHandlers(){
 		renderShared();
 	});	
 
+	d3.select("#b79").on("click", function(){
+		renderHistory();
+	});	
 
 
 	d3.select("#l1").on("click", function(){
