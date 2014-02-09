@@ -2373,12 +2373,16 @@ function Postit(id,text,x,y,scale,size,color,textcolor){
 	this.x=x;
 	this.y=y;
 	
+
+	
 	console.log("constructor: "+this.getInfo());
 }
 
 Postit.prototype.getInfo=function(){
 	return JSON.stringify(this);
 }
+
+
 
 Postit.prototype.save=function(){
 	var _insert = JSON.stringify(this);
@@ -2435,30 +2439,48 @@ Postit.prototype.update=function(){
 
 Postit.prototype.draw=function(svg){
 	var p=this;
+	
+	var movedX,movedY;
+	
 	console.log("in draw(): "+this.getInfo());
 	//postits drag and drop
 	var drag_postit = d3.behavior.drag()
 		.on("dragstart", function(d,i) {
-			console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y);
+		   d3.select(this).style("opacity",0.6);
+			movedX=0;
+			movedY=0;
+			
+			console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y+ " p.x: "+p.x+" p.y: "+p.y);
+			d3.select(this).attr("transform", function(d,i){
+				return "translate(" + [ d.x,d.y ] + ")"
+			})
+			
 		})	
 
 		.on("drag", function(d,i) {
+			
 			d.x += d3.event.dx
 			d.y += d3.event.dy
-			console.log("drag= d.x:"+d.x+" - d.y:"+d.y);
-
+			
+			movedX += d3.event.dx
+			movedY += d3.event.dy
+			
+			console.log("drag= d.x:"+d.x+" - d.y:"+d.y+" p.x: "+p.x+" p.y: "+p.y+ "--- movedX: "+movedX+" movedY: "+movedY);
+			
 			d3.select(this).attr("transform", function(d,i){
 				return "translate(" + [ d.x,d.y ] + ")"
 			})
 		})	
 		.on("dragend",function(d,i){
 			//postit update position
-			p.x=getInt(d.x)+getInt(p.x);
-			p.y=getInt(d.y)+getInt(p.y);
-			console.log("dragend event: x="+d.x+", y="+d.y);
-			console.log("context: this= "+this);
-
+			if (movedX>0 || movedY>0){
+				p.x=getInt(movedX)+getInt(p.x);
+				p.y=getInt(movedY)+getInt(p.y);
 			p.update();
+			}
+			console.log("dragend event: x="+d.x+", y="+d.y+" p.x: "+p.x+" p.y: "+p.y);
+			d3.select(this).style("opacity",1);
+		
 		});
 	
 	
@@ -2494,14 +2516,6 @@ Postit.prototype.draw=function(svg){
 		.style("text-anchor","start")
 		.style("fill",this.textcolor)
 			.attr("transform","translate("+_x+","+_y+") scale("+this.scale+") rotate("+_rotate+")");
-	
-	
-	/*for (i in _split){
-		t.append("tspan")
-		.text(_split[i])
-		.attr("dy",4+Math.sqrt(this.scale/5))
-		.attr("x",0);
-	}*/
 	
 	textarea(t,this.text,0,4,10,4);
 	
@@ -2591,7 +2605,7 @@ function drawVersion(){
 	gVersion.append("use").attr("xlink:href","#bpty")
 	.attr("transform","translate ("+(WIDTH-137)+","+(_y+5)+") scale(0.40) ");
 	
-	_drawLegendLine(svg,WIDTH-200,WIDTH-42,_y+20);
+	_drawLegendLine(gVersion,WIDTH-200,WIDTH-42,_y+20);
 		
 	//title
 	//_drawText(gVersion,"strategic portfolio kanban board",WIDTH-42,(_y-(_offset-9)),9,"bold","end");
@@ -2624,7 +2638,7 @@ function drawVersion(){
 	
 	//bottom disclaimer
 	_yRunning+=5;
-	_drawLegendLine(svg,WIDTH-200,WIDTH-42,_yRunning);
+	_drawLegendLine(gVersion,WIDTH-200,WIDTH-42,_yRunning);
 	
 	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",WIDTH-42,_yRunning+7,5,"normal","end");
 	
@@ -2671,15 +2685,15 @@ function drawLegend(){
 	
 	gLegend.append("use").attr("xlink:href","#item")
 		.attr("transform","translate ("+_x+","+(_y+2)+") scale(0.30) ");
-	_drawText(svg,"... corporate initiative [planned finish]",_x+12,(_y+7),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... corporate initiative [planned finish]",_x+12,(_y+7),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("use").attr("xlink:href","#tactic")
 		.attr("transform","translate ("+_x+","+(_y+12)+") scale(0.30) ");
-	_drawText(svg,"... tactical initiative [planned finish]",_x+12,(_y+17),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... tactical initiative [planned finish]",_x+12,(_y+17),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("use").attr("xlink:href","#innovation")
 		.attr("transform","translate ("+_x+","+(_y+22)+") scale(0.30) ");
-	_drawText(svg,"... innovation initiative [planned finish]",_x+12,(_y+27),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... innovation initiative [planned finish]",_x+12,(_y+27),_fontsize,"normal","start",null,"italic");
 
 	
 	gLegend.append("use").attr("xlink:href","#item")
@@ -2687,11 +2701,11 @@ function drawLegend(){
 	
 	gLegend.append("use").attr("xlink:href","#postit_yellow")
 		.attr("transform","translate ("+_x+","+(_y+30)+") scale(0.35) ");
-	_drawText(svg,"... fuzzy initiative [planned finish]",_x+12,(_y+37),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... fuzzy initiative [planned finish]",_x+12,(_y+37),_fontsize,"normal","start",null,"italic");
 
 	gLegend.append("use").attr("xlink:href","#postit_blue")
 		.attr("transform","translate ("+_x+","+(_y+40)+") scale(0.35) ");
-	_drawText(svg,"... custom note",_x+12,(_y+47),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... custom note",_x+12,(_y+47),_fontsize,"normal","start",null,"italic");
 
 
 			
@@ -2703,34 +2717,34 @@ function drawLegend(){
 		.style("opacity",0.5)
 		.attr("transform","translate ("+(_x+100)+","+(_y+5)+") scale(0.30) ");
 		
-	_drawText(svg,"... initiative [done]",(_x+105),(_y+7),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [done]",(_x+105),(_y+7),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.attr("transform","translate ("+(_x+100)+","+(_y+15)+") scale(0.30) ")
 		.style("opacity",0.5)
 		.style("fill","red");
-	_drawText(svg,"... initiative [delayed]",(_x+105),(_y+17),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [delayed]",(_x+105),(_y+17),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","gold")
 		.attr("transform","translate ("+(_x+100)+","+(_y+25)+") scale(0.30) ");
-	_drawText(svg,"... initiative [planned]",(_x+105),(_y+27),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [planned]",(_x+105),(_y+27),_fontsize,"normal","start",null,"italic");
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","grey")
 		.attr("transform","translate ("+(_x+100)+","+(_y+35)+") scale(0.30) ");
-	_drawText(svg,"... initiative [future]",(_x+105),(_y+37),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [future]",(_x+105),(_y+37),_fontsize,"normal","start",null,"italic");
 	
 	
 	
 	gLegend.append("use").attr("xlink:href","#target")
 		.attr("transform","translate ("+(_x+96)+","+(_y+42)+") scale(0.30) ");
-	_drawText(svg,"... pulling goal",_x+105,(_y+47),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... pulling goal",_x+105,(_y+47),_fontsize,"normal","start",null,"italic");
 	
 	
-	_drawLegendLine(svg,-280,-120,_y);
+	_drawLegendLine(gLegend,-280,-120,_y);
 		
 	//title
 	//_drawText(gVersion,"strategic portfolio kanban board",WIDTH-42,(_y-(_offset-9)),9,"bold","end");
