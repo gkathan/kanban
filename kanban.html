@@ -32,8 +32,8 @@
 <!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
 <script>
 	
-	TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
-	//TRANSCODE_URL = "http://localhost:8080/transcode";
+	//TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
+	TRANSCODE_URL = "http://localhost:8080/transcode/";
 	
 	
 	WIDTH=1500;
@@ -365,8 +365,8 @@ function initHandlers(){
 	});
 
 	d3.select("#b2").on("click", function(){
-		if (d3.select("#items").style("visibility") =="visible") d3.selectAll("#items,#postits").style("visibility","hidden");
-		else d3.selectAll("#items,#postits").style("visibility","visible");
+		if (d3.select("#initiatives").style("visibility") =="visible") d3.selectAll("#initiatives,#postits").style("visibility","hidden");
+		else d3.selectAll("#initiatives,#postits").style("visibility","visible");
 	});
 
 	d3.select("#b3").on("click", function(){
@@ -388,12 +388,12 @@ function initHandlers(){
 	d3.select("#b15").on("click", function(){
 		if (d3.select("#linechart").style("visibility") =="visible"){
 			 d3.select("#linechart").style("visibility","hidden");
-			 d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", 0);
+			 d3.select("#initiatives").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", 0);
 
 		}
 		else{
 			d3.select("#linechart").style("visibility","visible");
-			d3.select("#items").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
+			d3.select("#initiatives").selectAll("g").filter(function(d){return (d.lane=="bwin") && new Date(d.planDate)<=TODAY ;}).attr("filter", "url(#blur)");
 
 		}
 	});	
@@ -403,11 +403,11 @@ function initHandlers(){
 		
 		if (!SHOW_ONLY_VERSION1){
 			 console.log("hide");
-			 d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","hidden");
+			 d3.selectAll("#initiatives").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","hidden");
 			 SHOW_ONLY_VERSION1 = true;
 		 }
 		else {
-			d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","visible");
+			d3.selectAll("#initiatives").selectAll("g").filter(function(d){return d.ExtId==""}).style("visibility","visible");
 			SHOW_ONLY_VERSION1 = false;
 		}
 	});	
@@ -416,11 +416,11 @@ function initHandlers(){
 		
 		if (!SHOW_ONLY_NONVERSION1){
 			 console.log("hide");
-			 d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","hidden");
+			 d3.selectAll("#initiatives").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","hidden");
 			 SHOW_ONLY_NONVERSION1 = true;
 		 }
 		else {
-			d3.selectAll("#postits,#items").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","visible");
+			d3.selectAll("#initiatives").selectAll("g").filter(function(d){return d.ExtId!=""}).style("visibility","visible");
 			SHOW_ONLY_NONVERSION1 = false;
 		}
 	});	
@@ -430,19 +430,19 @@ function initHandlers(){
 	d3.select("#b8").on("click", function(){
 		if (d3.select("#releases").style("visibility") =="visible"){
 			 d3.select("#releases").style("visibility","hidden");
-			 d3.select("#items").style("opacity",1);
+			 d3.select("#initiatives").style("opacity",1);
 		 }
 		 
 		else{
 			 d3.select("#releases").style("visibility","visible");
-			 d3.select("#items").style("opacity",0.5);
+			 d3.select("#initiatives").style("opacity",0.5);
 		 }
 	});	
 
 	d3.select("#b9").on("click", function(){
 		if (d3.select("#sizings").style("opacity") >0){
 		 
-			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 d3.selectAll("#initiatives,#queues,#metrics")
 			 .style("visibility","visible");
 			 
 			 d3.selectAll("#sizings,#labels")
@@ -451,7 +451,7 @@ function initHandlers(){
 			 .duration(1000)
 			 .style("opacity",0);
 
-			 d3.selectAll("#items,#queues,#lanes,#axes,#postits,#metrics")
+			 d3.selectAll("#initiatives,#queues,#lanes,#axes,#metrics")
 			 .transition()
 			 .delay(0)
 			 .duration(1000)
@@ -470,13 +470,13 @@ function initHandlers(){
 			 .duration(1000)
 			 .style("opacity",1);
 
-			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 d3.selectAll("#initiatives,#queues,#metrics")
 			 .transition()
 			 .delay(0)
 			 .duration(1000)
 			 .style("opacity",0);
 			 
-			 d3.selectAll("#items,#queues,#postits,#metrics")
+			 d3.selectAll("#initiatives,#queues,#metrics")
 			 .transition()
 			 .delay(1000)
 			 .style("visibility","hidden");
@@ -529,20 +529,28 @@ function initHandlers(){
 	d3.select("#b30").on("click", function(){
 		CUSTOM_POSTIT_SCALE = 1; 
 		
-		post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-50,CUSTOM_POSTIT_SCALE,4,"blue","black");
+		post = new Postit(null,document.getElementById("input_postit").value,x(KANBAN_START),-100,CUSTOM_POSTIT_SCALE,4,"blue","black");
 		var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
 		
 		post.draw(gCustomPostits);
 		post.save();
 
 	});	
-
+	var _newDate;
+	
 	document.getElementById("input_timemachine").value = TODAY.toString('yyyy-MM-dd');  ;
 	d3.select("#b40").on("click", function(){
-		timeMachine(document.getElementById("input_timemachine").value);
+		_newDate = new Date(document.getElementById("input_timemachine").value);
+		if (_newDate<KANBAN_END & _newDate>KANBAN_START){
+			timeMachine(document.getElementById("input_timemachine").value);
+		}
+		else {
+			alert("TIMEMACHINE date should not be earlier than KANBAN_START and/or later than KANBAN_END date, sir !! ");
+			document.getElementById("input_timemachine").value=TODAY.toString('yyyy-MM-dd');
+		}
+			
 	});	
 
-	var _newDate;
 	document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
 	d3.select("#b50").on("click", function(){
 		_newDate = new Date(document.getElementById("input_kanbanstart").value);
