@@ -286,6 +286,7 @@ function show_svg_code()
 	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
 	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
 	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
+	  <button id="bguides" type="button" class="btn btn-default">Guides</button>
 	  
 	  <button id="b100" type="button" class="btn btn-default">Version1 items</button>
 	  <button id="b101" type="button" class="btn btn-default">Other items</button>
@@ -384,6 +385,10 @@ function initHandlers(){
 		else d3.select("#metrics").style("visibility","visible");
 	});	
 
+	d3.select("#bguides").on("click", function(){
+		if (d3.select("#guides").style("visibility") =="visible") d3.select("#guides").style("visibility","hidden");
+		else d3.select("#guides").style("visibility","visible");
+	});	
 
 	d3.select("#b15").on("click", function(){
 		if (d3.select("#linechart").style("visibility") =="visible"){
