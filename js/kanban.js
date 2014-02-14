@@ -1,7 +1,7 @@
 /**
- * @version: 0.2
+ * @version: 0.3
  * @author: Gerold Kathan (www.kathan.at)
- * @date: 2014-01-12
+ * @date: 2014-02-10
  * @copyright: 
  * @license: 
  * @website: www.kathan.at
@@ -11,16 +11,16 @@
 /**
 	 -------------------- HOWTO HIDE elements of a lane ----------------------------
 	
-	 d3.select("#items").selectAll("g").filter(function(d){return d.lane=="bwin"}).style("visibility","hidden")
+	 d3.select("#initiatives").selectAll("g").filter(function(d){return d.lane=="bwin"}).style("visibility","hidden")
 	
-	 d3.select("#items").selectAll("g").filter(function(d){return ((d.sublane=="touch")&&(d.lane=="bwin"))}).style("visibility","visible")
+	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((d.sublane=="touch")&&(d.lane=="bwin"))}).style("visibility","visible")
 	
-	 d3.select("#items").selectAll("g").filter(function(d){return ((d.theme=="topline"))}).style("visibility","hidden")
-	 d3.select("#items").selectAll("g").filter(function(d){return ((true))}).style("visibility","hidden")
+	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((d.theme=="topline"))}).style("visibility","hidden")
+	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((true))}).style("visibility","hidden")
 	
 	 -------------------- HOWTO HIDE elements of a column ----------------------------
 	
-	 d3.select("#items").selectAll("g").filter(function(d){return (new Date(d.planDate)>WIP_END)}).style("visibility","hidden")
+	 d3.select("#initiatives").selectAll("g").filter(function(d){return (new Date(d.planDate)>WIP_END)}).style("visibility","hidden")
 
 
 	---------------------- power of css3 selectors
@@ -104,10 +104,32 @@ var itemDataConfig;
  * "override": takes specified values and overrides the distribution with those values => not implemented yet ;-)
  */
 
+
+// raster px configuration
+
 var WIDTH =1200;
 var HEIGHT = 1200;
 
-var margin = {top: 250, right: 320, bottom: 100, left: 300};
+var LANE_LABELBOX_LEFT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_START;
+
+// height of the timeline header block where the dates are in 
+var TIMELINE_HEIGHT = 20;
+
+var PILLAR_TOP = -75;
+
+// y coord of marker / dates 
+var MARKER_DATE_TOP = -30;
+
+// 
+var METRIC_BASE_Y = -220;
+
+// width of the targets block after KANBAN_END and before LANELABELBOX_RIGHT
+var TARGETS_COL_WIDTH=10;
+
+
+var margin;
 var width,height;
 
 
@@ -147,8 +169,6 @@ var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
 var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
 
-var LANE_LABELBOX_LEFT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_WIDTH =100;
 
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
@@ -184,19 +204,26 @@ var SHOW_METRICS = false;
 var SHOW_ONLY_VERSION1=false;
 var SHOW_ONLY_NONVERSION1=false;
 
-// 
-METRIC_BASE_Y = -220;
 
 var TRANSCODE_URL;
 
+
+function setMargin(){
+	margin = {top: 250, right: 120+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: 300};
+	
+}
 /**
 *
 */
 function init(){
 	d3.select("#kanban").remove()
+	
+	setMargin();
 
 	width = WIDTH - margin.left - margin.right,
 	height = HEIGHT - margin.top - margin.bottom;
+
+
 
 	y = d3.scale.linear()
 		// changed 20140104 => from [0,100]
@@ -237,6 +264,87 @@ function init(){
 				})
 			});
 }
+
+
+function _checkArrayByKey(_array,_key){
+	for (var i in _array){
+		console.log ("i: "+i+ " "+_array[i]["end"]);
+		if (_array[i][_key]) return _array[i][_key];
+	}
+}
+
+function _addLineMarkers(svg,markers){
+	for (var i in markers){
+		if (markers[i]["start"]) svg.attr("marker-start", "url(#"+markers[i]["start"]+")");
+		if (markers[i]["end"]) svg.attr("marker-end", "url(#"+markers[i]["end"]+")");
+	}
+}
+
+
+/** generic line draw helper method
+ * @markers array ["start","end"]
+ * @class css reference
+ * */
+function _drawLine(svg,x1,y1,x2,y2,css,markers){
+	var _line = svg.append("line")
+	  .attr("x1",x1)
+	  .attr("y1",y1)
+	  .attr("x2",x2)
+	  .attr("y2",y2)
+	  .attr("class",css);
+	 if (markers){
+		_addLineMarkers(svg,markers);
+	 }
+}
+
+
+function drawRaster(){
+	LANE_LABELBOX_RIGHT_START = x(KANBAN_END)+TARGETS_COL_WIDTH;
+
+	var gRaster= svg.append("g").attr("id","raster");
+	
+	// horizontal top
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,0-margin.top,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0-margin.top,"rasterLine");
+	_drawText(gRaster,"0-margin.top"+(-margin.top)+"px",x(KANBAN_START)-margin.left,(-margin.top+2),"4","normal",null,"#cccccc");
+
+	//horizontal TIMELINE top 
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,-TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,-TIMELINE_HEIGHT,"rasterLine");
+	_drawText(gRaster,"TIMELINE_HEIGHT: "+(-TIMELINE_HEIGHT)+"px",x(KANBAN_START)-margin.left,(-TIMELINE_HEIGHT-2),"4","normal",null,"#cccccc");
+
+	//horizontal MARKER_DATE top 
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,MARKER_DATE_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,MARKER_DATE_TOP,"rasterLine");
+	_drawText(gRaster,"MARKER_DATE_TOP: "+(MARKER_DATE_TOP)+"px",x(KANBAN_START)-margin.left,(MARKER_DATE_TOP-2),"4","normal",null,"#cccccc");
+
+	// horizontal KANBAN top
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,0,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0,"rasterLine");
+	_drawText(gRaster,"KANBAN Y base: "+0+"px",x(KANBAN_START)-margin.left,-2,"4","normal",null,"#cccccc");
+
+	//vertical KANBAN_START
+	_drawLine(gRaster,x(KANBAN_START),0-margin.top,x(KANBAN_START),height+margin.bottom,"rasterLine");
+	//vertical LANELABELBOX start
+	_drawLine(gRaster,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,0-margin.top,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,height+margin.bottom,"rasterLine");
+	//horizontal KANBAN bottom
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,height,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height,"rasterLine");
+	_drawText(gRaster,"height: "+height+"px",x(KANBAN_START)-margin.left,height,"4","normal",null,"#cccccc");
+
+	//horizontal METRICS 
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,METRIC_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_BASE_Y,"rasterLine");
+	_drawText(gRaster,"METRIC_BASE_Y: "+(METRIC_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_BASE_Y-2),"4","normal",null,"#cccccc");
+	//horizontal METRICS BASE top 
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,PILLAR_TOP,"rasterLine");
+	_drawText(gRaster,"PILLAR_TOP: "+PILLAR_TOP+"px",x(KANBAN_START)-margin.left,(PILLAR_TOP-2),"4","normal",null,"#cccccc");
+	//horizontal TIMELINE bottom 
+	_drawLine(gRaster,x(KANBAN_START)-margin.left,height+TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height+TIMELINE_HEIGHT,"rasterLine");
+	//vertical KANBAN_END
+	_drawLine(gRaster,x(KANBAN_END),0-margin.top,x(KANBAN_END),height+margin.bottom,"rasterLine");
+	//vertical LANEBOX_RIGHT_START 
+	_drawLine(gRaster,LANE_LABELBOX_RIGHT_START,0-margin.top,LANE_LABELBOX_RIGHT_START,height+margin.bottom,"rasterLine");
+	//vertical LANEBOX_RIGHT_END 
+	_drawLine(gRaster,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,height+margin.bottom,"rasterLine");
+	
+}
+
+
 
 /** main etry point
  * 
@@ -494,8 +602,9 @@ function renderTechdebt(){
 				});
 }
 
-
-
+/**
+ * renders the custom postits which can be created manually
+ */
 function drawCustomPostits(){
 	
 	var gCustomPostits = d3.select("#kanban").append("g").attr("id","customPostits");
@@ -515,7 +624,6 @@ function drawInitiatives(){
 	drawWC2014();
 	
 	drawItems();
-	drawPostits();
 	
 }
 
@@ -531,6 +639,7 @@ function drawAll(){
 	drawVersion();
 	drawLegend();
 
+	drawRaster()
 }
 
 
@@ -572,7 +681,6 @@ function setTODAY(){
 *
 */
 function drawAxes(){	
-
 	d3.select("#axes").remove()
 	
 	var formatNumber = d3.format(".1f");
@@ -652,64 +760,40 @@ function drawAxes(){
 		.style("font-size","10px")
 		.style("margin-bottom","-40px")
 		.call(xAxisYear);
-	
 	// axis end
 
-
-gAxes.append("line")
-		.attr("x1", 0-LANE_LABELBOX_LEFT_WIDTH)
-		.attr("y1", -20)
-		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH)
-		.attr("y2", -20)
-		.attr("class","gridTop");
-
-gAxes.append("line")
-		.attr("x1", 0-LANE_LABELBOX_LEFT_WIDTH)
-		.attr("y1", height+20)
-		.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH)
-		.attr("y2", height+20)
-		.attr("class","gridTop");
-
+	_drawLine(gAxes,-LANE_LABELBOX_LEFT_WIDTH,-TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH,-TIMELINE_HEIGHT,"gridTop");
+	_drawLine(gAxes,-LANE_LABELBOX_LEFT_WIDTH,height+TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH,height+TIMELINE_HEIGHT,"gridTop");
 
 //################# AND SOME TIME GUIDES
-
-//from KANBAN_START to KANBAN_END
-// monthly guides thin
-// yearly guides bigger
 
 	var _monthGuides = d3.time.month.range(KANBAN_START,KANBAN_END,1);
 	var _yearGuides = d3.time.month.range(KANBAN_START,KANBAN_END,12);
 
 	for (i=0;i<_monthGuides.length;i++){
-		gAxes.append("line")
-			.attr("x1", x(new Date(_monthGuides[i])))
-			.attr("y1", -0)
-			.attr("x2", x(new Date(_monthGuides[i])))
-			.attr("y2", height)
-			.attr("class", "monthGuide");
+		_drawLine(gAxes,x(new Date(_monthGuides[i])),0,x(new Date(_monthGuides[i])),height,"monthGuide");
 	}
 
 	for (i=0;i<_yearGuides.length;i++){
-		gAxes.append("line")
-			.attr("x1", x(new Date(_yearGuides[i])))
-			.attr("y1", -0)
-			.attr("x2", x(new Date(_yearGuides[i])))
-			.attr("y2", height)
-			.attr("class", "yearGuide");
+		_drawLine(gAxes,x(new Date(_yearGuides[i])),0,x(new Date(_yearGuides[i])),height,"yearGuide");
 	}
 }
 
+
+// ----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- LANES SECTION ---------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
+
 /**
-* ################# LANE_LABELS SECTION #####################
+*
 */
 function drawLanes(){
-	 
 	d3.select("#lanes").remove()
 
     var lanes = svg.append("g").attr("id","lanes");
-    
-	
-	
+
+	var lanesLeft = lanes.append("g").attr("id","lanesLeft");
+	var lanesRight = lanes.append("g").attr("id","lanesRight");	
 	//------------ context box ----------------
 	/**
 	 * this would be level-0 in a generic view
@@ -717,9 +801,9 @@ function drawLanes(){
 	 * */
 	_drawLaneContext(lanes,CONTEXT,-LANE_LABELBOX_LEFT_WIDTH-200,0,LANE_LABELBOX_LEFT_WIDTH/6,height,"treemap.html")
 	
-	
 	var i=0;
-	
+	var _xRightStart = x(KANBAN_END)+TARGETS_COL_WIDTH;
+
 	lanes.selectAll("#lane")
 	// [changed 20140104]
 	.data(getLanesNEW())
@@ -737,34 +821,34 @@ function drawLanes(){
 		var _x_offset = 5;
 		var _y_offset = 4;
 		var _laneOpacity;
-		
 		var _metrics;
-
+		
+	
 		//left box
-		_metrics = _drawLaneBox(d3.select(this),-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
+		_metrics = _drawLaneBox(lanesLeft,-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
 
 		var _yTextOffset;
 		if (_metrics) _yTextOffset=_metrics.height+15;
 		else _yTextOffset=15;
 
 		//baseline box text
-		_drawLaneText(lanes,_lane,"baseline",_yTextOffset);
+		_drawLaneText(lanesLeft,_lane,"baseline",_yTextOffset);
 	
 		
 		// lane area
 		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+280,_height,i)
 
 		//target box	
-		_metrics =_drawLaneBox(d3.select(this),x(KANBAN_END),_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
+		_metrics =_drawLaneBox(lanesRight,_xRightStart,_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
 		
 		//target box text
-		_drawLaneText(lanes,_lane,"target",_yTextOffset);
+		_drawLaneText(lanesRight,_lane,"target",_yTextOffset);
 	
 
 		// laneside descriptors
 		if (_.last(CONTEXT.split("."))=="drill-in"){
 			var _laneName = _.last(_lane.split("."))
-			_drawLaneSideText(d3.select(this),_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
+			_drawLaneSideText(lanesLeft,_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
 		}
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
@@ -776,16 +860,11 @@ function drawLanes(){
 			// strip only the sublane name if name is fully qualified like "topline.bwin.touch"
 			var _sublane = _.last((_sublanes[s].name).split("."))
 			
-			_drawLaneSideText(d3.select(this),_sublane,1,_y+_h/2,"4px","middle");
+			_drawLaneSideText(lanesLeft,_sublane,1,_y+_h/2,"4px","middle");
 		
 			//no lines for first and last sublane
 			if (s>0 && s<_sublanes.length){
-				d3.select(this).append("line")
-					.attr("x1", x(KANBAN_START))
-					.attr("y1", _y)
-					.attr("x2", x(KANBAN_END))
-					.attr("y2", _y)
-					.attr("class", "sublaneLine");
+				_drawLine(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_y,"sublaneLine");
 				}
 			}
 		//check for demarcation between topline and enabling
@@ -796,13 +875,7 @@ function drawLanes(){
 			
 			// no demarcation line in the end ;-)
 			if (t<getThemesNEW().length-1){
-				d3.select(this).append("line")
-				.attr("x1", x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH-200)
-				.attr("y1", _t)
-				.attr("x2", x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+400)
-				.attr("y2", _t)
-				.attr("class", "themeLine");
-
+				_drawLine(d3.select(this),x(KANBAN_START)-margin.left,_t,x(KANBAN_END)+margin.right+margin.left,_t,"themeLine");
 				//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_LEFT_WIDTH-10,_t,"5px","middle");
 			}
 		}
@@ -813,19 +886,20 @@ function drawLanes(){
 	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
 		var _pillarColumns = [{"name":"ACCESS"},{"name":"APPEAL"},{"name":"USP"}];
 
-		var _xBase = x(KANBAN_END)+2;
+		var _xBase = _xRightStart+2;
 		var _yBase = -70;
 		var _width = LANE_LABELBOX_RIGHT_WIDTH-90;						
 							
 	  if (_width >100 & CONTEXT=="b2c gaming") {
-		  _drawPillarColumns(lanes,_pillarColumns,_xBase,_yBase,_width);
-		  _drawHowPillars(lanes,pillarData,_xBase,_yBase,_width);							
+		  _drawPillarColumns(lanesRight,_pillarColumns,_xBase,_yBase,_width);
+		  _drawHowPillars(lanesRight,pillarData,_xBase,_yBase,_width);							
 
 	}
 }	
-	
-function _drawPillarColumns(svg,data,x,y,width){
 
+/** helper method to render the strategical driver columns
+ */	
+function _drawPillarColumns(svg,data,x,y,width){
 		var _spacer = 3;
 		var _color = COLOR_BPTY;
 		var _length = data.length;
@@ -922,8 +996,6 @@ function _drawHowPillars(svg,data,x,y,width){
 }
 
 
-
-
 function _drawLaneText(svg,lane,side,logoHeight)
 {
 	var i=0;
@@ -940,10 +1012,7 @@ function _drawLaneText(svg,lane,side,logoHeight)
 	
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_LEFT_WIDTH+10
-	else if (side=="target") _xBase= x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH-10;
-	
-				
-	
+	else if (side=="target") _xBase= x(KANBAN_END)+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH-10;
 	
 	if (laneTextData){
 	var _lanetext = laneTextData.filter(function(d){return (d.lane==lane && d.side==side)});
@@ -1031,7 +1100,6 @@ function _drawLaneText(svg,lane,side,logoHeight)
 				}
 				_logo
 				.attr("transform","translate("+_x+","+_y+") scale(1)");
-				
 			}
 		console.log("metrics: "+_metrics);
 		return _metrics;
@@ -1070,7 +1138,13 @@ function _drawLaneText(svg,lane,side,logoHeight)
 /* ------------------------------------------------- END drawLanes() helper functions ----------------------------------------------------------- */
 
 
-/**################# QUEUE SECTION #####################
+
+
+// ----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- QUEUES SECTION --------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
+
+/**
 * 
 */
 function drawQueues(){
@@ -1086,8 +1160,8 @@ function drawQueues(){
 	var _xFutureX = x(WIP_END);
 	var _xFutureWidth = x(KANBAN_END) - _xFutureX;
 
-	var _yMetricBaseTop = -75; //top
-	var _yMetricBase = height+75; //bottom
+	var _yMetricBaseTop = PILLAR_TOP; //top
+	var _yMetricBase = height-PILLAR_TOP; //bottom
 	
 	var _yMetricDetailsOffset = 10;
 	var _yMetricDetails2Offset = 8;
@@ -1114,28 +1188,22 @@ function drawQueues(){
 		// in case of going beyond ...
 		if (WIP_END > KANBAN_END) _xWIPWidth = x(KANBAN_END)-x(WIP_START)
 			_drawQueueArea(gQueueWip,_xWIPStart,0,_xWIPWidth,height,"wip",0);
-		
 		// --------------- WIP METRICS ---------------------
 		if (WIP_END<KANBAN_END){
 			_metric = {"text":"WIP" ,"items":ITEMS_WIP ,"swag": SIZING_WIP}
 			_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 		}
-		
 		//-------------- TODAY markerlines ----------------
-		_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-30);
+		_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),MARKER_DATE_TOP);
 		
 		_drawTodayMarker(gQueueWip,x(WIP_START),_yMetricBaseTop,"TODAY");
-		
-			
 		// ------------- WIP marker lines ---------------------
 		if (WIP_END < KANBAN_END){
-			_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-30);
+			_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),MARKER_DATE_TOP);
 			//---------------- FUTURE queue --------------------
 			var gQueueFuture = gQueue.append("g").attr("id","future");
-			
 			_drawQueueArea(gQueueFuture,_xFutureX,0,_xFutureWidth,height,"future",0);
 		}
-
 		//---------------- FUTURE METRICS --------------------
 		if (WIP_END<KANBAN_END){
 			_metric = {"text":"FUTURE" ,"items":ITEMS_FUTURE ,"swag": SIZING_FUTURE}
@@ -1143,10 +1211,8 @@ function drawQueues(){
 			//---------------- TOTAL METRICS --------------------
 			_metric = {"text":"TOTAL" ,"items":ITEMS_TOTAL ,"swag": SIZING_TOTAL}
 			_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
-
 			//---------------- TOTAL DELAYED METRICS --------------------
 			_metric = {"text":"DELAY" ,"items":ITEMS_DELAYED ,"swag": DAYS_DELAYED}
-
 			if (ITEMS_DELAYED){
 				_drawQueueMetric(gQueue,_metric,null,null,null,(_xFutureX+_xFutureWidth)+80,_yMetricBase,_yMetricDetailsOffset,"red","bottom");
 			}
@@ -1160,16 +1226,10 @@ function drawQueues(){
 		function _drawTodayMarker(svg,x,y,text){
 				svg.append("use").attr("xlink:href","#today_marker")
 				.attr("transform","translate("+(x-5.5)+",-70) scale(1.1)");
-				
-				svg.append("text")
-				.text(text)
-				.attr("transform","translate("+(x)+","+y+") scale(1)")
-				.style("text-anchor","middle")
-				.style("font-size","18px")
-				.style("fill","red")
-				.style("font-weight","bold");
+
+				_drawText(svg,text,x,y,"18px","bold","middle","red","normal");
 		}
-		
+
 		/**
 		 */
 		function _drawQueueArea(svg,x,y,w,h,css,offsetX){
@@ -1202,14 +1262,8 @@ function drawQueues(){
 				.attr("x",x+5)
 				.attr("y",height-y+3);
 
-			svg.append("line")
-				.attr("x1", x + 0.5)
-				.attr("y1", y)
-				.attr("x2", x + 0.5)
-				.attr("y2", height-y)
-				.attr("class", css+"Line")
-				.attr("marker-start", "url(#rect_red)")
-				.attr("marker-end", "url(#rect_red)");
+			_drawLine(svg,(x+0.5),y,(x+0.5),(height-y),css+"Line",[{"start":"rect_red"},{"end":"rect_red"}]);
+			
 		}
 
 		/**
@@ -1251,124 +1305,69 @@ function drawQueues(){
 /* ------------------------------------------------- END drawQueues() helper functions ----------------------------------------------------------- */
 
 
-/**
- * 
- */
-function drawPostits(){
-	var gPostits = svg.append("g").attr("id","postits");
-	
-	var tooltip = d3.select("body")
-		.append("div")
-		.attr("class","d3tooltip");
 
-	gPostits.selectAll("postit")
-	// filtered data before used in D3 ;-)	
-	.data(filteredInitiativeData.filter(function(d){return (d.state==="todo")&& (new Date(d.planDate)>KANBAN_START);
-}))
-	.enter()
-	// **************** grouped item + svg block + label text
-	.append("g")
-	.attr("id",function(d){return "postit_"+d.id})
-	//.style("opacity",function(d){return d.accuracy/10})
-	//.on("mouseover",animateScaleUp)
-	.each(function(d){
-		var _size = d.size*ITEM_SCALE;
-		
-		var _itemXPlanned = x(new Date(d.planDate));
-		var _itemXActual = x(new Date(d.actualDate));
-		var _itemXStart = x(new Date(d.startDate));
-		var _yOffset = getSublaneCenterOffset(getFQName(d));
+// ----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
 
-
-		
-		//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
-		var _itemY = y(getSublaneByNameNEW(getFQName(d)).yt1-_yOffset)+getInt(d.sublaneOffset);
-		
-		
-		// ------------  postits --------------
-		if(d.state=="todo")
-		{
-			var postit_x_offset = -2*_size+2;
-			var postit_y_offset = -2*_size*POSTIT_SCALE;
-		
-			var postit_x =_itemXPlanned+postit_x_offset;
-			var postit_y =_itemY+postit_y_offset;
-			
-			var _rmax=5,
-				_rmin=-5;						;
-			
-			var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
-			var _scale = (_size/8)*POSTIT_SCALE;
-			
-			var postit = d3.select(this)
-			.on("mouseover", function(d){
-				d3.select(this)
-				.style("cursor","pointer");
-				onTooltipOverHandler(d,tooltip,"#postit_");}) 
-			.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
-			.on("mouseout", function(d){onTooltipOutHandler(d,tooltip,"#postit_");});
-		
-			postit.append("use")
-			.attr("xlink:href","#postit_yellow")
-			.attr("transform","translate("+postit_x+","+postit_y+") scale("+_scale+") rotate("+_rotate+")")
-			
-			postit.append("text")
-			.text("todo:")
-			.style("text-anchor","start")
-			.style("font-size",(3+_size/6)+"px")
-			.style("font-weight","bold")
-			.style("fill","red")
-			.attr("transform","translate("+(postit_x+1)+","+(postit_y+5)+") rotate("+_rotate+") scale("+POSTIT_SCALE+")")
-			.append("tspan")
-			.attr("dy",5)
-			.attr("x",0)
-			.text("id:"+d.id);
-		}
-	})
-	//grey all todo text 
-	d3.select("#items").selectAll("text").filter(function(d){return d.state=="todo";}).style("fill","grey")
-	
-}
-
-
-function _drawItemName(svg,d,x,y,scale){
-	// ------------  item names --------------
-	if (!scale) scale=1;
-	var size = d.size*ITEM_SCALE*scale;
-	var _textWeight="bold";
-	var _textStyle="normal";
-	var _textSize = 5+(size/5)*ITEM_FONTSCALE;
-	if (!d.isCorporate) {
-		_textWeight = "normal";
-		_textStyle="italic";
-		_textSize =_textSize * TACTIC_SCALE;
-	}
-	var _textDecoration="";
-	//if (d.ExtId!="") _textDecoration="underline";
-
-	var _text =svg.append("text")
-	   .style("font-size",_textSize+"px")
-	   .style("text-anchor","middle")
-	   // !!!!! BOLD and anchor=MIDDLE is not correctly renderered by batik !!!!!
-	   //.style("font-weight",_textWeight)
-	   .style("font-style",_textStyle)
-	   .style("text-decoration",_textDecoration)
-	   .style("kerning",-0.25)
-	   //.style("letter-spacing",-.2)
-	   //google font
-	   .style("font-family","arial, sans-serif")
-	   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";  return"black";})
-	   .attr("x",x)
-	   .attr("y",y)
-	   //.text(d.name);
-		textarea(_text,d.name,x,y,ITEM_TEXT_MAX_CHARS,_textSize-1);
-}
 
 /** renders the items
 */
 function drawItems(){
 	
-	d3.selectAll("#items,#dependencies,#sizings").remove();
+	d3.selectAll("#initiatives,#dependencies,#sizings").remove();
+
+// test drag item start
+	var baseY;
+	var drag_item = d3.behavior.drag()
+		.on("dragstart", function(d,i) {
+		   d3.select(this).style("opacity",0.4);
+			movedX=0;
+			movedY=0;
+			baseY = get_metrics(d3.select(this).node()).y;
+			console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y+" metrics:"+baseY);
+			d3.select(this).attr("transform", function(d,i){
+				return "translate(" + [ d.x,d.y ] + ")"
+			})
+			
+		})	
+
+		.on("drag", function(d,i) {
+			
+			//d.x += d3.event.dx
+			d.y += d3.event.dy
+			
+			movedX += d3.event.dx
+			movedY += d3.event.dy
+			
+			
+			d3.select(this).attr("transform", function(d,i){
+				return "translate(" + [ d.x,d.y ] + ")"
+			})
+		})	
+		.on("dragend",function(d,i){
+			console.log("dragend event: x="+d.x+", y="+d.y+"..."+d.lane);
+			
+			// check y drop coordinates whetrher they are within lane spectrum
+			var _lane = getLaneByNameNEW(d.lane);
+			var _m =get_metrics(d3.select(this).node());
+			var _y1 = y(_lane.yt1)+margin.top;
+			var _y2 = y(_lane.yt2)+margin.top;
+			
+			console.log("m.Y: "+_m.y+" lane Y1:" +_y1+" Y2: "+_y2);
+			
+			if (_m.y <_y1 || _m.y>_y2){
+				//put back to initial dragstart coords
+			 d3.select(this).attr("transform","translate(0,0)");
+			 d.x=0;
+			 d.y=0;
+				console.log("***** nope");
+			}			
+			
+			d3.select(this).style("opacity",1);
+		
+		});
+//test end
 
 	//tooltips
 	var tooltip = d3.select("body")
@@ -1381,7 +1380,8 @@ function drawItems(){
 	.style("opacity","0");
 
 	//initiatives groups
-	var gItems = svg.append("g").attr("id","items");
+	var gItems = svg.append("g").attr("id","initiatives").append("g").attr("id","items");
+	
 	
 	//labels
 	var gLabels = gSizings.append("g")
@@ -1395,7 +1395,7 @@ function drawItems(){
 					if (ITEMDATA_FILTER){
 						return _filterStart && _filterEnd && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 					}
-					return _filter;
+					return _filterStart && _filterEnd;
 					
 					});
 	
@@ -1407,15 +1407,12 @@ function drawItems(){
 				// **************** grouped item + svg block + label text
 				.append("g")
 				.attr("id",function(d){return "item_"+d.id})
-				//.style("opacity",function(d){return d.accuracy/10})
-				//.on("mouseover",animateScaleUp)
 				.each(function(d){
 					var _size = d.size*ITEM_SCALE;
 					if (!d.isCorporate) _size = _size * TACTIC_SCALE;
 					
 					var _itemXPlanned = x(new Date(d.planDate));
 					var _itemXActual = x(new Date(d.actualDate));
-					
 					
 					var _itemXStart = x(new Date(d.startDate));
 					var _itemX;
@@ -1427,16 +1424,12 @@ function drawItems(){
 						//d.state="delayed";
 						d.actualDate = yearFormat(TODAY);
 					}
-					
 					var _yOffset = getSublaneCenterOffset(getFQName(d));
-					
-					//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
 					
 					var _sublane = getSublaneByNameNEW(getFQName(d));
 					var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
 					
 					var _itemY = y(_sublane.yt1-_yOffset)+getInt(d.sublaneOffset);
-
 					
 					// ------------  line if delayed  before plan--------------
 					var _lineX1= _itemXPlanned;
@@ -1462,21 +1455,15 @@ function drawItems(){
 					if (new Date(d.actualDate) > KANBAN_END){
 						 _startActualBeyond=true;
 					}
-					
 					if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_lineX1,_lineX2,_itemY);
-					
 					// ------------  line if before plan--------------
 					else if (d.actualDate<d.planDate) _drawItemDelayLine(d3.select(this),_itemX,(_itemXPlanned-_size-(_size/2)),_itemY);
-					
 					
 					d3.select(this)
 						.style("opacity",d.accuracy/10);
 					
 					// ------------  circles --------------
-					
-					
 					if (d.Type !=="target"){
-
 						// only draw circle if we are inside KANBAN_START/END 
 						if (!_startActualBeyond && !_endBeyond){
 							d3.select(this)
@@ -1489,10 +1476,7 @@ function drawItems(){
 									if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
 									else if (new Date(d.actualDate)>WIP_END) {return "future";} 
 									else {return d.state}});
-
 							// ----------- circle icons -------------
-							console.log("################################ id:"+d.id+" "+_itemXPlanned);
-							
 							// only append icon if we have declared on in external.svg
 							if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
 								d3.select(this)
@@ -1502,9 +1486,8 @@ function drawItems(){
 						}
 					} //end if d.Type!="target"
 					
-					// ------------  item blocks --------------
+					// ------------  item blocks & names & postits --------------
 					// if isCorporate flag is not set use "tactic" icon 
-					
 					if (new Date(d.planDate) >KANBAN_START){
 						var _iconRef=d.Type;
 						if (!d.isCorporate) {
@@ -1515,14 +1498,14 @@ function drawItems(){
 							.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
 						
 						_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
-
+						
+						_drawPostit(d3.select(this),d);
+		
 					} // end KANBAN_START check
 					// if plandate is beyon KANBAN_START - we have to draw the name below the circle (a bit smaller)
 					else if (new Date(d.actualDate)>KANBAN_START){
 						_drawItemName(d3.select(this),d,_itemXActual,(_itemY+_size+3),0.1);
 					}
-
-						
 					// transparent circle on top for the event listener
 					d3.select(this)
 						.append("circle")
@@ -1561,7 +1544,6 @@ function drawItems(){
 					   .attr("y",_itemY);
 					
 					textarea(_text,d.name,_itemXPlanned,_itemY,ITEM_TEXT_SWAG_MAX_CHARS,(5+d.Swag/500));
-	
 					
 					// ------------  dependencies --------------
 					if (!isNaN(parseInt(d.dependsOn))){
@@ -1578,24 +1560,16 @@ function drawItems(){
 						
 						for (var j=0;j<_dependingItems.length;j++) {	
 							var _d=_dependingItems[j];
-							
 							//lookup the concrete item 
 							var _dependingItem = getItemByID(filteredInitiativeData,_d);
-							
 							if (_dependingItem){
 								var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
-								
 								//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
 								var _toX = x(new Date(_dependingItem.planDate))	
 								var _toY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
+								
 								// put lines in one layer to turn on off globally
-								dep.append("line")
-									.attr("x1", _itemXPlanned)
-									.attr("y1", _itemY)
-									.attr("x2", _toX)
-									.attr("y2", _toY)
-									.attr("class", "dependLine")
-									.attr("marker-end", "url(#arrow_grey)");
+								_drawLine(dep,_itemXPlanned,_itemY,_toX,_toY,"dependLine",[{"end":"arrow_grey"}]);
 							}
 						} // end for loop
 						//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
@@ -1619,34 +1593,109 @@ function drawItems(){
 						.attr("class","sizings "+d.lane)
 						.style("opacity",0.4);
 					}
-					
-				
+					// drag test	
+					d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
 				}) //end each()
-
-/*
-	// data tracelog ********************
-		d3.select("body")
-				.append("ul")
-				.selectAll("li")
-				.data(initiativeData)
-				.enter()
-				.append("li")
-				.text(function(d) {
-					return "ID: "+d.id+" name: "+d.name + " lane (main/sub): " + d.lane+"/"+d.sublane+" plaDdate: "+d.planDate + " scaleX = "+x(new Date(d.planDate))+" state: "+d.state+" size: "+d.size+" sizingPD: "+parseInt(d.Swag);
-				});
-			d3.selectAll("li")
-				.style("font-size","6px")
-				.style("font-weight",function(d) {
-					if (Date.now() < new Date(d.planDate)) {
-						return "normal";
-					} else {
-						return "bold";
-					}
-				})
-	// data tracelog end********************
-*/ 
-	
+				
+				
 } //end drawItems
+
+
+
+function _drawPostit(svg,d){
+	var tooltip = d3.select("body")
+		.append("div")
+		.attr("class","d3tooltip");
+
+	var gPostit= svg.append("g")
+	.attr("id",function(d){return "postit_"+d.id})
+	
+	
+	var _size = d.size*ITEM_SCALE;
+	
+	var _itemXPlanned = x(new Date(d.planDate));
+	var _itemXActual = x(new Date(d.actualDate));
+	var _itemXStart = x(new Date(d.startDate));
+	var _yOffset = getSublaneCenterOffset(getFQName(d));
+
+	//d.sublaneOffset = override for positioning of otherwise colliding elements => manual !
+	var _itemY = y(getSublaneByNameNEW(getFQName(d)).yt1-_yOffset)+getInt(d.sublaneOffset);
+	
+	// ------------  postits --------------
+	if(d.state=="todo")
+	{
+		var postit_x_offset = -2*_size+2;
+		var postit_y_offset = -2*_size*POSTIT_SCALE;
+	
+		var postit_x =_itemXPlanned+postit_x_offset;
+		var postit_y =_itemY+postit_y_offset;
+		
+		var _rmax=5,
+			_rmin=-5;						;
+		
+		var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
+		var _scale = (_size/8)*POSTIT_SCALE;
+		
+		var postit = gPostit
+		.on("mouseover", function(d){
+			d3.select(this)
+			.style("cursor","pointer");
+			onTooltipOverHandler(d,tooltip,"#postit_");}); 
+	
+		postit.append("use")
+		.attr("xlink:href","#postit_yellow")
+		.attr("transform","translate("+postit_x+","+postit_y+") scale("+_scale+") rotate("+_rotate+")")
+		
+		postit.append("text")
+		.text("todo:")
+		.style("text-anchor","start")
+		.style("font-size",(3+_size/6)+"px")
+		.style("font-weight","bold")
+		.style("fill","red")
+		.attr("transform","translate("+(postit_x+1)+","+(postit_y+5)+") rotate("+_rotate+") scale("+POSTIT_SCALE+")")
+		.append("tspan")
+		.attr("dy",5)
+		.attr("x",0)
+		.text("id:"+d.id);
+	}
+}
+
+
+/**
+ * helper methode
+ */
+function _drawItemName(svg,d,x,y,scale){
+	// ------------  item names --------------
+	if (!scale) scale=1;
+	var size = d.size*ITEM_SCALE*scale;
+	var _textWeight="bold";
+	var _textStyle="normal";
+	var _textSize = 5+(size/5)*ITEM_FONTSCALE;
+	if (!d.isCorporate) {
+		_textWeight = "normal";
+		_textStyle="italic";
+		_textSize =_textSize * TACTIC_SCALE;
+	}
+	var _textDecoration="";
+	//if (d.ExtId!="") _textDecoration="underline";
+
+	var _text =svg.append("text")
+	   .style("font-size",_textSize+"px")
+	   .style("text-anchor","middle")
+	   // !!!!! BOLD and anchor=MIDDLE is not correctly renderered by batik !!!!!
+	   //.style("font-weight",_textWeight)
+	   .style("font-style",_textStyle)
+	   .style("text-decoration",_textDecoration)
+	   .style("kerning",-0.25)
+	   //.style("letter-spacing",-.2)
+	   //google font
+	   .style("font-family","arial, sans-serif")
+	   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";else if (d.state=="todo") return "#aaaaaa";  return"black";})
+	   .attr("x",x)
+	   .attr("y",y)
+	   //.text(d.name);
+		textarea(_text,d.name,x,y,ITEM_TEXT_MAX_CHARS,_textSize-1);
+}
 
 
 /**
@@ -1725,7 +1774,6 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.health=="amber") _health ="gold";
 	else if (d.health=="red") _health ="red";
 	
-	
 	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
@@ -1741,23 +1789,17 @@ function onTooltipOverHandler(d,tooltip,highlight){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">DoR:</td><td class=\"small\" style=\"text-align:left\">"+d.DoR+"</td></tr>";
 		
 	}
-	
 	if (d.health!=""){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">health:</td><td><div class=\"health\" style=\"background-color:"+_health+"\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></td></tr>";
 	}
 	if (d.healthComment!=""){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">comment:</td><td>"+d.healthComment+" </td></tr>";
 	}
-
 	if (d.programLead!=""){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">lead:</td><td><b>"+d.programLead+"</b> </td></tr>";
 	}
-
-
-	
 	_htmlBase=_htmlBase+"<tr><td class=\"small\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr></table>";
 	tooltip.html(_htmlBase);
-	
 	tooltip.style("visibility", "visible");
 	tooltip.style("top", (d3.event.pageY-40)+"px").style("left",(d3.event.pageX+25)+"px");
 
@@ -1765,19 +1807,15 @@ function onTooltipOverHandler(d,tooltip,highlight){
 		.transition()            
 		.delay(200)            
 		.duration(500)
-		
 		.style("visibility","visible")
 		.style("opacity",1);
 
-	//d3.select("#item_"+d.id).select("text").style("font-weight","bold")
-	
 	if (d.dependsOn){
 		// highlight also depending items
 		var _dependingItems = d.dependsOn.split(",");
 
 		for (var j=0;j<_dependingItems.length;j++) {	
 			var _di = _dependingItems[j];
-		
 			var dep=d3.select("#item_"+_di)
 				.transition()            
 				.delay(200)            
@@ -1789,8 +1827,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 				.delay(500)            
 				.duration(500)
 				.attr("r", getItemByID(filteredInitiativeData,_di).size*2*ITEM_SCALE);
-		}
-		// end check depending items
+		}// end check depending items
 	}
 }
 
@@ -1807,7 +1844,6 @@ function onTooltipMoveHandler(tooltip){
  * called within item rendering
  */
 function onTooltipOutHandler(d,tooltip,highlight){
-	
 	tooltip.style("visibility", "hidden");
 		
 	d3.select("#depID_"+d.id)
@@ -1817,7 +1853,7 @@ function onTooltipOutHandler(d,tooltip,highlight){
 		.style("visibility","hidden");
 
 	//set all back to full visibility /accuracy
-	d3.selectAll("#items,#postits").selectAll("g")
+	d3.selectAll("#initiatives").selectAll("g")
 		.transition()            
 		.delay(100)            
 		.duration(500)
@@ -1846,9 +1882,9 @@ function onTooltipOutHandler(d,tooltip,highlight){
 	}
 }
 
-
-
-
+// ----------------------------------------------------------------------------------------------------------------
+// -------------------------------------------- METRICS SECTION ---------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
 
 function drawMetrics(){
 	d3.select("#metrics").remove();
@@ -1868,14 +1904,14 @@ function drawMetrics(){
 		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
 		//right
 		//1
-		var _primaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH +120;
-		var _secondaryXOffsetRight = LANE_LABELBOX_RIGHT_WIDTH+30;
+		var _primaryXOffsetRight = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH +120;
+		var _secondaryXOffsetRight = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH+30;
 		//2
 		var _2Offset = 150;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
 		//goal
-		var _goalXOffset = LANE_LABELBOX_RIGHT_WIDTH +300;
+		var _goalXOffset = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH +300;
 		
 	// all KPIs & results in baseline
 	
@@ -1893,8 +1929,8 @@ function drawMetrics(){
 // -------------------------- target 1-year (2014) -------------------------------
 	var _1Offset = 70;
 
-	var gMetricsTarget1 = gMetrics.append("g").attr("id","metrics_target1");
-	_targetResultSum1 = _renderMetrics(gMetricsBaseline,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight);
+	var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
+	_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight);
 
 	d3.select("#metrics_forecast1").style("opacity",0.5);
 
@@ -1902,13 +1938,13 @@ function drawMetrics(){
 		
 // -------------------------- target 2-years (2015)-------------------------------
 	var _2Offset = 70;
-	var gMetricsTarget2 = gMetrics.append("g").attr("id","metrics_target2");
-	_targetResultSum2 = _renderMetrics(gMetricsBaseline,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
+	var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
+	_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2);
 	
 
 // ------------------------------ potentials ------------------------------------------------
 
-	var gMetricsRisk = gMetricsTarget2.append("g").attr("id","metrics_risk");
+	var gMetricsRisk = gMetricsForecast2.append("g").attr("id","metrics_risk");
 
 	var _yRisk = 50;
 	var _xRisk = x(KANBAN_END)+_goalXOffset+30;
@@ -1921,7 +1957,7 @@ function drawMetrics(){
 
 
 /* ------------------------------------- goal column ------- ------------------------------------*/
-	var gMetricsGoal = gMetricsTarget2.append("g").attr("id","metrics_goal");
+	var gMetricsGoal = gMetricsForecast2.append("g").attr("id","metrics_goal");
 	
 	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,METRIC_BASE_Y,_getDataBy("dimension","goal",METRICDATES_DATA).data);
 
@@ -1970,9 +2006,6 @@ function _drawPotentials(svg,dimension,type,xBase,yBase){
 }
 
 
-
-
-
 /** helper function to return array element of  json structure by specified name
  */
 function _getDataBy(name,value,data){
@@ -1997,13 +2030,12 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	var _kpiDir = "left";
 	var _resultDir="right";
 	
+	var gMetrics = svg.append("g").attr("id","lane_metrics");
+	
 	if (dimension=="baseline"){
 			_kpiDir="right";
 			_resultDir="left";
-		}
-	
-	
-	var gMetrics = svg.append("g").attr("id","metrics_"+dimension);
+	}
 	
 	var _resultSum=0;
 	
@@ -2035,33 +2067,29 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
 	}
 
 	//metric date 
-	_drawMetricDate(gMetrics,x1Base-50,METRIC_BASE_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
-
+	_drawMetricDate(svg,x1Base-50,METRIC_BASE_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
 
 	// calculated sum
-	
 	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
 	var _yTotal =-35;
 	var _total = {"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
-	
-	_drawTextMetric(gMetrics,_total,"metricBig",x1Base,_yTotal,10,_resultDir);
-	
+
+	var gCorp = svg.append("g").attr("id","corp_metrics");
+	_drawTextMetric(gCorp,_total,"metricBig",x1Base,_yTotal,10,_resultDir);
 
 	// corp KPIs
 	var _corpKpis = metricData.filter(function(d){return d.dimension==dimension && d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
 
 	var _yTotalKpiBase = _yTotal-10;
 	for (var k in _corpKpis){
-		_drawTextMetric(gMetrics,_corpKpis[k],"metricSmall",x2Base,_yTotalKpiBase-((getInt(k)+1)*15),6,_kpiDir);
+		_drawTextMetric(gCorp,_corpKpis[k],"metricSmall",x2Base,_yTotalKpiBase-((getInt(k)+1)*15),6,_kpiDir);
 	}
-
 
 	// pie
 	var _yPie = METRIC_BASE_Y+75;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% sustainable"});
 
-	_drawPie(gMetrics,dimension,_met[0],x1Base,_yPie);
-
+	_drawPie(gCorp,dimension,_met[0],x1Base,_yPie);
 
 	// cx baseline 
 	var _yCX =METRIC_BASE_Y+50;
@@ -2069,28 +2097,22 @@ function _renderMetrics(svg,dimension,x1Base,x2Base){
     var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
 	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
 
-	_drawCX(gMetrics,_cxData,x1Base+35,_yCX);
+	_drawCX(gCorp,_cxData,x1Base+35,_yCX);
 	
 	
 	//market share overall
 	var _yMarketShare = METRIC_BASE_Y+35;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% overall"});
-	_drawTextMetric(gMetrics,_met[0],"metricBig",x1Base,_yMarketShare,10,"left");
+	_drawTextMetric(gCorp,_met[0],"metricBig",x1Base,_yMarketShare,10,"left");
 	
 	return _resultSum;
 }
-
-
 
 function _drawSign(svg,x,y,type,scale){
 		if (!scale) scale = 1;
 		svg.append("use").attr("xlink:href","#"+type)
 		.attr("transform","translate ("+x+","+y+") scale("+scale+")");
 }
-
-
-
-
 
 /**
  * icon_bracket<direction><type>
@@ -2110,7 +2132,7 @@ function _drawBracket(svg,color,direction,x,y,scaleX,scaleY,type,opacity){
  * => right = first scale then number*/
 function _drawTextMetric(svg,metric,css,x,y,space,direction){
 		var _metricColor;
-		if (metric.sustainable==1) _metricColor="174D75";
+		if (metric.sustainable==1) _metricColor=COLOR_BPTY;//"174D75";
 		//risks
 		else if (metric.sustainable==-1) _metricColor="ED1C24";
 		
@@ -2126,28 +2148,28 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction){
 			_xNumber = _xNumber+space;
 		}
 		
-		svg	.append("text")
+		var gMetric=svg.append("g").attr("id","metric."+metric.lane+"."+metric.class+"."+metric.type);
+		
+		gMetric.append("text")
 			.text(metric.number)
 			.attr("x",_xNumber)
 			.attr("y",y+space/2)
 			.style("fill",_metricColor)
 			.style("text-anchor",_anchor)
-			
 			.attr("class",css+"Number");
 			
 		_anchor = "start";
 		if (direction=="right") _anchor = "end";
 		
-		svg	.append("text")
+		gMetric.append("text")
 			.text(metric.scale)
 			.attr("x",x+space/2)
 			.attr("y",y-space/2)
 			.style("fill",_metricColor)
 			.style("text-anchor",_anchor)
-			
 			.attr("class",css+"Scale");
 
-		svg	.append("text")
+		gMetric.append("text")
 			.text(metric.type)
 			.attr("x",x+space/2)
 			.attr("y",y+space/2)
@@ -2157,12 +2179,7 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction){
 }
 
 function _drawMetricSeparator(svg,x){
-		svg.append("line")
-				.attr("x1", x)
-				.attr("y1", -180)
-				.attr("x2", x)
-				.attr("y2", height)
-				.attr("class", "themeLine");
+		_drawLine(svg,x,METRIC_BASE_Y,x,height,"themeLine");
 }
 
 
@@ -2170,9 +2187,10 @@ function _drawMetricSeparator(svg,x){
 /**date marker for metrics
  * */
 function _drawMetricDate(svg,x,y,data){
-	_drawText(svg,data.title,x,y,16,"bold","start",COLOR_BPTY,null);
-	_drawText(svg,data.sub+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
-	_drawText(svg,data.date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
+	var gDate = svg.append("g").attr("id","metric_date_"+data.title);
+	_drawText(gDate,data.title,x,y,16,"bold","start",COLOR_BPTY,null);
+	_drawText(gDate,data.sub+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
+	_drawText(gDate,data.date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
 	
 }
 
@@ -2193,24 +2211,24 @@ function _drawPie(svg,id,_data,x,y){
 		.sort(null)
 		.value(function(d) { return d.percentage; });
 
-	var gPies = svg.select("#metrics")
+	/*var gPies = svg.select("#metrics")
 		.append("g")
 		.attr("id","pies");
-
-	var gPieTarget = svg.append("g")
-			.attr("id",id)
+*/
+	var gPie = svg.append("g")
+			.attr("id","metric_pie_"+_data.type)
 		.selectAll(".arc")
 			.data(pie(data))
 			.enter().append("g")
 			.attr("transform","translate("+x+","+y+")")
 
-	gPieTarget.append("path")
+	gPie.append("path")
 	  .attr("d", arc)
 	  .style("fill", function(d) { if (d.data.type=="sustainable") return COLOR_BPTY; else return "grey";})
 	  .style("stroke", "#ffffff")
 	  .style("stroke-width", "4px");
 
-	gPieTarget.append("text")
+	gPie.append("text")
 	  .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
 	  .attr("dy", ".35em")
 	  .style("text-anchor", "middle")
@@ -2226,11 +2244,13 @@ function _drawPie(svg,id,_data,x,y){
 	
 }
 
-function _drawCX	(svg,data,x,y){
-		svg.append("use").attr("xlink:href","#customer")
+function _drawCX (svg,data,x,y){
+		var gCX = svg.append("g").attr("id","metric_CX");
+		
+		gCX.append("use").attr("xlink:href","#customer")
 		.attr("transform","translate ("+x+","+y+") scale(.5)");
 	
-		svg.append("text")
+		gCX.append("text")
 		.text(data.promoter)
 		.style("font-size","8px")
 		.style("font-weight","bold")
@@ -2242,7 +2262,7 @@ function _drawCX	(svg,data,x,y){
 			.style("font-size","4px")
 			.style("font-weight","normal");
 
-		svg.append("text")
+		gCX.append("text")
 		.text("promoter-score")
 		.style("font-size","5px")
 		.style("font-weight","normal")
@@ -2250,7 +2270,7 @@ function _drawCX	(svg,data,x,y){
 		.attr("x",x-4)
 		.attr("y",y-2)
 		
-		svg.append("text")
+		gCX.append("text")
 		.text(data.loyalty)
 		.style("font-size","12px")
 		.style("font-weight","bold")
@@ -2262,7 +2282,7 @@ function _drawCX	(svg,data,x,y){
 			.style("font-size","4px")
 			.style("font-weight","normal");
 			
-		svg.append("text")
+		gCX.append("text")
 		.text("loyalty-index")
 		.style("font-size","5px")
 		.style("font-weight","normal")
@@ -2275,7 +2295,7 @@ function _drawCX	(svg,data,x,y){
 /**
  * soccer world championship 2014 block
  */
-function drawWC2014(){
+function drawWC2014(svg){
 	
 	if (KANBAN_END > new Date("2014-07-13")){
 	
@@ -2289,7 +2309,7 @@ function drawWC2014(){
 		.attr("y",0)
 		.attr("height",y(100))
 		.style("fill","white")
-		.style("opacity",0.75);
+		.style("opacity",0.4);
 		
 		
 		svg.append("use").attr("xlink:href","#wc2014")
@@ -2324,13 +2344,7 @@ function drawReleases(){
 			
 			console.log("*** release: "+d.ReleaseName+" date: "+d.CurrentReleaseDate);
 			if (_releaseDate > KANBAN_START){
-				d3.select(this).append("line")
-				.attr("x1", x(_releaseDate))
-				.attr("y1", -5)
-				.attr("x2", x(_releaseDate))
-				.attr("y2", height+5)
-				.attr("class", "releaseLine")
-				.attr("marker-start", "url(#rect_blue)");
+				_drawLine(d3.select(this),x(_releaseDate),-5,x(_releaseDate),height+5,"releaseLine",[{"start":"rect_blue"}]);
 				
 				d3.select(this).append("text")
 				.text(d.ReleaseName)
@@ -2781,12 +2795,7 @@ function drawLegend(){
 /**
  */
 function _drawLegendLine(svg,x1,x2,y){
-	svg.append("line")
-	.attr("x1",x1)
-	.attr("y1", y)
-	.attr("x2", x2)
-	.attr("y2", y)
-	.attr("class", "legendLine");
+	_drawLine(svg,x1,y,x2,y,"legendLine");
 }
 
 
@@ -3450,11 +3459,15 @@ function segmentItemsByDate(items){
  * */
 function getElements(items){
 		var _ids = new Array();
+		
+		console.log("*** getElements() called for items.lenght:"+items.length);
 		for (var i in items){
 			_ids.push(items[i].id);
+			console.log("************ in getElements():"+items[i].id);	
+
 		}
-		console.log(_ids);	
 		//var _ids=new Array(200,201,208,209)
+		
 		var _elements = d3.select("#items").selectAll("g").filter(function(d){return _ids.indexOf(d.id)>=0;});
 		
 		return _elements;
