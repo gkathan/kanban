@@ -135,6 +135,12 @@ svg {
 	stroke-opacity:1;
 }
 
+.rasterLine {
+	stroke: #cccccc;
+	stroke-width: 0.25;
+	stroke-opacity:1;
+}
+
 
 .dependLine {
 	stroke: grey;
@@ -294,6 +300,13 @@ tr	{line-height:6px;
   width: 5px; /* or whatever you want */
 }
 
+.health
+{
+  float:left;
+  height: 5px; /* or whatever you want */
+  position:relative;
+  width: 30px; /* or whatever you want */
+}
 
 pre.prettyprint{padding:2px;border:1px solid #888}
 
