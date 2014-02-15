@@ -56,6 +56,10 @@ var svg = d3.select("body").append("svg")
     .attr("height", height);
 
 
+	svg.append("use").attr("xlink:href","#whiteboard")
+		.attr("transform","translate(0,0) scale(2) ");
+			
+
 var nodes,links;
 //d3.json("json/force_data.json", function(error, graph) {
 //d3.tsv("data/backlog.csv",function(error,data){
