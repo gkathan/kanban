@@ -232,6 +232,7 @@ function show_svg_code()
 	  <button id="b74" type="button" class="btn btn-danger">Bwin Drill-in</button>
 	  <button id="b75" type="button" class="btn btn-danger">EntIT Drill-in</button>
 	  <button id="b79" type="button" class="btn btn-success">History</button>
+	  <button id="bwhiteboard" type="button" class="btn btn-success">Whiteboard</button>
 	  
 	  
 	</div>
@@ -278,7 +279,7 @@ function show_svg_code()
 	  <button id="b2" type="button" class="btn btn-default">Items</button>
 	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
 	  <button id="b4" type="button" class="btn btn-default">Grid</button>
-	  <button id="b5" type="button" class="btn btn-default">Metrics</button>
+	  <button id="b5" type="button" class="btn btn-default">Hide Metrics</button>
 	  <button id="b8" type="button" class="btn btn-default">Releases</button>
 	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
 	  <button id="b9" type="button" class="btn btn-default">Swag</button>
@@ -381,8 +382,9 @@ function initHandlers(){
 	});
 
 	d3.select("#b5").on("click", function(){
-		if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
-		else d3.select("#metrics").style("visibility","visible");
+		if (SHOW_METRICS) hideMetrics();
+		//if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
+		//else d3.select("#metrics").style("visibility","visible");
 	});	
 
 	d3.select("#bguides").on("click", function(){
@@ -619,6 +621,10 @@ function initHandlers(){
 
 	d3.select("#b79").on("click", function(){
 		renderHistory();
+	});	
+
+	d3.select("#bwhiteboard").on("click", function(){
+		renderWhiteboard();
 	});	
 
 
