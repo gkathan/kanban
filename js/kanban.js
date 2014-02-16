@@ -224,6 +224,8 @@ var SHOW_ONLY_NONVERSION1=false;
 
 var TRANSCODE_URL;
 
+//on item doubleclick
+var ITEM_ISOLATION_MODE = false;
 
 function setMargin(){
 	var _offsetXRight = 20;
@@ -443,7 +445,7 @@ function renderB2CGaming() {
 	hideWhiteboard();
 	
 	HEIGHT=1100;
-	WIDTH=1700;
+	WIDTH=1900;
 	ITEM_SCALE=0.8;
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	
@@ -614,7 +616,9 @@ function renderEntIT(){
 					initiativeData=initiatives;
 					drawAll();
 					initHandlers();
+					//autoLayout();
 				});
+	
 }
 
 function renderHolding(){
@@ -1597,23 +1601,11 @@ function drawItems(){
 				.attr("cy",_itemY)
 				.attr("r",_size)
 				.style("opacity",0)
-				.on("mouseover", function(d){
-					console.log("****in circle: mouseOver: "+d.id);
-					d3.select("#item_circle_"+d.id)
-					.transition().delay(0).duration(500)
-					.attr("r", _size*2)
-					.style("cursor","pointer");
-					onTooltipOverHandler(d,tooltip,"#item_");
-					}) 
+				.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
 					
 				.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
-					
-				.on("mouseout", function(d){
-					d3.select("#item_circle_"+d.id)
-					.transition().delay(0).duration(500)
-					.attr("r", _size);
-						//.transition().delay(0).duration(500)
-					onTooltipOutHandler(d,tooltip,"#item_");})
+				.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
+				.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
 		
 		// ------------- labels for Swag view -------------
 		_text = gLabels
@@ -1827,9 +1819,16 @@ function _drawStartDateIndicator(svg,x1,x2,y,size){
  * handler for tooltip mouse over 
  * called within item rendering
  */
-function onTooltipOverHandler(d,tooltip,highlight){
+function onTooltipOverHandler(d,tooltip){
 	// and fadeout rest
-	d3.selectAll("#items,#postits").selectAll("g")
+	var highlight ="#item_";
+	console.log("****in circle: mouseOver: "+d.id);
+	d3.select("#item_circle_"+d.id)
+	.transition().delay(0).duration(500)
+	.attr("r", d.size*ITEM_SCALE*2)
+	.style("cursor","pointer");
+
+	d3.selectAll("#items").selectAll("g")
 		.transition()            
 		.delay(0)            
 		.duration(500)
@@ -1855,7 +1854,7 @@ function onTooltipOverHandler(d,tooltip,highlight){
 	else if (d.health=="amber") _health ="gold";
 	else if (d.health=="red") _health ="red";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] "+d.ExtId+"</td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] <a href=\"http://v1.bwinparty.corp?id="+d.ExtId+"\" target=\"new\">"+d.ExtId+"</a></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1921,11 +1920,52 @@ function onTooltipMoveHandler(tooltip){
 }
 
 /**
+ * handler for tooltip doubleclick handling 
+ */
+function onTooltipDoubleClickHandler(tooltip,svg,d){
+	console.log("doubleclick: "+d3.select(this)+" svg: "+svg);
+	if (!ITEM_ISOLATION_MODE){
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove",null);
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout",null);
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover",null);
+	
+		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity", .5);
+		
+		ITEM_ISOLATION_MODE=true;
+		console.log("...in ITEM_ISOLATION mode...");
+		var _x = get_metrics(svg.node()).x-margin.left;
+		var _y = get_metrics(svg.node()).y-margin.top;
+		console.log("...x: "+_x+"  y: "+_y);
+		
+		d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
+	}
+	else {
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover", function(d){onTooltipOverHandler(d,tooltip);})
+		console.log("...EXIT ITEM_ISOLATION mode...");
+		ITEM_ISOLATION_MODE=false;	
+		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity",1);
+		d3.select("#isolationtext").remove();
+	}
+	
+}
+
+
+/**
  * handler for tooltip mouse out 
  * called within item rendering
  */
-function onTooltipOutHandler(d,tooltip,highlight){
+function onTooltipOutHandler(d,tooltip){
 	tooltip.style("visibility", "hidden");
+	
+	var highlight="#item_";
+	
+	d3.select("#item_circle_"+d.id)
+					.transition().delay(0).duration(500)
+					.attr("r", d.size*ITEM_SCALE);
+						//.transition().delay(0).duration(500)
+					
 		
 	d3.select("#depID_"+d.id)
 		.transition()            
@@ -3559,15 +3599,19 @@ function segmentItemsByDate(items){
 function getElements(items){
 		var _ids = new Array();
 		
+		var _elements = new Array();
 		console.log("*** getElements() called for items.lenght:"+items.length);
 		for (var i in items){
 			_ids.push(items[i].id);
-			console.log("************ in getElements():"+items[i].id);	
+			_elements.push(d3.select("#item_"+items[i].id));
+			console.log("************ in getElements(): pushing - id:"+items[i].id);	
 
 		}
 		//var _ids=new Array(200,201,208,209)
-		
+		/*
 		var _elements = d3.select("#items").selectAll("g").filter(function(d){return _ids.indexOf(d.id)>=0;});
+		*/
+		console.log("*** returning "+_elements.length+" elements");
 		
 		return _elements;
 }
@@ -3592,27 +3636,50 @@ function autoLayoutBySublane(sublane){
 	var _items = getItemsBySublane(sublane);
 	var _segments = segmentItemsByDate(_items);
 	
+	var yBase=margin.top+y(getSublaneByNameNEW(sublane).yt1);
+	
 	for (var s in _segments){
-		layout(getElements(_segments[s]));
+		layout(getElements(_segments[s]),yBase);
 	}
 }
 
 /**
  * layout core algorithm 
  * uses _getMetrics function to get proper info about transformed svg elements (getBBox is not sufficient...)
+ * @yBase the yt1 of lane context we are in
  */
-function layout(elements){
+function layout(elements,yBase){
+	console.log("in layout()...yBase="+yBase);
 	var _total =0;
 	var _number = 0;
+	
+	// TODO: get the y1 of according lanecontext and start from top
+	
+
+
 	var _yList =new Array();
 
+	for (var i in elements){
+		if (elements[i].node()) {
+		console.log("...layout get metrics of: "+elements[i]);
+		var _m =get_metrics(elements[i].node());
+		_total+=_m.height
+		console.log("height: "+_m.height+" total:"+_total+" m.y: "+_m.y);
+		_yList.push(_m.y);
+		_number++;
+	}
+	}
+	
+	/*
 	elements.each(function (d){
+		console.log("this: "+d);
 		var _m =get_metrics(d3.select(this).node());
 		_total+=_m.height
-		console.log("h: "+_m.height+" t:"+_total+" y: "+_m.y);
+		console.log("height: "+_m.height+" total:"+_total+" m.y: "+_m.y);
 		_yList.push(_m.y);
 		_number++;
 	})
+	*/
 
 	//var _ids = d3.select("#items").selectAll("g")[0];
 	var _min = d3.min(_yList);
@@ -3622,11 +3689,23 @@ function layout(elements){
 	console.log("_total height: "+_total);
 
 	var i=0;
-	var _space =0;
+	var _space =1;
+	
+	for (var e in elements){
+		if (elements[e].node()) {
+		var _m =get_metrics(elements[e].node());
+		elements[e].attr("transform","translate(0,"+(yBase+i-_m.y)+")");
+		
+		i+=_m.height+_space;
+	}
+	}
+
+/*
 	elements.each(function (d){
 		d3.select(this).attr("transform",function(d){return "translate(0,"+(_min+i-get_metrics(d3.select(this).node()).y)+")";});
 		i+=get_metrics(d3.select(this).node()).height+_space;
 	})
+	*/
 }
 
 
