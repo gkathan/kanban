@@ -1672,7 +1672,7 @@ function drawItems(){
 		// transparent circle on top for the event listener
 		d3.select(this)
 			.append("circle")
-				.attr("id","item_circle_"+d.id)
+				.attr("id","event_circle_"+d.id)
 				.attr("cx",_itemX)
 				.attr("cy",_itemY)
 				.attr("r",_size)
@@ -1902,8 +1902,16 @@ function onTooltipOverHandler(d,tooltip){
 	console.log("****in circle: mouseOver: "+d.id);
 	d3.select("#item_circle_"+d.id)
 	.transition().delay(0).duration(500)
+	.attr("r", d.size*ITEM_SCALE*2);
+	//.style("cursor","pointer");
+
+	// and the transparent event circle
+	d3.select("#event_circle_"+d.id)
+	.transition().delay(0).duration(500)
 	.attr("r", d.size*ITEM_SCALE*2)
 	.style("cursor","pointer");
+
+
 
 	d3.selectAll("#items").selectAll("g")
 		.transition()            
@@ -1931,7 +1939,7 @@ function onTooltipOverHandler(d,tooltip){
 	else if (d.health=="amber") _health ="gold";
 	else if (d.health=="red") _health ="red";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td colspan=\"2\" style=\"font-size:5px;text-align:right\">[id: "+d.id+"] <a href=\"http://v1.bwinparty.corp?id="+d.ExtId+"\" target=\"new\">"+d.ExtId+"</a></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:5px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:5px;text-align:right\"> <a href=\"http://v1.bwinparty.corp?id="+d.ExtId+"\" target=\"new\">"+d.ExtId+"</a></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -1955,7 +1963,8 @@ function onTooltipOverHandler(d,tooltip){
 	if (d.programLead!=""){
 		_htmlBase=_htmlBase+"<tr><td class=\"small\">lead:</td><td><b>"+d.programLead+"</b> </td></tr>";
 	}
-	_htmlBase=_htmlBase+"<tr><td class=\"small\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr></table>";
+	_htmlBase=_htmlBase+"<tr><td class=\"small\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr>";
+	_htmlBase = _htmlBase+"<tr> <td colspan=\"2\"  style=\"text-align:right\"><a id=\"flip\" class=\"small\" style=\"text-align:right\" >[flip it]</a></td></table>";
 	tooltip.html(_htmlBase);
 	tooltip.style("visibility", "visible");
 	tooltip.style("top", (d3.event.pageY-40)+"px").style("left",(d3.event.pageX+25)+"px");
@@ -2015,18 +2024,21 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		console.log("...x: "+_x+"  y: "+_y);
 		
 		d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
-		
-		//flip test
-		
+
+	d3.select("#flip").on("click", function(){
 		var front = document.getElementById('tooltip');
-	    var back_content = "backside of the stuff..."; // Generate or pull any HTML you want for the back.
+	    var back_content = "backside of the stuff...<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
+		console.log("...flip...");
+		// when the correct action happens, call flip!
+		back = flippant.flip(front, back_content);
+		
+		d3.select("#flip_close").on("click", function(){
+		back.close();
+	});
+	
+	});
 
-	// when the correct action happens, call flip!
-	back = flippant.flip(front, back_content)
-	// this creates the back element, sizes it and flips it around.
-
-	// call the close method on the back element when it's time to close.
-	//back.close()
+		//back.close()
 	}
 	else {
 		back.close();
@@ -2054,9 +2066,14 @@ function onTooltipOutHandler(d,tooltip){
 	var highlight="#item_";
 	
 	d3.select("#item_circle_"+d.id)
-					.transition().delay(0).duration(500)
-					.attr("r", d.size*ITEM_SCALE);
-						//.transition().delay(0).duration(500)
+		.transition().delay(0).duration(500)
+		.attr("r", d.size*ITEM_SCALE);
+			//.transition().delay(0).duration(500)
+
+	d3.select("#event_circle_"+d.id)
+		.transition().delay(0).duration(500)
+		.attr("r", d.size*ITEM_SCALE);
+			//.transition().delay(0).duration(500)
 					
 		
 	d3.select("#depID_"+d.id)
