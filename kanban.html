@@ -17,11 +17,13 @@
 <script src="js/underscore-min.js"></script>
 <script src="js/underscore.nest.min.js"></script>
 
+<script src="js/flippant.min.js"></script>
 
 
 <script src="js/kanban.js"></script>
 
 <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="js/flippant.css">
 
 <!--
 <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300italic,700' rel='stylesheet' type='text/css'>
@@ -173,7 +175,7 @@ function submit_download_form(output_format)
 	// last css is for bootstrap => exclude !
 	
 	var declaration ="";
-	for (var i=0;i<(document.styleSheets.length-1);i++){
+	for (var i=0;i<(document.styleSheets.length-2);i++){
 		console.log("***"+i);
 		declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
 	}
@@ -279,7 +281,7 @@ function show_svg_code()
 	  <button id="b2" type="button" class="btn btn-default">Items</button>
 	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
 	  <button id="b4" type="button" class="btn btn-default">Grid</button>
-	  <button id="b5" type="button" class="btn btn-default">Hide Metrics</button>
+	  <button id="b5" type="button" class="btn btn-default">Safe Metrics</button>
 	  <button id="b8" type="button" class="btn btn-default">Releases</button>
 	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
 	  <button id="b9" type="button" class="btn btn-default">Swag</button>
@@ -382,7 +384,8 @@ function initHandlers(){
 	});
 
 	d3.select("#b5").on("click", function(){
-		if (SHOW_METRICS) hideMetrics();
+		safeMetrics();
+		//if (SHOW_METRICS) hideMetrics();
 		//if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
 		//else d3.select("#metrics").style("visibility","visible");
 	});	
