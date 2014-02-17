@@ -27,7 +27,7 @@
 	* d3.selectAll("[id*=item]").style("visibility","hidden") (wildcard *= all "*item*")
 
 	----------------------- hide all results metrics 
-	* hideMetrics([{"goal":true}])
+	* hideMetrics([{"name":"goal","hide":true}])
 	* d3.selectAll("[id*=NGR]").style("visibility","hidden")
 
 
@@ -280,8 +280,6 @@ function init(){
 	width = WIDTH - margin.left - margin.right,
 	height = HEIGHT - margin.top - margin.bottom;
 
-
-
 	y = d3.scale.linear()
 		// changed 20140104 => from [0,100]
 		.domain([Y_MAX,Y_MIN])
@@ -298,30 +296,29 @@ function init(){
 		.attr("id","kanban")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+/*
 	drag = d3.behavior.drag()
-			.on("drag", function(d,i) {
-				d.x += d3.event.dx
-				d.y += d3.event.dy
-				d3.select(this).attr("transform", function(d,i){
-					return "translate(" + [ d.x,d.y ] + ")"
-				})
-			})	
-			.on("dragend",function(d,i){
-				console.log("dragend event: x="+d.x+", y="+d.y);
-				console.log("context: this= "+this);
-			});
-
+	.on("drag", function(d,i) {
+		d.x += d3.event.dx
+		d.y += d3.event.dy
+		d3.select(this).attr("transform", function(d,i){
+			return "translate(" + [ d.x,d.y ] + ")"
+		})
+	})	
+	.on("dragend",function(d,i){
+		console.log("dragend event: x="+d.x+", y="+d.y);
+		console.log("context: this= "+this);
+	});
+*/
 
 	drag_x = d3.behavior.drag()
-			.on("drag", function(d,i) {
-				d.x += d3.event.dx
-				//d.y += d3.event.dy
-				d3.select(this).attr("transform", function(d,i){
-					return "translate(" + [ d.x,d.y ] + ")"
-				})
-			});
-	
-
+	.on("drag", function(d,i) {
+		d.x += d3.event.dx
+		//d.y += d3.event.dy
+		d3.select(this).attr("transform", function(d,i){
+			return "translate(" + [ d.x,d.y ] + ")"
+		})
+	});
 }
 
 
@@ -791,19 +788,19 @@ function hideMetrics(which){
 	
 	if (which){
 		for (var i in which){
-			if (which[i]["baseline"]==true){
+			if (which[i].name=="baseline" && which[i].hide==true){
 				SHOW_METRICS_BASELINE=false;
 				WIDTH-=100;
 			}
-			if (which[i]["forecast1"]==true){
+			if (which[i].name=="forecast1" && which[i].hide==true){
 				SHOW_METRICS_FORECAST1=false;
 				WIDTH-=150;
 			}
-			if (which[i]["forecast2"]==true){
+			if (which[i].name=="forecast2" && which[i].hide==true){
 				SHOW_METRICS_FORECAST2=false;
 				WIDTH-=150;
 			}
-			if (which[i]["goal"]==true){
+			if (which[i].name=="goal" && which[i].hide==true){
 				SHOW_METRICS_GOAL=false;
 				WIDTH-=120;
 			}
@@ -814,7 +811,7 @@ function hideMetrics(which){
 }
 
 function safeMetrics(){
-	hideMetrics([{"goal":true}])
+	hideMetrics([{name:"goal",hide:true}])
 	d3.selectAll("[id*=NGR]").style("visibility","hidden")
 	
 }
@@ -2041,7 +2038,7 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		//back.close()
 	}
 	else {
-		back.close();
+		if (back) back.close();
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover", function(d){onTooltipOverHandler(d,tooltip);})
