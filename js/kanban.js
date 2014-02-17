@@ -26,6 +26,11 @@
 	---------------------- power of css3 selectors
 	* d3.selectAll("[id*=item]").style("visibility","hidden") (wildcard *= all "*item*")
 
+	----------------------- hide all results metrics 
+	* hideMetrics([{"goal":true}])
+	* d3.selectAll("[id*=NGR]").style("visibility","hidden")
+
+
 
 	--------------------- HOWTO runtime change e.g. lanedistribution --------------------
 	
@@ -217,6 +222,12 @@ var WIDTH_WHITESTROKE ="5px";
 
 var SHOW_METRICS = false;
 
+var SHOW_METRICS_BASELINE = false;
+var SHOW_METRICS_FORECAST1 = false;
+var SHOW_METRICS_FORECAST2 = false;
+var SHOW_METRICS_GOAL = false;
+
+
 // additional buttons state
 var SHOW_ONLY_VERSION1=false;
 var SHOW_ONLY_NONVERSION1=false;
@@ -227,14 +238,34 @@ var TRANSCODE_URL;
 //on item doubleclick
 var ITEM_ISOLATION_MODE = false;
 
+
+//flippant test
+var back;
+
 function setMargin(){
 	var _offsetXRight = 20;
-	var _offsetXLeft = 0;
+	var _offsetXLeft = 20;
 	
+	/*
 	if (SHOW_METRICS){
 		 _offsetXRight = 420;
-		 _offsetXLeft = 150;
+		 _offsetXLeft = 100;
 	}		
+	*/
+	if (SHOW_METRICS_BASELINE){
+		 _offsetXLeft += 100;
+	}		
+	if (SHOW_METRICS_FORECAST1){
+		 _offsetXRight += 150;
+	}		
+	if (SHOW_METRICS_FORECAST2){
+		 _offsetXRight += 150;
+	}		
+	if (SHOW_METRICS_GOAL && SHOW_METRICS_FORECAST2){
+		 _offsetXRight += 120;
+	}		
+	
+	
 	margin = {top: 250, right: _offsetXRight+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: _offsetXLeft+150};
 	
 }
@@ -440,6 +471,21 @@ function setKanbanDefaultDates(){
 	KANBAN_END = KANBAN_END_DEFAULT;
 }
 
+function showAllMetrics(){
+	SHOW_METRICS_BASELINE = true;
+	SHOW_METRICS_FORECAST1 = true;
+	SHOW_METRICS_FORECAST2 = true;
+	SHOW_METRICS_GOAL = true;
+}
+
+function hideAllMetrics(){
+	SHOW_METRICS_BASELINE = false;
+	SHOW_METRICS_FORECAST1 = false;
+	SHOW_METRICS_FORECAST2 = false;
+	SHOW_METRICS_GOAL = false;
+
+}
+
 
 function renderB2CGaming() {
 	hideWhiteboard();
@@ -450,7 +496,8 @@ function renderB2CGaming() {
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	
 	setKanbanDefaultDates();
-	SHOW_METRICS=true;
+//	SHOW_METRICS=true;
+	showAllMetrics();
 	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -472,7 +519,8 @@ function renderHistory() {
 	HEIGHT=1100;
 	WIDTH=1500;
 	ITEM_SCALE=0.8;
-	SHOW_METRICS=false;
+	//SHOW_METRICS=false;
+	hideAllMetrics();
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	KANBAN_START=new Date("2012-01-01");
 	KANBAN_END=new Date("2014-02-30");
@@ -521,7 +569,8 @@ function renderWhiteboard() {
 					for (var i in initiativeData){
 						// function Postit(id,text,x,y,scale,size,color,textcolor){
 						var d = initiativeData[i];
-						var p = new Postit(d.id,"::"+d.lane+" | "+d.name,150+(i*15),150+(i*15),4,3,"yellow","black");
+						var p = new Postit(d.id,d.name+" "+d.name2,150+(i*15),150+(i*15),4,3,"yellow","black");
+						p.setTitle("::"+d.lane);
 						p.draw(whiteboard)
 						
 					}
@@ -542,8 +591,8 @@ function renderBwin(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	SHOW_METRICS=true;
-	
+	//SHOW_METRICS=true;
+	showAllMetrics();
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.3;
@@ -567,8 +616,9 @@ function renderBwinSecondLevel(){
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 
 	setKanbanDefaultDates();
-	SHOW_METRICS=false;
-
+	//SHOW_METRICS=false;
+	hideAllMetrics();
+	
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
 	ITEMDATA_NEST= ["themesl","sublane"];
@@ -595,7 +645,8 @@ function renderEntIT(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	SHOW_METRICS=false;
+	//SHOW_METRICS=false;
+	hideAllMetrics();
 	
 	setKanbanDefaultDates();
 	
@@ -628,8 +679,8 @@ function renderHolding(){
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	
 	setKanbanDefaultDates();
-	SHOW_METRICS=true;
-
+	//SHOW_METRICS=true;
+	showAllMetrics();
 	ITEM_SCALE=0.6;
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
@@ -648,8 +699,8 @@ function renderShared(){
 	HEIGHT=600;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	SHOW_METRICS=true;
-
+	//SHOW_METRICS=true;
+	showAllMetrics()
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.5;
@@ -671,8 +722,9 @@ function renderNewBiz(){
 	HEIGHT=500;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	SHOW_METRICS=false;
-
+	//SHOW_METRICS=false;
+	hideAllMetrics();
+	
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.5;
@@ -693,8 +745,8 @@ function renderTechdebt(){
 	HEIGHT=550;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
-	SHOW_METRICS=true;
-
+	//SHOW_METRICS=true;
+	showAllMetrics();
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.5;
@@ -735,12 +787,38 @@ function drawInitiatives(){
 	
 }
 
-function hideMetrics(){
-	SHOW_METRICS=false;
-	d3.select("#metrics").style("visibility","hidden");
-	WIDTH=WIDTH-400;
-	drawAll();
+function hideMetrics(which){
+	
+	if (which){
+		for (var i in which){
+			if (which[i]["baseline"]==true){
+				SHOW_METRICS_BASELINE=false;
+				WIDTH-=100;
+			}
+			if (which[i]["forecast1"]==true){
+				SHOW_METRICS_FORECAST1=false;
+				WIDTH-=150;
+			}
+			if (which[i]["forecast2"]==true){
+				SHOW_METRICS_FORECAST2=false;
+				WIDTH-=150;
+			}
+			if (which[i]["goal"]==true){
+				SHOW_METRICS_GOAL=false;
+				WIDTH-=120;
+			}
+		}
+		drawAll();
+	}
+	
 }
+
+function safeMetrics(){
+	hideMetrics([{"goal":true}])
+	d3.selectAll("[id*=NGR]").style("visibility","hidden")
+	
+}
+
 
 function drawAll(){
 	init();
@@ -917,7 +995,7 @@ function drawLanes(){
 	 * this would be level-0 in a generic view
 	 * in this concrete view this would be the "businessmodel=b2c gaming" umbrell box
 	 * */
-	_drawLaneContext(lanes,CONTEXT,-LANE_LABELBOX_LEFT_WIDTH-200,0,LANE_LABELBOX_LEFT_WIDTH/6,height,"treemap.html")
+	_drawLaneContext(lanes,CONTEXT,-margin.left,0,LANE_LABELBOX_LEFT_WIDTH/6,height,"treemap.html")
 	
 	var i=0;
 	var _xRightStart = x(KANBAN_END)+TARGETS_COL_WIDTH;
@@ -1405,7 +1483,6 @@ function drawQueues(){
 // ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------
 
-
 /** renders the items
 */
 function drawItems(){
@@ -1464,11 +1541,10 @@ function drawItems(){
 		});
 	//test end
 
-	//tooltips
 	var tooltip = d3.select("body")
 		.append("div")
-		.attr("class","d3tooltip");
-
+		.attr("class","d3tooltip").attr("id","tooltip");
+	
 	svg.append("g").attr("id","dependencies");
 	var gSizings = svg.append("g")
 	.attr("id","sizings")
@@ -1680,10 +1756,11 @@ function drawItems(){
  * @d data 
  */
 function _drawPostit(svg,d){
-	var tooltip = d3.select("body")
+	
+	/*var tooltip = d3.select("body")
 		.append("div")
 		.attr("class","d3tooltip");
-
+*/
 	var gPostit= svg.append("g")
 	.attr("id",function(d){return "postit_"+d.id})
 	
@@ -1710,11 +1787,11 @@ function _drawPostit(svg,d){
 		var _scale = (_size/8)*POSTIT_SCALE;
 		
 		var postit = gPostit
-		.on("mouseover", function(d){
+		/*.on("mouseover", function(d){
 			d3.select(this)
 			.style("cursor","pointer");
 			onTooltipOverHandler(d,tooltip,"#postit_");}); 
-	
+	*/
 		postit.append("use")
 		.attr("xlink:href","#postit_yellow")
 		.attr("transform","translate("+postit_x+","+postit_y+") scale("+_scale+") rotate("+_rotate+")")
@@ -1938,8 +2015,21 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		console.log("...x: "+_x+"  y: "+_y);
 		
 		d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
+		
+		//flip test
+		
+		var front = document.getElementById('tooltip');
+	    var back_content = "backside of the stuff..."; // Generate or pull any HTML you want for the back.
+
+	// when the correct action happens, call flip!
+	back = flippant.flip(front, back_content)
+	// this creates the back element, sizes it and flips it around.
+
+	// call the close method on the back element when it's time to close.
+	//back.close()
 	}
 	else {
+		back.close();
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
 		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover", function(d){onTooltipOverHandler(d,tooltip);})
@@ -1947,6 +2037,8 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		ITEM_ISOLATION_MODE=false;	
 		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity",1);
 		d3.select("#isolationtext").remove();
+		
+		
 	}
 	
 }
@@ -2011,7 +2103,7 @@ function drawMetrics(){
 	d3.select("#metrics").remove();
 	
 	//only show metrics in b2c business model view
-	if (SHOW_METRICS){
+	//if (SHOW_METRICS){
 
 		//console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
@@ -2024,15 +2116,22 @@ function drawMetrics(){
 		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
 		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
 		//right
+		var _metricXBaseRight= TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH;
+		
+		var _primaryXOffsetRight = _metricXBaseRight +120;
+		var _secondaryXOffsetRight = _metricXBaseRight+30;
+		
+		/*
 		//1
-		var _primaryXOffsetRight = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH +120;
-		var _secondaryXOffsetRight = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH+30;
+		var _primaryXOffsetRight = _metricXBaseRight +120;
+		var _secondaryXOffsetRight = _metricXBaseRight+30;
 		//2
 		var _2Offset = METRIC_WIDTH;
 		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
 		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
 		//goal
-		var _goalXOffset = TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH +(2*METRIC_WIDTH);
+		var _goalXOffset = _metricXBaseRight +(2*METRIC_WIDTH);
+		*/
 		
 	// all KPIs & results in baseline
 	
@@ -2044,68 +2143,88 @@ function drawMetrics(){
 		var _primTextYOffset=18; 
 	
 // -------------------------- baseline -----------------------------------------------
-	var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
-	_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
-	
+	if (SHOW_METRICS_BASELINE){
+		var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
+		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
+	}
 // -------------------------- target 1-year (2014) -------------------------------
-	var _1Offset = 70;
+	if (SHOW_METRICS_FORECAST1){
+		var _1Offset = 70;
 
-	var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
-	_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
-
-	d3.select("#metrics_forecast1").style("opacity",0.5);
-
-	_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight2-40);
+		var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
+		_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 		
+		if (SHOW_METRICS_FORECAST2)
+			d3.select("#metrics_forecast1").style("opacity",0.5);
+
+		
+		_primaryXOffsetRight += METRIC_WIDTH;
+		_secondaryXOffsetRight += METRIC_WIDTH;
+
+		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight-40);
+		
+	}		
 // -------------------------- target 2-years (2015)-------------------------------
-	var _2Offset = 70;
-	var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
-	_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",x(KANBAN_END)+_primaryXOffsetRight2-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight2,METRICS_SCALE);
+	if (SHOW_METRICS_FORECAST2){
+		var _2Offset = 70;
+		
+		//var _goalXOffset = _primaryXOffsetRight+30;
+
+		var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
+		_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",x(KANBAN_END)+_primaryXOffsetRight-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
+
+		_primaryXOffsetRight += METRIC_WIDTH;
+		_secondaryXOffsetRight += METRIC_WIDTH;
+
 	
 
 // ------------------------------ potentials ------------------------------------------------
+	if (SHOW_METRICS_GOAL){
+		
+		_primaryXOffsetRight-=120;
 
-	var gMetricsRisk = gMetricsForecast2.append("g").attr("id","metrics_risk");
+		var gMetricsRisk = gMetricsForecast2.append("g").attr("id","metrics_risk");
 
-	var _yRisk = 50;
-	var _xRisk = x(KANBAN_END)+_goalXOffset+30;
-/* ----------------------------------------- opportunities -----------------------------------------*/
-	_drawPotentials(gMetricsRisk,"forecast2","opportunity",_xRisk,_yRisk);
+		var _yRisk = 50;
+		var _xRisk = x(KANBAN_END)+_primaryXOffsetRight+30;
+	/* ----------------------------------------- opportunities -----------------------------------------*/
+		_drawPotentials(gMetricsRisk,"forecast2","opportunity",_xRisk,_yRisk);
 
-/* ----------------------------------------- risks ------------------------------------------------ */
-	_drawPotentials(gMetricsRisk,"forecast2","risk",_xRisk,_yRisk+220);
-	
+	/* ----------------------------------------- risks ------------------------------------------------ */
+		_drawPotentials(gMetricsRisk,"forecast2","risk",_xRisk,_yRisk+220);
+		
 
 
-/* ------------------------------------- goal column ------- ------------------------------------*/
-	var gMetricsGoal = gMetricsForecast2.append("g").attr("id","metrics_goal");
-	
-	_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_goalXOffset,METRIC_BASE_Y,_getDataBy("dimension","goal",METRICDATES_DATA).data);
+	/* ------------------------------------- goal column ------- ------------------------------------*/
+		var gMetricsGoal = gMetricsForecast2.append("g").attr("id","metrics_goal");
+		
+		_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_primaryXOffsetRight,METRIC_BASE_Y,_getDataBy("dimension","goal",METRICDATES_DATA).data);
 
-	
-	 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
-	_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal,10,"left",METRICS_SCALE);
+		
+		 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
+		_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal,10,"left",METRICS_SCALE);
 
-	var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal" });
-	var _yTotalKpiBase = _yTotal-10;
-	for (var k in _goalKpis){
-		_drawTextMetric(gMetricsGoal,_goalKpis[k],"metricSmall",x(KANBAN_END)+_goalXOffset+30,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,"right",METRICS_SCALE);
+		var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal" });
+		var _yTotalKpiBase = _yTotal-10;
+		for (var k in _goalKpis){
+			_drawTextMetric(gMetricsGoal,_goalKpis[k],"metricSmall",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,"right",METRICS_SCALE);
+		}
+		
+		//delta symbol
+		_drawSign(gMetricsGoal,x(KANBAN_END)+_primaryXOffsetRight-36,_yTotal+20,"icon_delta",0.4);
+		_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_primaryXOffsetRight-85,_yTotal+7,1.1,.8,"bracket",0.1);
+		
+		var _diff = _goalResult[0].number-_targetResultSum2;
+		var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
+
+		_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal+(30*METRICS_SCALE),10,"left",METRICS_SCALE);
+		// delta end
 	}
-	
-	//delta symbol
-	_drawSign(gMetricsGoal,x(KANBAN_END)+_goalXOffset-36,_yTotal+20,"icon_delta",0.4);
-	_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_goalXOffset-85,_yTotal+7,1.1,.8,"bracket",0.1);
-	
-	var _diff = _goalResult[0].number-_targetResultSum2;
-	var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
-
-	_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_goalXOffset+30,_yTotal+(30*METRICS_SCALE),10,"left",METRICS_SCALE);
-	// delta end
- 
+}
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
 	
-	}	
+	//}	
 
 } //end drawMetrics
 
@@ -2531,6 +2650,9 @@ Postit.prototype.getInfo=function(){
 	return JSON.stringify(this);
 }
 
+Postit.prototype.setTitle=function(title){
+	this.title=title;
+}
 
 
 Postit.prototype.save=function(){
@@ -2653,8 +2775,10 @@ Postit.prototype.draw=function(svg){
 	var _x = (getInt(this.x)+Math.sqrt(this.scale)+1);
 	var _y = (getInt(this.y)+Math.sqrt(this.scale)-1);
 	
-	var t =postit.append("text")
-	.style("text-anchor","start")
+	if (this.title){
+		postit.append("text")
+		.text(this.title)
+		.style("text-anchor","start")
 		.style("font-size",this.size+"px")
 		.style("font-family","courier")
 		.style("font-weight","bold")
@@ -2664,9 +2788,26 @@ Postit.prototype.draw=function(svg){
 		
 		.style("text-anchor","start")
 		.style("fill",this.textcolor)
+			.attr("transform","translate("+_x+","+(_y+(4*this.size))+") scale("+this.scale+") rotate("+_rotate+")");
+		_y+=4*this.size;
+	}
+	
+	
+	var _size = this.size-0.5;
+	var t =postit.append("text")
+	.style("text-anchor","start")
+		.style("font-size",(_size)+"px")
+		.style("font-family","courier")
+		.style("font-weight","normal")
+		.style("cursor","pointer")		
+		.style("letter-spacing","-0.1")
+		.style("kerning","-0.1")
+		
+		.style("text-anchor","start")
+		.style("fill",this.textcolor)
 			.attr("transform","translate("+_x+","+_y+") scale("+this.scale+") rotate("+_rotate+")");
 	
-	textarea(t,this.text,1,4,10,this.size);
+	textarea(t,this.text,1,4,16,_size);
 	
 	postit.append("path")
 	.attr("transform","translate("+((22*this.scale)+getInt(this.x))+","+(getInt(this.y)+(2*this.scale))+") rotate("+(45+_rotate)+") scale("+(0.25*this.scale)+")")
@@ -2705,7 +2846,7 @@ function drawVision(){
 	// --- mission strategy stuff ------
 		
 	//_drawBracket(gVersion,"blue","bottom",350,-180,2,.8,"triangle",1);
-	_drawBracket(gVision,"blue","bottom",_x-100,_y+90,3,.8,"triangle",1);
+	_drawBracket(gVision,"blue","bottom",_x-160,_y+90,3.3,.8,"triangle",1);
 	
 	
 	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-100;
@@ -2741,11 +2882,10 @@ function drawVersion(){
 	
 	var _line =7;
 	var _offset =8;
-	var _y = height+TIMELINE_HEIGHT;
-	if (!SHOW_METRICS) _y=METRIC_BASE_Y;
+	var _y = METRIC_BASE_Y;
+	if (SHOW_METRICS_FORECAST1 || SHOW_METRICS_FORECAST2 || SHOW_METRICS_GOAL) _y=height+TIMELINE_HEIGHT;
 	
-	var _xOffset=-50;
-	if (SHOW_METRICS) _xOffset=330;
+	var _xOffset=-80+(SHOW_METRICS_FORECAST1*150)+(SHOW_METRICS_FORECAST2*150)+(SHOW_METRICS_GOAL*120);
 	 
 	var _x = x(KANBAN_END)+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH+_xOffset;
 	
@@ -2828,8 +2968,7 @@ function drawLegend(){
 	var _y = height+TIMELINE_HEIGHT;
 	var _fontsize=4;
 	
-	var _x=-100;
-	if (SHOW_METRICS) _x=-260;
+	_x=-margin.left+20;
 	
 	
 	
