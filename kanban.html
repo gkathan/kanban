@@ -13,17 +13,28 @@
 <script src="bootstrap/dist/js/bootstrap.min.js"></script>
 
 <script src="js/vkbeautify.0.99.00.beta.js"></script>
+<script src="js/bootstrap-multiselect.js"></script>
+
+<script src="js/jquery.sidr.min.js"></script>
 
 <script src="js/underscore-min.js"></script>
 <script src="js/underscore.nest.min.js"></script>
 
 <script src="js/flippant.min.js"></script>
+<script src="js/moment.min.js"></script>
+<script src="js/daterangepicker.js"></script>
 
 
 <script src="js/kanban.js"></script>
 
 <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="js/flippant.css">
+<link href="css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
+   
+<link rel="stylesheet" type="text/css" href="css/flippant.css">
+<link rel="stylesheet" type="text/css" href="css/daterangepicker-bs3.css">
+<link rel="stylesheet" type="text/css" href="css/jquery.sidr.light.css">
+<link rel="stylesheet" type="text/css" href="css/bootstrap-multiselect.css">
+
 
 <!--
 <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,300italic,700' rel='stylesheet' type='text/css'>
@@ -77,8 +88,8 @@
 									{"context":"*","name":"topline.bwin","value"		:28},
 									{"context":"*","name":"topline.pp","value"		:20},
 									{"context":"*","name":"topline.foxy","value"		:18},
-									{"context":"*","name":"topline.premium","value"	:14},
-									{"context":"*","name":"topline.casino","value"	:20},
+									{"context":"*","name":"topline.premium","value"	:16},
+									{"context":"*","name":"topline.casino","value"	:18},
 									{"context":"*","name":"enabling.techdebt","value"	:40},
 									{"context":"*","name":"enabling.shared","value"	:60},
 									{"context":"*","name":"topline.kalixa","value"	:50},
@@ -142,6 +153,18 @@
 
 <body>
 
+<div class="btn-group-xs">
+  <button id="simple-menu" type="button" class="btn btn-primary btn-xs">kanban menu</button>
+</div>
+
+
+<script>
+$(document).ready(function() {
+  $('#simple-menu').sidr({speed:200});
+});
+</script>			
+
+
 <!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
      The form is populated and submitted by the JavaScript below. -->
      
@@ -159,9 +182,6 @@
  <input type="hidden" id="png_scale" name="png_scale" value="">
  
 </form>
-
-<pre class="prettyprint lang-xml" style="font-size:8px" id="svg_code">
-</pre>
 <script>
 
 
@@ -175,7 +195,7 @@ function submit_download_form(output_format)
 	// last css is for bootstrap => exclude !
 	
 	var declaration ="";
-	for (var i=0;i<(document.styleSheets.length-2);i++){
+	for (var i=0;i<2;i++){
 		console.log("***"+i);
 		declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
 	}
@@ -201,28 +221,76 @@ function submit_download_form(output_format)
 	form.submit();
 }
 
-function show_svg_code()
-{
-	console.log("*****show_svg_code");
-	
-	// Get the d3js SVG element
-	var svg = document.getElementsByTagName("svg")[0];
-
-	// Extract the data as SVG text string
-	var svg_xml = (new XMLSerializer).serializeToString(svg);
-
-	//Optional: prettify the XML with proper indentations
-	svg_xml = vkbeautify.xml(svg_xml);
-	// Set the content of the <pre> element with the XML
-	$("#svg_code").text(svg_xml);
-
-}
 
 </script>
 
 
 
-<div style="margin-left:10px;margin-top:10px">
+<div id="sidr" style="margin-left:10px;margin-top:10px">
+
+<div  class="row" style="margin-left:10px;margin-bottom:10px">
+		<!--date range -->
+		<div id="kanbanrange"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
+			<span style="font-size:12px;font-weight:bold;margin-left:20px">KANBAN RANGE</span><br><i class="fa fa-calendar fa-lg"></i>
+			<span style="font-size:10px"><script type="text/javascript"> document.write(KANBAN_START.toString("MMMM d, yyyy")+" - "+KANBAN_END.toString("dd.MMMM yyyy"));</script></span> <b class="caret"></b>
+		</div>
+		 
+		<script type="text/javascript">
+		$('#kanbanrange').daterangepicker(
+			{
+			  ranges: {
+				 'ALL': [KANBAN_START, KANBAN_END],
+				 'WIP': [moment().subtract('days', 10), moment().add('days', WIP_WINDOW_DAYS+10)],
+				 'History': [moment("2012-01-01"), moment().add("days",10)],
+				 'Last 30 Days': [moment().subtract('days', 29), moment()],
+				 'This Month': [moment().startOf('month'), moment().endOf('month')],
+				 'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
+			  },
+			  startDate: KANBAN_START,
+			  endDate: KANBAN_END
+			},
+			function(start, end) {
+				$('#kanbanrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+				KANBAN_START = new Date(start);
+				KANBAN_END=new Date(end);
+				console.log("..in daterange function");
+				drawAll();
+			}
+		);
+		</script>
+		<!-- date range -->
+</div>
+<div  class="row" style="margin-left:10px;margin-bottom:10px">
+
+		<!--time machine -->
+		<div id="timemachine"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
+			<span style="font-size:12px;font-weight:bold;margin-left:20px">TIME MACHINE</span><br/><i class="fa fa-calendar fa-lg"></i>
+			<span style="font-size:10px"><script type="text/javascript"> document.write(TODAY.toString("MMMM d, yyyy"));</script></span> <b class="caret"></b>
+		</div>
+		 
+		<script type="text/javascript">
+		$('#timemachine').daterangepicker(
+			{ startDate: moment(),
+			  endDate: moment(),
+			  singleDatePicker: true
+
+			  },
+			function(start, end) {
+				if (start<KANBAN_END & start>KANBAN_START){
+					timeMachine(start);
+				}
+				else {
+					alert("TIMEMACHINE date should not be earlier than KANBAN_START and/or later than KANBAN_END date, sir !! ");
+					start=TODAY.toString('yyyy-MM-dd');
+				}
+				$('#timemachine span').html(start.format('MMMM D, YYYY'));
+			}
+		);
+		</script>
+		<!-- time machine -->
+</div>
+
+
 
 	<div class="btn-group-xs">
 	  <button id="b70" type="button" class="btn btn-success">Holding</button>
@@ -233,71 +301,42 @@ function show_svg_code()
 	  <button id="b78" type="button" class="btn btn-success">Shared</button>
 	  <button id="b74" type="button" class="btn btn-danger">Bwin Drill-in</button>
 	  <button id="b75" type="button" class="btn btn-danger">EntIT Drill-in</button>
-	  <button id="b79" type="button" class="btn btn-success">History</button>
 	  <button id="bwhiteboard" type="button" class="btn btn-success">Whiteboard</button>
-	  
-	  
 	</div>
-
-	<div style="width:550px" class="input-group input-group-sm">
 	
-      <input id="input_kanbanstart" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b50" class="btn btn-default input-sm" type="button">kanban start</button>
-      </span>
-      
-     <input id="input_kanbanend" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b51" class="btn btn-default input-sm" type="button">kanban end</button>
-      </span>
-
-	<input id="input_timemachine" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b40" class="btn btn-default input-sm" type="button">time machine</button>
-      </span>
-	
-      
-    </div><!-- /input-group -->
-
-
-
-     
-	<div style="width:300px" class="input-group input-group-sm">
-      <input id="input_width" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b11" class="btn btn-default input-sm" type="button">set WIDTH</button>
-      </span>
-      
-      <input id="input_height" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b12" class="btn btn-default input-sm" type="button">set HEIGHT</button>
-      </span>
-      
-    </div><!-- /input-group -->
-
-
 	<div class="btn-group-xs">
 	  <button id="b1" type="button" class="btn btn-default">Queues</button>
 	  <button id="b2" type="button" class="btn btn-default">Items</button>
 	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
 	  <button id="b4" type="button" class="btn btn-default">Grid</button>
-	  <button id="b5" type="button" class="btn btn-default">Safe Metrics</button>
+	  <button id="bhidemetrics" type="button" class="btn btn-default">Metrics</button>
+	  <button id="b5" type="button" class="btn btn-default">No NGR</button>
 	  <button id="b8" type="button" class="btn btn-default">Releases</button>
 	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
 	  <button id="b9" type="button" class="btn btn-default">Swag</button>
+	</div>
+	<div class="btn-group-xs">
 	  <button id="b15" type="button" class="btn btn-default">Linechart</button>
 	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
 	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
 	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
 	  <button id="bguides" type="button" class="btn btn-default">Guides</button>
-	  
 	  <button id="b100" type="button" class="btn btn-default">Version1 items</button>
 	  <button id="b101" type="button" class="btn btn-default">Other items</button>
-	  
-	  
-	  
-
 	</div>
+
+	<div style="width:250px" class="input-group input-group-sm">
+      <input id="input_width" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b11" class="btn btn-default input-sm" type="button">WIDTH</button>
+      </span>
+      <input id="input_height" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b12" class="btn btn-default input-sm" type="button">HEIGHT</button>
+      </span>
+    </div><!-- /input-group -->
+
+
 
 	<div style="width:250px" class="input-group input-group-sm">
       <input id="input_postit" type="text" class="form-control input-sm">
@@ -305,8 +344,6 @@ function show_svg_code()
         <button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
       </span>
    </div><!-- /input-group -->
-
-
 
 
 	<!-- ########### The Export Section ####### -->
@@ -317,17 +354,13 @@ function show_svg_code()
 				Save as PDF</button>
 			<button class="btn btn-primary btn-xs" id="save_as_png" value="">
 				Save as PNG</button>
-			&nbsp;<button class="btn btn-warning btn-xs" id="show_svg_code" value="">
-				Show SVG</button>
 
-			<div style="width:400px" class="input-group input-group-sm">
+			<div style="width:250px" class="input-group input-group-sm">
 				  <input id="input_transcode_url" type="text" class="form-control input-sm">
 				  <span class="input-group-btn">
-					<button id="b99" class="btn btn-default input-sm" type="button">set transcode URL</button>
+					<button id="b99" class="btn btn-default input-sm" type="button">URL</button>
 				  </span>
 			</div><!-- /input-group -->
-
-			
 	</div>
 	
 	<div class="btn-group-xs">
@@ -340,9 +373,35 @@ function show_svg_code()
 			  <a class="control-zoom-in" href="#" title="Zoom in"></a>
 			  <a class="control-zoom-out" href="#" title="Zoom out"></a>
 	  </div>
-		
 
 
+
+<div class="input-group btn-group">
+	<select class="multiselect" multiple="multiple">
+	  <option value="baseline">baseline</option>
+	  <option value="forecast1">forecast-1</option>
+	  <option value="forecast2">forecast-2</option>
+	  <option value="goal">goal</option>
+	  <option value="corporate">corporate</option>
+	</select>
+</div>	
+<!-- Initialize the multi-select plugin: -->
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.multiselect').multiselect({
+		buttonClass: 'btn-primary btn-sm',
+		onChange: function(element,checked){
+			var _val = $(element).val()
+			hideMetrics([{"name":_val,"hide":true}])
+
+			console.log("element: "+_val+" checked: "+checked);
+		}
+	});
+  });
+</script>
+
+
+</div>
 <script>
 	// Attached actions to the buttons
 	
@@ -352,6 +411,7 @@ function show_svg_code()
 	$("#save_as_png").click(function() { submit_download_form("png"); });
 	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
 	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
+	
 		
 	initHandlers();
 		
@@ -378,6 +438,13 @@ function initHandlers(){
 		else d3.select("#lanes").style("visibility","visible");
 	});
 
+	d3.select("#bhidemetrics").on("click", function(){
+		if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
+		else d3.select("#metrics").style("visibility","visible");
+	});
+
+
+
 	d3.select("#b4").on("click", function(){
 		if (d3.select("#axes").style("visibility") =="visible") d3.select("#axes").style("visibility","hidden");
 		else d3.select("#axes").style("visibility","visible");
@@ -386,8 +453,6 @@ function initHandlers(){
 	d3.select("#b5").on("click", function(){
 		safeMetrics();
 		//if (SHOW_METRICS) hideMetrics();
-		//if (d3.select("#metrics").style("visibility") =="visible") d3.select("#metrics").style("visibility","hidden");
-		//else d3.select("#metrics").style("visibility","visible");
 	});	
 
 	d3.select("#bguides").on("click", function(){
@@ -546,48 +611,7 @@ function initHandlers(){
 		post.save();
 
 	});	
-	var _newDate;
 	
-	document.getElementById("input_timemachine").value = TODAY.toString('yyyy-MM-dd');  ;
-	d3.select("#b40").on("click", function(){
-		_newDate = new Date(document.getElementById("input_timemachine").value);
-		if (_newDate<KANBAN_END & _newDate>KANBAN_START){
-			timeMachine(document.getElementById("input_timemachine").value);
-		}
-		else {
-			alert("TIMEMACHINE date should not be earlier than KANBAN_START and/or later than KANBAN_END date, sir !! ");
-			document.getElementById("input_timemachine").value=TODAY.toString('yyyy-MM-dd');
-		}
-			
-	});	
-
-	document.getElementById("input_kanbanstart").value = KANBAN_START.toString('yyyy-MM-dd');  ;
-	d3.select("#b50").on("click", function(){
-		_newDate = new Date(document.getElementById("input_kanbanstart").value);
-		if (_newDate<KANBAN_END){
-			KANBAN_START=_newDate;
-			drawAll();
-		}
-		else{
-			 alert("KANBAN_START should not be later than KANBAN_END sir !");
-			document.getElementById("input_kanbanstart").value=KANBAN_START.toString('yyyy-MM-dd');
-		 }
-	});	
-
-	document.getElementById("input_kanbanend").value = KANBAN_END.toString('yyyy-MM-dd');  ;
-	d3.select("#b51").on("click", function(){
-		_newDate = new Date(document.getElementById("input_kanbanend").value);
-		if (KANBAN_START<_newDate){
-			KANBAN_END=_newDate;
-			drawAll();
-		}
-		else{
-			alert("KANBAN_END should not be earlier than KANBAN_START sir !");
-			document.getElementById("input_kanbanend").value=KANBAN_END.toString('yyyy-MM-dd');
-		}
-	});	
-
-
 	d3.select("#b70").on("click", function(){
 		renderHolding();
 	});	
@@ -622,9 +646,6 @@ function initHandlers(){
 		renderShared();
 	});	
 
-	d3.select("#b79").on("click", function(){
-		renderHistory();
-	});	
 
 	d3.select("#bwhiteboard").on("click", function(){
 		renderWhiteboard();
