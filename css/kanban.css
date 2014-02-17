@@ -6,6 +6,10 @@ svg {
   font-family:arial, sans-serif; 
 }
 
+a {
+cursor:pointer
+}
+
 .axis path,
 .axis line {
   fill: none;
