@@ -30,8 +30,17 @@
 	* hideMetrics([{"name":"goal","hide":true}])
 	* d3.selectAll("[id*=NGR]").style("visibility","hidden")
 
+	----------------------- hide all corporate total  metrics 
+	* hideMetrics([{"name":"goal","hide":true}])
+	 d3.selectAll("[id*=corp_metrics]").style("visibility","hidden")
+	 d3.selectAll("[id*=metric_date]").transition().duration(300).attr("transform","translate(0,150)")
+	* show 
+	 d3.selectAll("[id*=corp_metrics]").style("visibility","visible")
+	 d3.selectAll("[id*=metric_date]").transition().duration(300).attr("transform","translate(0,0)")
 
 
+d3.select("#metrics_forecast1").transition().delay(300).style("visibility","hidden");d3.select("#metrics_forecast2").transition().duration(300).attr("transform","translate(-150,0)")
+* d3.select("#metrics_forecast1").transition().delay(300).style("visibility","visible");d3.select("#metrics_forecast2").transition().duration(300).attr("transform","translate(0,0)")
 	--------------------- HOWTO runtime change e.g. lanedistribution --------------------
 	
 	1) remove groups
@@ -58,6 +67,8 @@
 	2) drawAll()
 	
 */
+
+var dcount=0;
 
 // global variables
 var CONTEXT="CONTEXT";
@@ -222,10 +233,12 @@ var WIDTH_WHITESTROKE ="5px";
 
 var SHOW_METRICS = false;
 
-var SHOW_METRICS_BASELINE = false;
-var SHOW_METRICS_FORECAST1 = false;
-var SHOW_METRICS_FORECAST2 = false;
-var SHOW_METRICS_GOAL = false;
+var SHOW_METRICS_BASELINE;
+var SHOW_METRICS_FORECAST1;
+var SHOW_METRICS_FORECAST2;
+var SHOW_METRICS_GOAL;
+var SHOW_METRICS_CORPORATE;
+var SHOW_METRICS_NGR;
 
 
 // additional buttons state
@@ -243,32 +256,26 @@ var ITEM_ISOLATION_MODE = false;
 var back;
 
 function setMargin(){
-	var _offsetXRight = 20;
-	var _offsetXLeft = 20;
+	var _marginXRight = 20;
+	var _marginXLeft = 20;
 	
-	/*
-	if (SHOW_METRICS){
-		 _offsetXRight = 420;
-		 _offsetXLeft = 100;
-	}		
-	*/
-	if (SHOW_METRICS_BASELINE){
-		 _offsetXLeft += 100;
-	}		
-	if (SHOW_METRICS_FORECAST1){
-		 _offsetXRight += 150;
-	}		
-	if (SHOW_METRICS_FORECAST2){
-		 _offsetXRight += 150;
-	}		
-	if (SHOW_METRICS_GOAL && SHOW_METRICS_FORECAST2){
-		 _offsetXRight += 120;
-	}		
+	var _offsetXLeft=0;
+	var _offsetXRight=0;
+	var _offsetYTop =0;
 	
+	var _offsetXLeftBaseline = 100;
+	var _offsetXLeftForecast1 = 150;
+	var _offsetXLeftForecast2 =150;
+	var _offsetXLeftGoal = 120;
+	var _offsetYTopCorporate =150;
 	
-	margin = {top: 250, right: _offsetXRight+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: _offsetXLeft+150};
+	_offsetXLeft = _marginXLeft+ (SHOW_METRICS_BASELINE*_offsetXLeftBaseline);
+	_offsetXRight= _marginXRight + (SHOW_METRICS_FORECAST1*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2*_offsetXLeftForecast2)+(SHOW_METRICS_GOAL*_offsetXLeftGoal);
+	_offsetYTop = (SHOW_METRICS_CORPORATE*_offsetYTopCorporate);
 	
+	margin = {top: 100+_offsetYTop, right: _offsetXRight+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: _offsetXLeft+150};
 }
+
 /**
 *
 */
@@ -296,21 +303,6 @@ function init(){
 		.attr("id","kanban")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-/*
-	drag = d3.behavior.drag()
-	.on("drag", function(d,i) {
-		d.x += d3.event.dx
-		d.y += d3.event.dy
-		d3.select(this).attr("transform", function(d,i){
-			return "translate(" + [ d.x,d.y ] + ")"
-		})
-	})	
-	.on("dragend",function(d,i){
-		console.log("dragend event: x="+d.x+", y="+d.y);
-		console.log("context: this= "+this);
-	});
-*/
-
 	drag_x = d3.behavior.drag()
 	.on("drag", function(d,i) {
 		d.x += d3.event.dx
@@ -320,10 +312,6 @@ function init(){
 		})
 	});
 }
-
-
-
-
 
 /** generic line draw helper method
  * @markers array ["start","end"]
@@ -354,7 +342,6 @@ function drawGuides(){
 	LANE_LABELBOX_RIGHT_START = x(KANBAN_END)+TARGETS_COL_WIDTH;
 
 	var gGuides= svg.append("g").attr("id","guides");
-	
 	
 	// horizontal top
 	_drawLine(gGuides,x(KANBAN_START)-margin.left,0-margin.top,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0-margin.top,"rasterLine");
@@ -468,21 +455,6 @@ function setKanbanDefaultDates(){
 	KANBAN_END = KANBAN_END_DEFAULT;
 }
 
-function showAllMetrics(){
-	SHOW_METRICS_BASELINE = true;
-	SHOW_METRICS_FORECAST1 = true;
-	SHOW_METRICS_FORECAST2 = true;
-	SHOW_METRICS_GOAL = true;
-}
-
-function hideAllMetrics(){
-	SHOW_METRICS_BASELINE = false;
-	SHOW_METRICS_FORECAST1 = false;
-	SHOW_METRICS_FORECAST2 = false;
-	SHOW_METRICS_GOAL = false;
-
-}
-
 
 function renderB2CGaming() {
 	hideWhiteboard();
@@ -493,8 +465,8 @@ function renderB2CGaming() {
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	
 	setKanbanDefaultDates();
-//	SHOW_METRICS=true;
-	showAllMetrics();
+	
+	enableAllMetrics();
 	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -504,6 +476,9 @@ function renderB2CGaming() {
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
 					initiativeData=initiatives;
+					// do not show sensitive data
+					safeMetrics();
+					
 					drawAll();
 					drawCustomPostits();
 					initHandlers();
@@ -517,7 +492,7 @@ function renderHistory() {
 	WIDTH=1500;
 	ITEM_SCALE=0.8;
 	//SHOW_METRICS=false;
-	hideAllMetrics();
+	disableAllMetrics();
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	KANBAN_START=new Date("2012-01-01");
 	KANBAN_END=new Date("2014-02-30");
@@ -572,13 +547,11 @@ function renderWhiteboard() {
 						
 					}
 					
-					
 //					drawAll();
 //					drawCustomPostits();
 					initHandlers();
 					
 				});
-
 }
 
 
@@ -589,7 +562,7 @@ function renderBwin(){
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	//SHOW_METRICS=true;
-	showAllMetrics();
+	enableAllMetrics();
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.3;
@@ -614,7 +587,7 @@ function renderBwinSecondLevel(){
 
 	setKanbanDefaultDates();
 	//SHOW_METRICS=false;
-	hideAllMetrics();
+	disableAllMetrics();
 	
 	ITEM_SCALE=0.5;
 	ITEM_FONTSCALE=0.75;
@@ -643,7 +616,7 @@ function renderEntIT(){
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	//SHOW_METRICS=false;
-	hideAllMetrics();
+	disableAllMetrics();
 	
 	setKanbanDefaultDates();
 	
@@ -677,7 +650,7 @@ function renderHolding(){
 	
 	setKanbanDefaultDates();
 	//SHOW_METRICS=true;
-	showAllMetrics();
+	enableAllMetrics();
 	ITEM_SCALE=0.6;
 	ITEMDATA_NEST= ["bm","theme","lane","sublane"];
 	ITEMDATA_FILTER = null;
@@ -697,7 +670,7 @@ function renderShared(){
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	//SHOW_METRICS=true;
-	showAllMetrics()
+	enableAllMetrics()
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.5;
@@ -716,11 +689,11 @@ function renderShared(){
 
 function renderNewBiz(){
 	hideWhiteboard();
-	HEIGHT=500;
+	HEIGHT=800;
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	//SHOW_METRICS=false;
-	hideAllMetrics();
+	disableAllMetrics();
 	
 	setKanbanDefaultDates();
 	
@@ -743,7 +716,7 @@ function renderTechdebt(){
 	WIDTH=1500;
 	LANE_LABELBOX_RIGHT_WIDTH =100;
 	//SHOW_METRICS=true;
-	showAllMetrics();
+	enableAllMetrics();
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=1.5;
@@ -784,37 +757,153 @@ function drawInitiatives(){
 	
 }
 
-function hideMetrics(which){
+function enableAllMetrics(){
+	SHOW_METRICS_BASELINE = true;
+	SHOW_METRICS_FORECAST1 = true;
+	SHOW_METRICS_FORECAST2 = true;
+	SHOW_METRICS_GOAL = true;
+	SHOW_METRICS_CORPORATE = true;
+	setMargin();
+	//d3.selectAll("#metrics_baseline,#metrics_forecast1,#metrics_forecast2").style("visibility","hidden");
 	
-	if (which){
-		for (var i in which){
-			if (which[i].name=="baseline" && which[i].hide==true){
-				SHOW_METRICS_BASELINE=false;
-				WIDTH-=100;
-			}
-			if (which[i].name=="forecast1" && which[i].hide==true){
-				SHOW_METRICS_FORECAST1=false;
-				WIDTH-=150;
-			}
-			if (which[i].name=="forecast2" && which[i].hide==true){
-				SHOW_METRICS_FORECAST2=false;
-				WIDTH-=150;
-			}
-			if (which[i].name=="goal" && which[i].hide==true){
-				SHOW_METRICS_GOAL=false;
-				WIDTH-=120;
-			}
-		}
-		drawAll();
-	}
+}
+
+function disableAllMetrics(){
+	SHOW_METRICS_BASELINE = false;
+	SHOW_METRICS_FORECAST1 = false;
+	SHOW_METRICS_FORECAST2 = false;
+	SHOW_METRICS_GOAL = false;
+	SHOW_METRICS_CORPORATE = false;
+	setMargin();
+	//d3.selectAll("#metrics_baseline,#metrics_forecast1,#metrics_forecast2").style("visibility","hidden");
+
 	
 }
 
 function safeMetrics(){
-	hideMetrics([{name:"goal",hide:true}])
-	d3.selectAll("[id*=NGR]").style("visibility","hidden")
+	hideNGR();
+	hideMetrics([{"name":"goal","hide":true}]);
 	
 }
+
+function fullMetrics(){
+	if (!SHOW_METRICS_NGR){
+		enableAllMetrics();
+		SHOW_METRICS_NGR= true;
+		drawAll();
+	}	
+	else{
+		hideNGR();
+		drawAll();
+	}
+}
+
+function hideNGR(){
+	d3.selectAll("[id*=NGR]").style("visibility","hidden")
+	SHOW_METRICS_NGR=false;
+}
+function showNGR(){
+	d3.selectAll("[id*=NGR]").style("visibility","visible")
+	SHOW_METRICS_NGR=true;
+}
+
+function hideGoalRisk(){
+	d3.selectAll("#metrics_goal,#metrics_risk").transition().style("visibility","hidden");
+	SHOW_METRICS_GOAL=false;
+}
+
+function showGoalRisk(){
+	d3.selectAll("#metrics_goal,#metrics_risk").transition().style("visibility","visible");
+	SHOW_METRICS_GOAL=true;
+}
+
+
+
+function hideCorpMetrics(){
+	d3.selectAll("[id*=corp_metrics]").style("visibility","hidden")
+	d3.selectAll("[id*=metric_date]").transition().duration(300).attr("transform","translate(0,150)")
+	hideVision();
+	SHOW_METRICS_CORPORATE=false;
+ }
+ 
+ function showCorpMetrics(){
+	d3.selectAll("[id*=corp_metrics]").transition().delay(300).style("visibility","visible")
+	d3.selectAll("[id*=metric_date]").transition().duration(300).attr("transform","translate(0,0)")
+	showVision();
+	SHOW_METRICS_CORPORATE=true;
+}	 
+
+function showVision(){
+	d3.select("#vision").style("visibility","visible"); 
+}
+
+function hideVision(){
+	d3.select("#vision").style("visibility","hidden"); 
+}
+
+
+
+function filterMetrics(){
+	if (SHOW_METRICS_BASELINE) d3.select("#metrics_baseline").transition().style("visibility","visible");
+	else d3.select("#metrics_baseline").transition().style("visibility","hidden");
+	
+
+	if (SHOW_METRICS_FORECAST2) d3.selectAll("#metrics_forecast2").transition().style("visibility","visible");
+	else d3.selectAll("#metrics_forecast2").style("visibility","hidden");
+
+	if (SHOW_METRICS_FORECAST1) {d3.select("#metrics_forecast1").transition().delay(300).style("visibility","visible");d3.select("#metrics_forecast2").transition().duration(300).attr("transform","translate(0,0)");}
+	else {
+		d3.select("#metrics_forecast1").style("visibility","hidden");
+		d3.select("#metrics_forecast2").attr("transform","translate(-150,0)");
+		}
+	
+	if (SHOW_METRICS_GOAL) showGoalRisk();
+	else hideGoalRisk();
+	
+	if (SHOW_METRICS_NGR) showNGR();
+	else hideNGR();
+
+
+	if (SHOW_METRICS_CORPORATE) showCorpMetrics();
+	else hideCorpMetrics();
+	
+}
+
+function hideMetrics(which){
+	
+	if (which){
+			for (var i in which){
+			if (which[i].name=="baseline" && which[i].hide==true && SHOW_METRICS_BASELINE==true){
+				SHOW_METRICS_BASELINE=false;
+			}
+			else if (which[i].name=="baseline" && which[i].hide==false && SHOW_METRICS_BASELINE==false){
+				SHOW_METRICS_BASELINE=true;
+			}
+			
+			if (which[i].name=="forecast1" && which[i].hide==true &&SHOW_METRICS_FORECAST1==true){
+				SHOW_METRICS_FORECAST1=false;
+			}
+			else if (which[i].name=="forecast1" && which[i].hide==false &&SHOW_METRICS_FORECAST1==false){
+				SHOW_METRICS_FORECAST1=true;
+			}
+			
+			if (which[i].name=="forecast2" && which[i].hide==true && SHOW_METRICS_FORECAST2==true){
+				SHOW_METRICS_FORECAST2=false;
+			}
+			else if (which[i].name=="forecast2" && which[i].hide==false && SHOW_METRICS_FORECAST2==false){
+				SHOW_METRICS_FORECAST2=true;
+			}
+			if (which[i].name=="goal" && which[i].hide==true && SHOW_METRICS_GOAL==true){
+				hideGoalRisk();
+			}
+			else if (which[i].name=="goal" && which[i].hide==false && SHOW_METRICS_GOAL==false){
+				showGoalRisk();
+			}
+		
+		}
+	}
+}
+
 
 
 function drawAll(){
@@ -833,6 +922,7 @@ function drawAll(){
 	
 	d3.select("#whiteboard").style("visibility","hidden");
 	
+	dcount++;
 }
 
 
@@ -1484,7 +1574,8 @@ function drawQueues(){
 */
 function drawItems(){
 	
-	d3.selectAll("#initiatives,#dependencies,#sizings").remove();
+	d3.selectAll("#initiatives,#dependencies,#sizings,#tooltip").remove();
+	
 
 // test drag item start
 	var baseY;
@@ -1565,7 +1656,7 @@ function drawItems(){
 		return _filterStart && _filterEnd;
 	});
 	
-	var groups = gItems.selectAll("initiatives")
+	var groups = gItems.selectAll("items")
 	// filter data if ITEMDATA_FILTER is set
 	.data(filteredInitiativeData)
 	.enter()
@@ -2157,12 +2248,12 @@ function drawMetrics(){
 		var _primTextYOffset=18; 
 	
 // -------------------------- baseline -----------------------------------------------
-	if (SHOW_METRICS_BASELINE){
+	//if (SHOW_METRICS_BASELINE){
 		var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
 		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
-	}
+	//}
 // -------------------------- target 1-year (2014) -------------------------------
-	if (SHOW_METRICS_FORECAST1){
+	//if (SHOW_METRICS_FORECAST1){
 		var _1Offset = 70;
 
 		var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
@@ -2177,9 +2268,9 @@ function drawMetrics(){
 
 		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight-40);
 		
-	}		
+	//}		
 // -------------------------- target 2-years (2015)-------------------------------
-	if (SHOW_METRICS_FORECAST2){
+	//if (SHOW_METRICS_FORECAST2){
 		var _2Offset = 70;
 		
 		//var _goalXOffset = _primaryXOffsetRight+30;
@@ -2193,7 +2284,7 @@ function drawMetrics(){
 	
 
 // ------------------------------ potentials ------------------------------------------------
-	if (SHOW_METRICS_GOAL){
+	//if (SHOW_METRICS_GOAL){
 		
 		_primaryXOffsetRight-=120;
 
@@ -2233,10 +2324,15 @@ function drawMetrics(){
 
 		_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal+(30*METRICS_SCALE),10,"left",METRICS_SCALE);
 		// delta end
-	}
-}
+	//}
+//}
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
+	
+	
+	// based on SHOW_ flags hide or show certain metric columns / rows
+	filterMetrics();
+	
 	
 	//}	
 
@@ -4054,4 +4150,16 @@ var PACKAGE_VERSION="20140207_1428";
 var PACKAGE_VERSION="20140207_1803";
 	
 var PACKAGE_VERSION="20140207_1901";
+	
+var PACKAGE_VERSION="20140218_1509";
+	var PACKAGE_VERSION="20140218_1512";
+	var PACKAGE_VERSION="20140218_1528";
+	var PACKAGE_VERSION="20140218_1540";
+	
+var PACKAGE_VERSION="20140218_1713";
+	var PACKAGE_VERSION="20140218_1727";
+	
+var PACKAGE_VERSION="20140218_1806";
+	
+var PACKAGE_VERSION="20140218_1842";
 	
