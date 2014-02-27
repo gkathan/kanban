@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <title>SlickGrid example 3: Editing</title>
+  <link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="js/SlickGrid-master/examples.css" type="text/css"/>
+  <style>
+    .cell-title {
+      font-weight: bold;
+    }
+
+    .cell-effort-driven {
+      text-align: center;
+    }
+    
+      .changed {
+      background: orange;
+    }
+    
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div style="width:1600px;">
+    <div id="myGrid" style="width:100%;height:500px;"></div>
+  </div>
+
+ </div>
+
+
+<script src="js/SlickGrid-master/lib/jquery-1.7.min.js"></script>
+<script src="js/SlickGrid-master/lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
+
+<script src="js/SlickGrid-master/slick.core.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellrangedecorator.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellrangeselector.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellselectionmodel.js"></script>
+<script src="js/SlickGrid-master/slick.formatters.js"></script>
+<script src="js/SlickGrid-master/slick.editors.js"></script>
+<script src="js/SlickGrid-master/slick.grid.js"></script>
+
+<script>
+  function requiredFieldValidator(value) {
+    if (value == null || value == undefined || !value.length) {
+      return {valid: false, msg: "This is a required field"};
+    } else {
+      return {valid: true, msg: null};
+    }
+  }
+
+var initiativeData;
+	$.when($.getJSON("/data/data.php?type=initiatives"),
+				$.getJSON("/data/data.php?type=metrics"))
+				
+			.done(function(initiatives,metrics){
+					if (initiatives[1]=="success") initiativeData=initiatives[0];
+					else throw new Exception("error loading initiatives");
+					if (metrics[1]=="success") metricData=metrics[0];
+					else throw new Exception("error loading metrics");
+					
+					renderGrid();
+				});
+
+				
+  var grid;
+	
+function renderGrid(){
+
+
+var columns = [
+
+        { id:"id", name: "id", field: "id",sortable:true },
+        { id:"ExtId", name: "v1 id", field: "ExtId",sortable:true },
+        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"},
+        { id: "name2", name: "name2",  field: "name2",width:150 },
+        { id: "Swag", name: "Swag", field: "Swag",width:50,editor:Slick.Editors.Integer },
+		{ id: "planDate", name: "planDate", field: "planDate", editor: Slick.Editors.Date,sortable:true },
+		{ id: "actualDate", name: "actualDate", field: "actualDate", editor: Slick.Editors.Date,sortable:true },
+	    { id: "state", name: "state",  field: "state" },
+        { id: "health", name: "health",  field: "health" },
+		{ id: "DoD", name: "DoD", field: "DoD", editor: Slick.Editors.LongText},
+        { id: "isCorporate", name: "isCorporate", field: "isCorporate",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox},
+        { id: "bm", name: "businessmodel",  field: "bm" },
+        { id: "theme", name: "theme",  field: "theme" },
+        { id: "lane", name: "lane",  field: "lane" },
+        { id: "sublane", name: "sublane",  field: "sublane" },
+        { id: "productOwner", name: "productOwner",  field: "productOwner",width:150 },
+        { id: "type", name: "type",  field: "Type",editor: Slick.Editors.SelectOption,options: { 1: 'item', 2: 'innovation', 3: 'target' } }
+
+  ];
+
+  var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    cellHighlightCssClass: "changed",
+    autoEdit: true,
+	dataItemColumnValueExtractor: function(item, columnDef) {
+		if(columnDef.editor == Slick.Editors.SelectOption){
+			return eval(columnDef.options)[item[columnDef.field]];
+		}else{
+			return item[columnDef.field];
+		}    
+	}
+}
+
+ 
+    grid = new Slick.Grid("#myGrid", initiativeData, columns, options);
+    
+     grid.setSelectionModel(new Slick.CellSelectionModel());
+
+    grid.onAddNewRow.subscribe(function (e, args) {
+      var item = args.item;
+      grid.invalidateRow(data.length);
+      data.push(item);
+      grid.updateRowCount();
+      grid.render();
+    });
+}
+ </script>
+</body>
+</html>
