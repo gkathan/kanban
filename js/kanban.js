@@ -77,8 +77,10 @@ var VISION_TEXT = "\"let the world play for real\"";
 var VISION_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"";
 
 
-//the data as it is read on init
+//the data as it is read on init = flat JSON table
 var initiativeData;
+var targetData;
+
 // depending on context we filter this data for every view
 var filteredInitiativeData;
 
@@ -90,9 +92,13 @@ var releaseData;
 var laneTextData;
 var pillarData;
 
+
 var postitData;
 
+// hierarchical data enriched with y-coords based on lanestructure
 var itemData;
+var targetTree;
+
 
 //top root parent of nested item hierarchy
 var NEST_ROOT="root";
@@ -255,6 +261,9 @@ var ITEM_ISOLATION_MODE = false;
 //flippant test
 var back;
 
+var tooltip;
+
+
 function setMargin(){
 	var _marginXRight = 20;
 	var _marginXLeft = 20;
@@ -302,6 +311,11 @@ function init(){
 		.append("g")
 		.attr("id","kanban")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	tooltip = d3.select("body")
+		.append("div")
+		.attr("id","tooltip");
+	
 
 	drag_x = d3.behavior.drag()
 	.on("drag", function(d,i) {
@@ -418,7 +432,7 @@ function drawGuides(){
 /** main etry point
  * 
  */
-function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,postitTable){
+function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,postitTable,targetTable){
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
@@ -427,9 +441,10 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 				$.getJSON("/data/data.php?type="+metricsTable),
 				$.getJSON("/data/data.php?type="+releaseTable),
 				$.getJSON("/data/data.php?type="+postitTable),
+				$.getJSON("/data/data.php?type="+targetTable),
 				$.getJSON("/data/laneTextTargetPillars.json"))
 				
-			.done(function(lanetext,initiatives,metrics,releases,postits,pillars){
+			.done(function(lanetext,initiatives,metrics,releases,postits,targets,pillars){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -440,6 +455,8 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 					else throw new Exception("error loading releases");
 					if (postits[1]=="success") postitData=postits[0];
 					else throw new Exception("error loading postits");
+					if (targets[1]=="success") targetData=targets[0];
+					else throw new Exception("error loading targets");
 					if (pillars[1]=="success") pillarData=pillars[0];
 					else throw new Exception("error loading pillars");
 					
@@ -447,6 +464,9 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 					//renderHolding();
 				});
 	}); // end xml load anonymous 
+
+
+
 }
 
 
@@ -455,6 +475,8 @@ function setKanbanDefaultDates(){
 	KANBAN_END = KANBAN_END_DEFAULT;
 }
 
+
+//var $grid;
 
 function renderB2CGaming() {
 	hideWhiteboard();
@@ -484,6 +506,32 @@ function renderB2CGaming() {
 					initHandlers();
 					
 				});
+
+ 
+	 var grid;
+  var columns = [
+
+        { id:"id", name: "id", field: "id" },
+        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text },
+        { id: "name2", name: "name2",  field: "name2" },
+        { id: "Swag", name: "Swag", field: "Swag" },
+		{ id: "planDate", name: "planDate", field: "planDate", editor: Slick.Editors.Date },
+		{ id: "actualDate", name: "actualDate", field: "actualDate", editor: Slick.Editors.Date },
+        { id: "lane", name: "lane",  field: "lane" }
+
+  ];
+
+  var options = {
+	editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    autoEdit: false
+     };
+
+  
+    //grid = new Slick.Grid("#grid_items", initiativeData, columns, options);
+  
 }
 
 function renderHistory() {
@@ -911,6 +959,7 @@ function drawAll(){
 	createLaneHierarchy();
 	
 	drawInitiatives();
+	drawTargets();
 
 	drawMetrics();
 	drawVision();
@@ -1105,13 +1154,14 @@ function drawLanes(){
 		var _y_offset = 4;
 		var _laneOpacity;
 		var _metrics;
+
 	
 		//left box
 		_metrics = _drawLaneBox(lanesLeft,-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
 
-		var _yTextOffset;
-		if (_metrics) _yTextOffset=_metrics.height+15;
-		else _yTextOffset=15;
+		var _yTextOffset = 10;
+		if (_metrics) _yTextOffset+=_metrics.height;
+		
 
 		//baseline box text
 		_drawLaneText(lanesLeft,_lane,"baseline",_yTextOffset);
@@ -1570,14 +1620,8 @@ function drawQueues(){
 // ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------
 
-/** renders the items
-*/
-function drawItems(){
-	
-	d3.selectAll("#initiatives,#dependencies,#sizings,#tooltip").remove();
-	
-
-// test drag item start
+function _registerDragDrop(){
+	// test drag item start
 	var baseY;
 	var drag_item = d3.behavior.drag()
 		.on("dragstart", function(d,i) {
@@ -1589,7 +1633,6 @@ function drawItems(){
 			d3.select(this).attr("transform", function(d,i){
 				return "translate(" + [ d.x,d.y ] + ")"
 			})
-			
 		})	
 
 		.on("drag", function(d,i) {
@@ -1627,11 +1670,124 @@ function drawItems(){
 			d3.select(this).style("opacity",1);
 		
 		});
+	return drag_item;	
 	//test end
+}
 
-	var tooltip = d3.select("body")
-		.append("div")
-		.attr("class","d3tooltip").attr("id","tooltip");
+
+/** renders the targets
+*/
+function drawTargets(){
+	d3.selectAll("#targets,#targetDependencies").remove();
+	
+	var drag_item = _registerDragDrop();
+	tooltip.attr("class","targetTooltip");
+	
+	//initiatives groups
+	var gTargets = svg.append("g").attr("id","targets");
+	
+	svg.append("g").attr("id","targetDependencies");
+	
+	//visualize targets hack ;-) just highlight with a white box for now...
+	
+	gTargets.append("rect")
+		.attr("x",x(new Date("2014-12-15")))
+		.attr("width",65)
+		.attr("y",0)
+		.attr("height",y(100))
+		.style("fill","white")
+		.style("opacity",0.7);
+	
+	var groups = gTargets.selectAll("targets")
+	.data(targetData)
+	.enter()
+	// **************** grouped item + svg block + label text
+	.append("g")
+	.attr("id",function(d){return "target_"+d.id})
+	.each(function(d){
+		var _size = d.size*ITEM_SCALE;
+		var _itemXTarget = x(new Date(d.targetDate));
+		
+		var _yOffset = getSublaneCenterOffset(getFQName(d));
+		var _sublane = getSublaneByNameNEW(getFQName(d));
+		var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
+		var _itemY = y(_sublane.yt1-_yOffset)+getInt(d.sublaneOffset);
+		
+		d3.select(this)
+			.style("opacity",d.accuracy/10);
+		
+		
+		// ------------  targeticon & names & postits --------------
+		// if isCorporate flag is not set use "tactic" icon 
+		var _iconRef=d.Type;
+		d3.select(this)
+			.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
+			.attr("transform","translate("+(_itemXTarget-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
+		
+		_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
+		
+		//_drawPostit(d3.select(this),d);
+
+		// transparent circle on top for the event listener
+		d3.select(this)
+			.append("circle")
+				.attr("id","event_circle_"+d.id)
+				.attr("cx",_itemXTarget)
+				.attr("cy",_itemY)
+				.attr("r",_size)
+				.style("opacity",0)
+				.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
+					
+				.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+				.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
+				.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+
+		// ------------  dependencies --------------
+		// this can maybe be extracted into function...
+
+		if (!isNaN(parseInt(d.initiatives))){
+			console.log("============================== "+d.id+" depends on: "+d.dependsOn); 
+			
+			var _dependingItems = d.initiatives.split(",");
+			console.log("target depending items: "+_dependingItems);
+
+			// by default visibility is hidden
+			var dep = d3.select("#targetDependencies")
+					.append("g")
+					.attr("id","depID_"+d.id)
+					.style("visibility","hidden");
+			
+			for (var j=0;j<_dependingItems.length;j++) {	
+				var _d=_dependingItems[j];
+				//lookup the concrete item 
+				var _dependingItem = getItemByID(initiativeData,_d);
+				if (_dependingItem){
+					var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
+					//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
+					var _fromX = x(new Date(_dependingItem.actualDate))	
+					var _fromY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
+					
+					// put lines in one layer to turn on off globally
+					_drawLine(dep,_fromX,_fromY,_itemXTarget-_size-2,_itemY,"targetDependLine",[{"end":"arrow_red"}]);
+				}
+			} // end for loop
+			//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
+		} // end if dependcies
+		
+		// drag test	
+		d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
+	}) //end each()
+} //end drawTargets
+
+/** renders the items
+*/
+function drawItems(){
+	
+	d3.selectAll("#initiatives,#dependencies,#sizings").remove();
+	
+	var drag_item = _registerDragDrop();
+
+	tooltip.attr("class","itemTooltip");
 	
 	svg.append("g").attr("id","dependencies");
 	var gSizings = svg.append("g")
@@ -1649,9 +1805,10 @@ function drawItems(){
 	filteredInitiativeData = initiativeData.filter(function(d){
 		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
 		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
+		var _filterTargets = (d.Type !="target");
 		
 		if (ITEMDATA_FILTER){
-			return _filterStart && _filterEnd && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+			return _filterStart && _filterEnd && _filterTargets && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 		}
 		return _filterStart && _filterEnd;
 	});
@@ -1845,10 +2002,6 @@ function drawItems(){
  */
 function _drawPostit(svg,d){
 	
-	/*var tooltip = d3.select("body")
-		.append("div")
-		.attr("class","d3tooltip");
-*/
 	var gPostit= svg.append("g")
 	.attr("id",function(d){return "postit_"+d.id})
 	
@@ -1986,8 +2139,13 @@ function _drawStartDateIndicator(svg,x1,x2,y,size){
  */
 function onTooltipOverHandler(d,tooltip){
 	// and fadeout rest
+	
 	var highlight ="#item_";
-	console.log("****in circle: mouseOver: "+d.id);
+	if (d.Type=="target") highlight="#target_";
+	
+	//bugfix 
+	tooltip.attr("class",d.Type+"Tooltip");
+	
 	d3.select("#item_circle_"+d.id)
 	.transition().delay(0).duration(500)
 	.attr("r", d.size*ITEM_SCALE*2);
@@ -1999,9 +2157,7 @@ function onTooltipOverHandler(d,tooltip){
 	.attr("r", d.size*ITEM_SCALE*2)
 	.style("cursor","pointer");
 
-
-
-	d3.selectAll("#items").selectAll("g")
+	d3.selectAll("#items,#targets").selectAll("g")
 		.transition()            
 		.delay(0)            
 		.duration(500)
@@ -2016,6 +2172,55 @@ function onTooltipOverHandler(d,tooltip){
 		
 	console.log("highlight"+highlight+d.id);
 		
+	//render HTML based on Type	
+	if (d.Type=="target")
+		tooltip.html(_targetTooltipHTML(d));
+	else
+		tooltip.html(_itemTooltipHTML(d));
+	
+	tooltip.style("visibility", "visible");
+	tooltip.style("top", (d3.event.pageY-40)+"px").style("left",(d3.event.pageX+25)+"px");
+
+	d3.select("#depID_"+d.id)
+		.transition()            
+		.delay(200)            
+		.duration(500)
+		.style("visibility","visible")
+		.style("opacity",1);
+	
+	var _dependingItems;
+	if (d.dependsOn){
+		// highlight also depending items
+		_dependingItems = d.dependsOn.split(",");
+	}
+	// in case of targets
+	if (d.initiatives){
+		// highlight also depending items
+		_dependingItems = d.initiatives.split(",");
+	}
+	
+	if (_dependingItems){
+
+		for (var j=0;j<_dependingItems.length;j++) {	
+			var _di = _dependingItems[j];
+			
+			var _item = getItemByID(filteredInitiativeData,_di);
+			
+			if (_item){
+				var dep=d3.select("#item_"+_di)
+					.transition()            
+					.delay(200)            
+					.duration(500)
+					.style("opacity",1);
+				
+			}
+		}// end check depending items
+	}
+}
+
+/** returns HTML for item tooltip content
+ */
+function _itemTooltipHTML(d){
 	//[TODO] fix the indicator dynmic color bar  and overall table mess here ;-)	
 	var _indicator;
 	if (d.actualDate>d.planDate &&d.state!="done") _indicator="red";
@@ -2027,63 +2232,70 @@ function onTooltipOverHandler(d,tooltip){
 	else if (d.health=="amber") _health ="gold";
 	else if (d.health=="red") _health ="red";
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:5px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:5px;text-align:right\"> <a href=\"http://v1.bwinparty.corp?id="+d.ExtId+"\" target=\"new\">"+d.ExtId+"</a></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td</tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td  class=\"small\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr><tr><td class=\"small\">owner:</td><td><b>"+d.productOwner+"</b></td></tr><tr><td class=\"small\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr><tr><td class=\"small\">started:</td><td><b>"+d.startDate+"</b></td></tr><tr><td class=\"small\">planned:</td><td><b>"+d.planDate+"</b></td><tr><td class=\"small\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	var _v1Link = "http://v1.bwinparty.corp/V1-Production/Epic.mvc/Summary?oidToken=Epic%3A";
+	
+	
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:4px;text-align:right\">";
+	if (d.ExtId)
+		_htmlBase+=" <a href=\""+_v1Link+d.ExtId+"\" target=\"new\">[v1: "+d.ExtId+"]</a>";
+	_htmlBase+="</td></tr>";
+	_htmlBase+="<tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td></tr>"+(d.name2 ? "<tr><td class=\"tiny\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"");
+	_htmlBase+="<tr><td class=\"tiny\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">owner:</td><td><b>"+d.productOwner+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">started:</td><td><b>"+d.startDate+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">planned:</td><td><b>"+d.planDate+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
 	}
 	else if (d.actualDate>d.planDate &&d.state=="done"){
-		_htmlBase=_htmlBase+ "<tr><td class=\"small\">done:</td><td><b>"+d.actualDate+"</b> </td></tr><tr><td class=\"small\">delay: </td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
+		_htmlBase=_htmlBase+ "<tr><td class=\"tiny\">done:</td><td><b>"+d.actualDate+"</b> </td></tr><tr><td class=\"small\">delay: </td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
 	}
 	else if (d.state=="done"){
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">done:</td><td><b>"+d.actualDate+"</b> </td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">done:</td><td><b>"+d.actualDate+"</b> </td></tr>";
 	}
 	else if (d.state=="todo"){
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">DoR:</td><td class=\"small\" style=\"text-align:left\">"+d.DoR+"</td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">DoR:</td><td class=\"small\" style=\"text-align:left\">"+d.DoR+"</td></tr>";
 		
 	}
 	if (d.health!=""){
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">health:</td><td><div class=\"health\" style=\"background-color:"+_health+"\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">health:</td><td><div class=\"health\" style=\"background-color:"+_health+"\">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></td></tr>";
 	}
 	if (d.healthComment!=""){
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">comment:</td><td class=\"small\" style=\"text-align:left\">"+d.healthComment+" </td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">comment:</td><td class=\"small\" style=\"text-align:left\">"+d.healthComment+" </td></tr>";
 	}
 	if (d.programLead!=""){
-		_htmlBase=_htmlBase+"<tr><td class=\"small\">lead:</td><td><b>"+d.programLead+"</b> </td></tr>";
+		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">lead:</td><td><b>"+d.programLead+"</b> </td></tr>";
 	}
-	_htmlBase=_htmlBase+"<tr><td class=\"small\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr>";
+	_htmlBase=_htmlBase+"<tr><td class=\"tiny\">DoD:</td><td class=\"small\" style=\"text-align:left\">"+d.DoD+"</td></tr>";
 	_htmlBase = _htmlBase+"<tr> <td colspan=\"2\"  style=\"text-align:right\"><a id=\"flip\" class=\"small\" style=\"text-align:right\" >[flip it]</a></td></table>";
-	tooltip.html(_htmlBase);
-	tooltip.style("visibility", "visible");
-	tooltip.style("top", (d3.event.pageY-40)+"px").style("left",(d3.event.pageX+25)+"px");
 
-	d3.select("#depID_"+d.id)
-		.transition()            
-		.delay(200)            
-		.duration(500)
-		.style("visibility","visible")
-		.style("opacity",1);
-
-	if (d.dependsOn){
-		// highlight also depending items
-		var _dependingItems = d.dependsOn.split(",");
-
-		for (var j=0;j<_dependingItems.length;j++) {	
-			var _di = _dependingItems[j];
-			var dep=d3.select("#item_"+_di)
-				.transition()            
-				.delay(200)            
-				.duration(500)
-				.style("opacity",1);
-			
-			dep.select("circle")
-				.transition()            
-				.delay(500)            
-				.duration(500)
-				.attr("r", getItemByID(filteredInitiativeData,_di).size*2*ITEM_SCALE);
-		}// end check depending items
-	}
+	return _htmlBase;
+	
 }
+
+/** returns HTML for item tooltip content
+ */
+function _targetTooltipHTML(d){
+	var _htmlBase ="<table><col width=\"35\"/><col width=\"160\"/><tr><td style=\"font-size:5px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:5px;text-align:right\"></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><b style=\"padding-left:4px;font-size:7px;color:red\">"+d.name +"</b></td></tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td class=\"tiny\">owner:</td><td><b>"+d.targetOwner+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">target date:</td><td><b>"+d.targetDate+"</b> </td></tr>";
+	
+	_htmlBase+="<tr><td class=\"tiny\">syndicate:</td><td class=\"small\" style=\"text-align:left\">"+d.syndicate+"</td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">scope:</td><td class=\"small\" style=\"text-align:left\">"+d.scope+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">commercial:</td><td class=\"small\" style=\"text-align:left\">"+d.commercialScope+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">non-scope:</td><td class=\"small\" style=\"text-align:left\">"+d.nonScope+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">remark:</td><td class=\"small\" style=\"text-align:left\">"+d.remark+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">risk:</td><td class=\"small\" style=\"text-align:left\">"+d.risk+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">metrics:</td><td class=\"small\" style=\"text-align:left\">"+d.metrics+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">prio:</td><td><b>"+d.ranking+"</b> </td></tr>";
+	
+	_htmlBase = _htmlBase+"<tr> <td colspan=\"2\"  style=\"text-align:right\"><a id=\"flip\" class=\"small\" style=\"text-align:right\" >[flip it]</a></td></table>";
+
+	return _htmlBase;
+}
+
 
 /**
  * handler for tooltip mouse move 
@@ -2099,9 +2311,9 @@ function onTooltipMoveHandler(tooltip){
 function onTooltipDoubleClickHandler(tooltip,svg,d){
 	console.log("doubleclick: "+d3.select(this)+" svg: "+svg);
 	if (!ITEM_ISOLATION_MODE){
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove",null);
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout",null);
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover",null);
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mousemove",null);
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mouseout",null);
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mouseover",null);
 	
 		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity", .5);
 		
@@ -2113,34 +2325,30 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		
 		d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
 
-	d3.select("#flip").on("click", function(){
-		var front = document.getElementById('tooltip');
-	    var back_content = "backside of the stuff...<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
-		console.log("...flip...");
-		// when the correct action happens, call flip!
-		back = flippant.flip(front, back_content);
-		
-		d3.select("#flip_close").on("click", function(){
-		back.close();
-	});
-	
-	});
-
-		//back.close()
+		d3.select("#flip").on("click", function(){
+				var front = document.getElementById('tooltip');
+				var back_content = "backside of the target...<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
+				console.log("...flip...");
+				// when the correct action happens, call flip!
+				back = flippant.flip(front, back_content);
+				
+				d3.select("#flip_close").on("click", function(){
+					back.close();
+				});
+			});
 	}
 	else {
 		if (back) back.close();
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
-		d3.selectAll("#items").selectAll("g").selectAll("circle").on("mouseover", function(d){onTooltipOverHandler(d,tooltip);})
+		
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mouseover", function(d){onTooltipOverHandler(d,tooltip);})
+		
 		console.log("...EXIT ITEM_ISOLATION mode...");
 		ITEM_ISOLATION_MODE=false;	
 		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity",1);
 		d3.select("#isolationtext").remove();
-		
-		
 	}
-	
 }
 
 
@@ -2151,7 +2359,8 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 function onTooltipOutHandler(d,tooltip){
 	tooltip.style("visibility", "hidden");
 	
-	var highlight="#item_";
+	var highlight ="#item_";
+	if (d.Type=="target") highlight="#target_";
 	
 	d3.select("#item_circle_"+d.id)
 		.transition().delay(0).duration(500)
@@ -2171,7 +2380,7 @@ function onTooltipOutHandler(d,tooltip){
 		.style("visibility","hidden");
 
 	//set all back to full visibility /accuracy
-	d3.selectAll("#initiatives").selectAll("g")
+	d3.selectAll("#items,#targets").selectAll("g")
 		.transition()            
 		.delay(100)            
 		.duration(500)
@@ -2190,12 +2399,18 @@ function onTooltipOutHandler(d,tooltip){
 
 		for (var j=0;j<_dependingItems.length;j++) {	
 			var _di = _dependingItems[j];
+			
+			var _item = getItemByID(filteredInitiativeData,_di);
+		
+			if (_item){
+			
 			var dep=d3.select("#item_"+_di)
-			dep.select("circle")
+			dep.selectAll("circle")
 				.transition()            
 				.delay(0)            
 				.duration(500)
-				.attr("r", getItemByID(filteredInitiativeData,_di).size*ITEM_SCALE);
+				.attr("r", _item.size*ITEM_SCALE);
+			}
 		} // end de- check depending items
 	}
 }
@@ -3266,7 +3481,23 @@ function createLaneHierarchy(){
 	
 	createRelativeCoordinates(itemData,0,ITEMDATA_DEPTH_LEVEL);
 	
-	transposeCoordinates();
+	transposeCoordinates(itemData);
+
+
+	// and the same for the targets....
+	
+	targetTree = _.nest(targetData.filter(function(d){
+					if (ITEMDATA_FILTER){
+						return eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"")
+					}
+					else{
+						return true;
+					}}),ITEMDATA_NEST);
+	
+	createRelativeCoordinates(targetTree,0,ITEMDATA_DEPTH_LEVEL);
+	
+	transposeCoordinates(targetTree);
+
 }
 
 
@@ -3438,11 +3669,11 @@ function checkDistributionOverride(override){
  * e.g. if we are in the root.topline lane (71%)
  * the 71% becomes the new 100% in this context
 */
-function transposeCoordinates(){
+function transposeCoordinates(data){
 	
 	for (count=1;count<=ITEMDATA_DEPTH_LEVEL;count++){
 		console.log("i: "+count);
-		createAbsoluteCoordinates(itemData,0,count,1);
+		createAbsoluteCoordinates(data,0,count,1);
 	}
 }
 
@@ -4162,4 +4393,24 @@ var PACKAGE_VERSION="20140218_1713";
 var PACKAGE_VERSION="20140218_1806";
 	
 var PACKAGE_VERSION="20140218_1842";
+	
+var PACKAGE_VERSION="20140220_1441";
+	
+var PACKAGE_VERSION="20140220_1525";
+	var PACKAGE_VERSION="20140221_1640";
+	
+var PACKAGE_VERSION="20140221_1709";
+	
+var PACKAGE_VERSION="20140222_0754";
+	
+var PACKAGE_VERSION="20140225_0911";
+	
+var PACKAGE_VERSION="20140226_1804";
+	
+var PACKAGE_VERSION="20140226_1833";
+	var PACKAGE_VERSION="20140226_1834";
+	var PACKAGE_VERSION="20140226_1835";
+	var PACKAGE_VERSION="20140226_1837";
+	var PACKAGE_VERSION="20140226_1838";
+	var PACKAGE_VERSION="20140226_1839";
 	
