@@ -10,6 +10,17 @@ a {
 cursor:pointer
 }
 
+
+
+ul
+{
+	padding-left:10px;
+}
+
+h1{
+	font-size:6px;
+	}
+
 .axis path,
 .axis line {
   fill: none;
@@ -153,10 +164,10 @@ cursor:pointer
 }
 
 .targetDependLine {
-	stroke: red;
+	stroke: #174D75;
 	stroke-width: 1;
 	opacity:0.5;
-	stroke-dasharray: 5,2;
+	stroke-dasharray: 2,1;
 }
 
 .releaseLine {
@@ -241,7 +252,7 @@ cursor:pointer
 	font-size:6px;
 	padding:2px;
 	background:white;
-	border:2px solid red;
+	border:2px solid #174D75;
 	border-radius:10px;
 	opacity:0.9;
 }	
@@ -252,7 +263,7 @@ cursor:pointer
   font-size:10px;
   width: 100%;
   line-height: 0;
-  color: red;
+  color: #174D75;
   content: "\25C0";
   position: absolute;
   text-align: left;
@@ -313,7 +324,7 @@ td         { border: 0px solid black;
 			 word-wrap:break-word;
 			 vertical-align:top;
 			 }
-td.small    { font-size: 6px;
+td.small    { font-size: 5px;
 			  font-weight:normal;
 			  text-align:right;
 			  vertical-align:top;
