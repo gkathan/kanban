@@ -233,6 +233,9 @@ var x,y,svg,whiteboard,drag,drag_x;
 var dataversions={};
 
 var COLOR_BPTY="#174D75";
+
+var COLOR_TARGET = COLOR_BPTY;
+
 // size of white space around boxes
 var WIDTH_WHITESTROKE ="5px";
 
@@ -1768,7 +1771,7 @@ function drawTargets(){
 					var _fromY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
 					
 					// put lines in one layer to turn on off globally
-					_drawLine(dep,_fromX,_fromY,_itemXTarget-_size-2,_itemY,"targetDependLine",[{"end":"arrow_red"}]);
+					_drawLine(dep,_fromX,_fromY,_itemXTarget-_size-2,_itemY,"targetDependLine",[{"end":"arrow_blue"}]);
 				}
 			} // end for loop
 			//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
@@ -2055,7 +2058,7 @@ function _drawPostit(svg,d){
 /**
  * helper methode
  */
-function _drawItemName(svg,d,x,y,scale){
+function _drawItemName(svg,d,x,y,scale,color){
 	// ------------  item names --------------
 	if (!scale) scale=1;
 	var size = d.size*ITEM_SCALE*scale;
@@ -2081,7 +2084,7 @@ function _drawItemName(svg,d,x,y,scale){
 	   //.style("letter-spacing",-.2)
 	   //google font
 	   .style("font-family","arial, sans-serif")
-	   .style("fill",function(d){if (d.Type=="target" || (d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";else if (d.state=="todo") return "#aaaaaa";  return"black";})
+	   .style("fill",function(d){if ((d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";else if (d.state=="todo") return "#aaaaaa"; else if (d.Type=="target") return COLOR_TARGET; return"black";})
 	   .attr("x",x)
 	   .attr("y",y)
 	   //.text(d.name);
@@ -2213,6 +2216,19 @@ function onTooltipOverHandler(d,tooltip){
 					.duration(500)
 					.style("opacity",1);
 				
+				/*
+				// and a blue circle around the element
+				
+				var _x = x(new Date(_item.actualDate));
+				var _y = get_metrics(dep).y;
+				svg.append("circle").attr("r",20)
+				.style("stroke",COLOR_BPTY)
+				.style("stroke-width","5px")
+				.style("fill","white")
+				.style("fill-opacity",0.1)
+				.style("stroke-opacity",0.75)
+				.attr("transform","translate ("+_x+","+_y+")");
+				*/
 			}
 		}// end check depending items
 	}
@@ -2279,16 +2295,16 @@ function _itemTooltipHTML(d){
 /** returns HTML for item tooltip content
  */
 function _targetTooltipHTML(d){
-	var _htmlBase ="<table><col width=\"35\"/><col width=\"160\"/><tr><td style=\"font-size:5px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:5px;text-align:right\"></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><b style=\"padding-left:4px;font-size:7px;color:red\">"+d.name +"</b></td></tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td class=\"tiny\">owner:</td><td><b>"+d.targetOwner+"</b></td></tr>";
+	var _htmlBase ="<table><col width=\"35\"/><col width=\"160\"/><tr><td style=\"font-size:5px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:5px;text-align:right\"></td></tr><tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><b style=\"padding-left:4px;font-size:7px;color:"+COLOR_TARGET+"\">"+d.name +"</b></td></tr>"+(d.name2 ? "<tr><td class=\"small\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"")+"<tr><td class=\"tiny\">owner:</td><td><b>"+d.targetOwner+"</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">target date:</td><td><b>"+d.targetDate+"</b> </td></tr>";
 	
-	_htmlBase+="<tr><td class=\"tiny\">syndicate:</td><td class=\"small\" style=\"text-align:left\">"+d.syndicate+"</td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">scope:</td><td class=\"small\" style=\"text-align:left\">"+d.scope+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">commercial:</td><td class=\"small\" style=\"text-align:left\">"+d.commercialScope+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">non-scope:</td><td class=\"small\" style=\"text-align:left\">"+d.nonScope+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">remark:</td><td class=\"small\" style=\"text-align:left\">"+d.remark+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">risk:</td><td class=\"small\" style=\"text-align:left\">"+d.risk+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">metrics:</td><td class=\"small\" style=\"text-align:left\">"+d.metrics+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">syndicate:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.syndicate)+"</td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">scope:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.scope)+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">non-scope:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.nonScope)+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">commercial:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.commercialScope)+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">remark:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.remark)+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">risk:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.risk)+"</b> </td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">metrics:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.metrics)+"</b> </td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">prio:</td><td><b>"+d.ranking+"</b> </td></tr>";
 	
 	_htmlBase = _htmlBase+"<tr> <td colspan=\"2\"  style=\"text-align:right\"><a id=\"flip\" class=\"small\" style=\"text-align:right\" >[flip it]</a></td></table>";
@@ -4413,4 +4429,10 @@ var PACKAGE_VERSION="20140226_1833";
 	var PACKAGE_VERSION="20140226_1837";
 	var PACKAGE_VERSION="20140226_1838";
 	var PACKAGE_VERSION="20140226_1839";
+	
+var PACKAGE_VERSION="20140227_0823";
+	
+var PACKAGE_VERSION="20140227_0917";
+	
+var PACKAGE_VERSION="20140227_1538";
 	
