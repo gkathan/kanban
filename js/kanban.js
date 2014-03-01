@@ -468,8 +468,6 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 				});
 	}); // end xml load anonymous 
 
-
-
 }
 
 
@@ -509,9 +507,8 @@ function renderB2CGaming() {
 					initHandlers();
 					
 				});
-
  
-	 var grid;
+ var grid;
   var columns = [
 
         { id:"id", name: "id", field: "id" },
@@ -1619,9 +1616,6 @@ function drawQueues(){
 
 
 
-// ----------------------------------------------------------------------------------------------------------------
-// ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------------
 
 function _registerDragDrop(){
 	// test drag item start
@@ -1676,6 +1670,11 @@ function _registerDragDrop(){
 	return drag_item;	
 	//test end
 }
+
+
+// ----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- TARGETS SECTION ---------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
 
 
 /** renders the targets
@@ -1764,7 +1763,8 @@ function drawTargets(){
 				var _d=_dependingItems[j];
 				//lookup the concrete item 
 				var _dependingItem = getItemByID(initiativeData,_d);
-				if (_dependingItem){
+				// do not draw line to items out of KANBAN range 
+				if (_dependingItem && new Date(_dependingItem.actualDate) >= KANBAN_START){
 					var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
 					//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
 					var _fromX = x(new Date(_dependingItem.actualDate))	
@@ -1781,6 +1781,11 @@ function drawTargets(){
 		d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
 	}) //end each()
 } //end drawTargets
+
+
+// ----------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
 
 /** renders the items
 */
@@ -2908,8 +2913,8 @@ function drawWC2014(svg){
 		
 		
 		svg.append("use").attr("xlink:href","#wc2014")
-		.attr("transform","translate ("+(_x+(_y-_x)/4)+","+(10)+") scale(.75) ")
-		.style("opacity",0.5);
+		.attr("transform","translate ("+_x+","+(-85)+") scale(.5) ")
+		.style("opacity",1);
 	}
 }
 
@@ -4435,4 +4440,10 @@ var PACKAGE_VERSION="20140227_0823";
 var PACKAGE_VERSION="20140227_0917";
 	
 var PACKAGE_VERSION="20140227_1538";
+	var PACKAGE_VERSION="20140228_1019";
+	var PACKAGE_VERSION="20140228_1023";
+	
+var PACKAGE_VERSION="20140228_1742";
+	
+var PACKAGE_VERSION="20140228_1743";
 	
