@@ -383,6 +383,7 @@ function submit_download_form(output_format)
 	  <button id="btargets" type="button" class="btn btn-default">Targets</button>
 	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
 	  <button id="b4" type="button" class="btn btn-default">Grid</button>
+	  <button id="bvision" type="button" class="btn btn-default">Vision</button>
 	  <button id="bhidemetrics" type="button" class="btn btn-default">Metrics</button>
 	  <button id="b5" type="button" class="btn btn-default">No NGR</button>
 	  <button id="bcorporate" type="button" class="btn btn-default">Corporate</button>
@@ -497,6 +498,7 @@ function initHandlers(){
 	switchVisibility("#bhidemetrics","#metrics");
 	switchVisibility("#b4","#axes");
 	switchVisibility("#bguides","#guides");
+	switchVisibility("#bvision","#vision");
 
 	d3.select("#b5").on("click", function(){
 		if (SHOW_METRICS_NGR){
