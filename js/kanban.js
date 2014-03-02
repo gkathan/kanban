@@ -160,6 +160,9 @@ var METRIC_PIE_BASE_Y = METRIC_BASE_Y+75;
 var METRIC_CX_BASE_Y = METRIC_BASE_Y+50;
 var METRIC_SHARE_BASE_Y = METRIC_BASE_Y+35;
 
+var METRIC_BASE_X_OFFSET = LANE_LABELBOX_LEFT_WIDTH +120;
+
+
 //bracket y offset
 var METRIC_BRACKET_Y_OFFSET = 40;
 
@@ -373,11 +376,13 @@ function drawGuides(){
 	_drawText(gGuides,"MARKER_DATE_TOP: "+(MARKER_DATE_TOP)+"px",x(KANBAN_START)-margin.left,(MARKER_DATE_TOP-2),"4","normal",null,"#cccccc");
 
 	// horizontal KANBAN top
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,0,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0,"rasterLine");
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,0,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0,"rasterLineThick");
 	_drawText(gGuides,"KANBAN Y base: "+0+"px",x(KANBAN_START)-margin.left,-2,"4","normal",null,"#cccccc");
-
+	//vertical METRIC_BASE
+	_drawLine(gGuides,x(KANBAN_START)-METRIC_BASE_X_OFFSET,0-margin.top,x(KANBAN_START)-METRIC_BASE_X_OFFSET,height+margin.bottom,"rasterLine");
+	
 	//vertical KANBAN_START
-	_drawLine(gGuides,x(KANBAN_START),0-margin.top,x(KANBAN_START),height+margin.bottom,"rasterLine");
+	_drawLine(gGuides,x(KANBAN_START),0-margin.top,x(KANBAN_START),height+margin.bottom,"rasterLineThick");
 	//vertical LANELABELBOX start
 	_drawLine(gGuides,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,0-margin.top,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,height+margin.bottom,"rasterLine");
 	//horizontal KANBAN bottom
@@ -409,6 +414,7 @@ function drawGuides(){
 	//horizontal METRIC PILLAR bottom 
 	_drawLine(gGuides,x(KANBAN_START)-margin.left,height-PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height-PILLAR_TOP,"rasterLine");
 	_drawText(gGuides,"height-PILLAR_TOP "+(height-PILLAR_TOP)+"px",x(KANBAN_START)-margin.left,(height-PILLAR_TOP-2),"4","normal",null,"#cccccc");
+	
 	//vertical KANBAN_END
 	_drawLine(gGuides,x(KANBAN_END),0-margin.top,x(KANBAN_END),height+margin.bottom,"rasterLine");
 	//vertical LANEBOX_RIGHT_START 
@@ -2454,42 +2460,42 @@ function drawMetrics(){
 		var _kpiYOffset = 15;
 		var _yTotal = MARKER_DATE_TOP;
 		//left			
-		var _primaryXOffset = LANE_LABELBOX_LEFT_WIDTH +120;
-		var _secondaryXOffset = LANE_LABELBOX_LEFT_WIDTH+35;
+		var _primaryXOffset = METRIC_BASE_X_OFFSET-60;
+		var _secondaryXOffset = METRIC_BASE_X_OFFSET-85;
 		//right
 		var _metricXBaseRight= TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH;
 		
 		var _primaryXOffsetRight = _metricXBaseRight +120;
 		var _secondaryXOffsetRight = _metricXBaseRight+30;
-		
-		/*
-		//1
-		var _primaryXOffsetRight = _metricXBaseRight +120;
-		var _secondaryXOffsetRight = _metricXBaseRight+30;
-		//2
-		var _2Offset = METRIC_WIDTH;
-		var _primaryXOffsetRight2 = _primaryXOffsetRight +_2Offset;
-		var _secondaryXOffsetRight2 = _secondaryXOffsetRight+_2Offset;
-		//goal
-		var _goalXOffset = _metricXBaseRight +(2*METRIC_WIDTH);
-		*/
-		
+	
 	// all KPIs & results in baseline
 	
 		var _baselineResultSum=0;
 		var _targetResultSum1=0;
 		var _targetResultSum2=0;
 		
-		var _bOffset = 60;
+		//var _bOffset = 0;
 		var _primTextYOffset=18; 
 	
 // -------------------------- baseline -----------------------------------------------
-	//if (SHOW_METRICS_BASELINE){
 		var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
-		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset+_bOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
-	//}
+		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
+
+
+/*[TODO]
+
+1) check actual is BEFORE TODAY (in the past)
+2) take the most closest to TODAY if there are more than 1
+3) and render it accordingly
+
+*/
+// -------------------------- actual -----------------------------------------------
+		//var gMetricsActual = gMetrics.append("g").attr("id","metrics_actual");
+		//_actualResultSum = _renderMetrics(gMetricsActual,"actual",(x(KANBAN_START)-_primaryXOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
+// * => the actual (TODAY) metric snapshot x = (x(TODAY)+LANE_LABELBOX_LEFT_WIDTH)
+ 
+
 // -------------------------- target 1-year (2014) -------------------------------
-	//if (SHOW_METRICS_FORECAST1){
 		var _1Offset = 70;
 
 		var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
@@ -2504,13 +2510,9 @@ function drawMetrics(){
 
 		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight-40);
 		
-	//}		
 // -------------------------- target 2-years (2015)-------------------------------
-	//if (SHOW_METRICS_FORECAST2){
 		var _2Offset = 70;
 		
-		//var _goalXOffset = _primaryXOffsetRight+30;
-
 		var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
 		_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",x(KANBAN_END)+_primaryXOffsetRight-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 
@@ -2520,8 +2522,6 @@ function drawMetrics(){
 	
 
 // ------------------------------ potentials ------------------------------------------------
-	//if (SHOW_METRICS_GOAL){
-		
 		_primaryXOffsetRight-=120;
 
 		var gMetricsRisk = gMetricsForecast2.append("g").attr("id","metrics_risk");
@@ -2533,14 +2533,11 @@ function drawMetrics(){
 
 	/* ----------------------------------------- risks ------------------------------------------------ */
 		_drawPotentials(gMetricsRisk,"forecast2","risk",_xRisk,_yRisk+220);
-		
-
 
 	/* ------------------------------------- goal column ------- ------------------------------------*/
 		var gMetricsGoal = gMetricsForecast2.append("g").attr("id","metrics_goal");
 		
 		_drawMetricDate(gMetricsGoal,x(KANBAN_END)+_primaryXOffsetRight,METRIC_BASE_Y,_getDataBy("dimension","goal",METRICDATES_DATA).data);
-
 		
 		 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
 		_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal,10,"left",METRICS_SCALE);
@@ -2560,8 +2557,6 @@ function drawMetrics(){
 
 		_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal+(30*METRICS_SCALE),10,"left",METRICS_SCALE);
 		// delta end
-	//}
-//}
 /* ------------------------------------- linechart prototype ------------------------------------*/
 	drawLineChart();
 	
@@ -2605,13 +2600,14 @@ function _getDataBy(name,value,data){
 
 /**
  * @dimension "baseline,targe1,target2
+ * 
  */
 function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
-		// y space between KPIs
-		var _kpiYOffset = 15;
-		var _primTextYOffset=18; 
-		//var METRIC_DATES_Y=-190;
-	
+	// y space between KPIs
+	var _kpiYOffset = 15;
+	var _primTextYOffset=18; 
+	//var METRIC_DATES_Y=-190;
+
 	if (!scale) scale=METRICS_SCALE;
 	_kpiYOffset = _kpiYOffset*scale;
 	_primTextYOffset = _primTextYOffset*scale;
@@ -2622,12 +2618,26 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	var _kpiDir = "left";
 	var _resultDir="right";
 	
+		
 	var gMetrics = svg.append("g").attr("id","lane_metrics");
 	
 	if (dimension=="baseline"){
 			_kpiDir="right";
 			_resultDir="left";
 	}
+	
+	if (dimension=="actual"){
+		
+		gMetrics.append("rect")
+		.attr("x",-METRIC_BASE_X_OFFSET)
+		.attr("width",METRIC_WIDTH-30)
+		.attr("y",METRIC_BASE_Y)
+		.attr("height",y(100))
+		.style("fill","white")
+		.style("opacity",0.8);
+		
+	}
+	
 	
 	var _resultSum=0;
 	
@@ -2659,19 +2669,21 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	}
 
 	//metric date 
-	_drawMetricDate(svg,x1Base-50,METRIC_BASE_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
+	_drawMetricDate(svg,x1Base-60,METRIC_BASE_Y,_getDataBy("dimension",dimension,METRICDATES_DATA).data);
 
 	// calculated sum
 	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
 	var _yTotal = MARKER_DATE_TOP;
 	var _total = {"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
 
+
+	// corp result
 	var gCorp = svg.append("g").attr("id","corp_metrics");
 	_drawTextMetric(gCorp,_total,"metricBig",x1Base,_yTotal,10,_resultDir,scale);
 
 	// corp KPIs
 	var _corpKpis = metricData.filter(function(d){return d.dimension==dimension && d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
-
+	
 	var _yTotalKpiBase = _yTotal-(10*METRICS_SCALE);
 	for (var k in _corpKpis){
 		_drawTextMetric(gCorp,_corpKpis[k],"metricSmall",x2Base,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,_kpiDir,scale);
@@ -2681,7 +2693,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	var _yPie = METRIC_PIE_BASE_Y;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% sustainable"});
 
-	_drawPie(gCorp,dimension,_met[0],x1Base,_yPie);
+	_drawPie(gCorp,dimension,_met[0],x1Base-20,_yPie);
 
 	// cx baseline 
 	var _yCX =METRIC_CX_BASE_Y;
@@ -2689,13 +2701,13 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
     var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
 	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
 
-	_drawCX(gCorp,_cxData,x1Base+35,_yCX);
+	_drawCX(gCorp,_cxData,x1Base+25,_yCX);
 	
 	
 	//market share overall
 	var _yMarketShare = METRIC_SHARE_BASE_Y;
 	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% overall"});
-	_drawTextMetric(gCorp,_met[0],"metricBig",x1Base,_yMarketShare,10,"left");
+	_drawTextMetric(gCorp,_met[0],"metricBig",x1Base-10,_yMarketShare,10,"left");
 	
 	return _resultSum;
 }
@@ -2743,7 +2755,7 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 			_xNumber = _xNumber+space;
 		}
 		
-		var gMetric=svg.append("g").attr("id","metric."+metric.lane+"."+metric.class+"."+metric.type);
+		var gMetric=svg.append("g").attr("id","metric_"+metric.id+"."+metric.lane+"."+metric.class+"."+metric.type);
 		
 		gMetric.append("text")
 			.text(metric.number)
@@ -2900,12 +2912,12 @@ function drawWC2014(svg){
 	if (KANBAN_END > new Date("2014-07-13")){
 	
 		var svg = d3.select("#kanban");
-		var _x = x(new Date("2014-06-13"));
-		var _y = x(new Date("2014-07-13"));
+		var _x1 = x(new Date("2014-06-13"));
+		var _x2 = x(new Date("2014-07-13"));
 		
 		svg.append("rect")
-		.attr("x",_x)
-		.attr("width",(_y-_x))
+		.attr("x",_x1)
+		.attr("width",(_x2-_x1))
 		.attr("y",0)
 		.attr("height",y(100))
 		.style("fill","white")
@@ -2913,7 +2925,7 @@ function drawWC2014(svg){
 		
 		
 		svg.append("use").attr("xlink:href","#wc2014")
-		.attr("transform","translate ("+_x+","+(-85)+") scale(.5) ")
+		.attr("transform","translate ("+(_x1+15)+","+(-65)+") scale(.3) ")
 		.style("opacity",1);
 	}
 }
