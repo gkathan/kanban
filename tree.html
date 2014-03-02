@@ -1,32 +1,13 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
 
-.node {
-  cursor: pointer;
-}
+<link rel="stylesheet" type="text/css" href="css/tree.css">
 
-.node circle {
-  fill: #fff;
-  stroke: steelblue;
-  stroke-width: 1.5px;
-}
-
-.node text {
-  font: 10px sans-serif;
-}
-
-.link {
-  fill: none;
-  stroke: #ccc;
-  stroke-width: 1.5px;
-}
-
-</style>
 <body>
 <script src="js/d3.v3.min.js"></script>
 <script src="js/underscore-min.js"></script>
 <script src="js/underscore.nest.min.js"></script>
+<script src="js/jquery-2.1.0.min.js"></script>
 
 
 <div id="master" style="margin:10px 10px">
@@ -36,11 +17,93 @@
 <b>TREE experiments - current backlog</b><br>
 * mouse over the areas and click to drill-in<br><br>
 
+
+	<div>
+			<button class="btn btn-primary btn-xs" id="save_as_svg" value="">
+				Save as SVG</button>
+			<button class="btn btn-primary btn-xs" id="save_as_pdf" value="">
+				Save as PDF</button>
+			<button class="btn btn-primary btn-xs" id="save_as_png" value="">
+				Save as PNG</button>
+
+			<div style="width:250px" class="input-group input-group-sm">
+				  <input id="input_transcode_url" type="text" class="form-control input-sm">
+				  <span class="input-group-btn">
+					<button id="b99" class="btn btn-default input-sm" type="button">URL</button>
+				  </span>
+			</div><!-- /input-group -->
+	</div>
+
+
+
+<!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
+     The form is populated and submitted by the JavaScript below. -->
+     
+<!-- production transcoder (tomcat6): http://www.kathan.at/transcode/--> 
+<!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
+<form id="svgform" method="post" action="http://tomcat.ea.bwinparty.corp/transcode/">
+
+<!--<form id="svgform" method="post" action="localhost:8080/transcode/">-->
+
+ <input type="hidden" id="format" name="format" value="">
+ <input type="hidden" id="data" name="data" value="">
+ <input type="hidden" id="context" name="context" value="">
+ <input type="hidden" id="svg_width" name="svg_width" value="">
+ <input type="hidden" id="svg_height" name="svg_height" value="">
+ <input type="hidden" id="png_scale" name="png_scale" value="">
+ 
+</form>
 <script>
 
+
+/*
+   Utility function: populates the <FORM> with the SVG data
+   and the requested output format, and submits the form.
+*/
+function submit_download_form(output_format)
+{
+	//dirty hack for the CSS declaration
+	// last css is for bootstrap => exclude !
+	
+	var declaration ="";
+
+	declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[0].href+"\" type=\"text/css\"?>";
+
+	console.log("***declaration"+declaration);
+	
+
+	// Get the d3js SVG element
+	var svg = document.getElementsByTagName("svg")[0];
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+	var form = document.getElementById("svgform");
+	
+	var WIDTH = 2000;
+	var HEIGHT = 2000;
+	var CONTEXT="backlog tree";
+	
+	//console.log(declaration+svg_xml);
+	form.action=TRANSCODE_URL;
+	form["format"].value = output_format;
+	form["data"].value = declaration+svg_xml ;
+	form["context"].value = CONTEXT ;
+	form["svg_width"].value = WIDTH ;
+	form["svg_height"].value = HEIGHT ;
+	//high res scale
+	form["png_scale"].value = 3 ;
+	console.log("*going to submit");
+	
+	form.submit();
+}
+
+
+
+
+TRANSCODE_URL = "http://localhost:8080/transcode/";
+
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    width = 1500 - margin.right - margin.left,
-    height = 800 - margin.top - margin.bottom;
+    width = 2000 - margin.right - margin.left,
+    height = 2500 - margin.top - margin.bottom;
     
 var i = 0,
     duration = 750,
@@ -55,6 +118,10 @@ var diagonal = d3.svg.diagonal()
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.right + margin.left)
     .attr("height", height + margin.top + margin.bottom)
+    .attr("xmlns","http://www.w3.org/2000/svg")
+    .attr("version","1.1")
+    .attr("space","preserve")
+ 
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -63,9 +130,11 @@ var svg = d3.select("body").append("svg")
 
 //d3.tsv("data/backlog.csv",function(data){
 //d3.tsv("data/initiatives_v20.csv",function(data){
-	d3.json("/data/data.php?type=initiatives",function(data){
+d3.csv("data/businessbacklogs.csv",function(data){
+//	d3.json("/data/data.php?type=initiatives",function(data){
 
-	root = _.nest(data,["bm","theme","lane","sublane"]);
+//	root = _.nest(data,["bm","theme","lane","sublane"]);
+root = _.nest(data,["l1","l2","l3","l4","l5","l6"]);
 
 //  root = flare;
   root.x0 = height / 2;
@@ -80,7 +149,7 @@ var svg = d3.select("body").append("svg")
     }
   }
 
-  root.children.forEach(collapse);
+//  root.children.forEach(collapse);
   update(root);
 });
 
@@ -93,7 +162,7 @@ function update(source) {
       links = tree.links(nodes);
 
   // Normalize for fixed-depth.
-  nodes.forEach(function(d) { d.y = d.depth * 180; });
+  nodes.forEach(function(d) { d.y = d.depth * 250; });
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -184,6 +253,28 @@ function click(d) {
   }
   update(d);
 }
+function expandAll(items){
+	for (var i in items){
+		if (items[i].children) 
+			expandAll(items[i].children);
+		else{
+			items[i].children_ = items[i].children;
+			items[i].children =null;
+		}
+	}
+}
+
+
+	
+	$("#show_svg_code").click(function() { show_svg_code(); });
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
+	$("#save_as_png").click(function() { submit_download_form("png"); });
+	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
+	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
+
+
+
 
 </script>
 
