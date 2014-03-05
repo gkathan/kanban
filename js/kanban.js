@@ -230,6 +230,15 @@ var CUSTUM_POSTIT_SCALE=1;
 
 var METRICS_SCALE=1;
 
+
+//config of metrics
+METRICDATES_DATA=[
+					{"dimension": "baseline", "data": {"sub":"results for","date":new Date("2013-12-31"),"title":"BASELINE 2013" ,"subBase":"calc-base","baseDate":"2013-12-31"}},
+					{"dimension": "forecast1", "data": {"sub":"best-case","date":new Date("2014-12-31"),"title":"FORECAST 2014" ,"subBase":"calc-base","baseDate":"2013-10-31"}},
+					{"dimension": "forecast2", "data": {"sub":"best-case","date":new Date("2015-12-31"),"title":"FORECAST 2015" ,"subBase":"calc-base","baseDate":"2013-10-31"}},
+					{"dimension": "goal", "data": {"sub":"norbert says","date":new Date("2015-12-31"),"title":"GOAL" ,"subBase":"calc-base","baseDate":"2013-10-31"}}
+		];
+
 var x,y,svg,whiteboard,drag,drag_x;
 
 
@@ -248,6 +257,11 @@ var SHOW_METRICS = false;
 var SHOW_METRICS_BASELINE;
 var SHOW_METRICS_FORECAST1;
 var SHOW_METRICS_FORECAST2;
+
+// experiemnt with actual snapshot metrics column
+var SHOW_METRICS_FORECAST1_ACTUAL=false;
+var SHOW_METRICS_FORECAST2_ACTUAL=false;
+
 var SHOW_METRICS_GOAL;
 var SHOW_METRICS_CORPORATE;
 var SHOW_METRICS_NGR;
@@ -285,7 +299,7 @@ function setMargin(){
 	var _offsetYTopCorporate =150;
 	
 	_offsetXLeft = _marginXLeft+ (SHOW_METRICS_BASELINE*_offsetXLeftBaseline);
-	_offsetXRight= _marginXRight + (SHOW_METRICS_FORECAST1*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2*_offsetXLeftForecast2)+(SHOW_METRICS_GOAL*_offsetXLeftGoal);
+	_offsetXRight= _marginXRight + (SHOW_METRICS_FORECAST1*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2*_offsetXLeftForecast2)+ (SHOW_METRICS_FORECAST1_ACTUAL*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2_ACTUAL*_offsetXLeftForecast2)+(SHOW_METRICS_GOAL*_offsetXLeftGoal);
 	_offsetYTop = (SHOW_METRICS_CORPORATE*_offsetYTopCorporate);
 	
 	margin = {top: 100+_offsetYTop, right: _offsetXRight+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: _offsetXLeft+150};
@@ -1754,10 +1768,10 @@ function drawTargets(){
 		// this can maybe be extracted into function...
 
 		if (!isNaN(parseInt(d.initiatives))){
-			console.log("============================== "+d.id+" depends on: "+d.dependsOn); 
+			//console.log("============================== "+d.id+" depends on: "+d.dependsOn); 
 			
 			var _dependingItems = d.initiatives.split(",");
-			console.log("target depending items: "+_dependingItems);
+			//console.log("target depending items: "+_dependingItems);
 
 			// by default visibility is hidden
 			var dep = d3.select("#targetDependencies")
@@ -1787,6 +1801,27 @@ function drawTargets(){
 		d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
 	}) //end each()
 } //end drawTargets
+
+
+/** gets for an item all associated targets this items is contributing to
+ */
+function _getTargetsByItem(item){
+	var _targets = new Array();
+	for (var t in targetData){
+		var _initiatives = targetData[t].initiatives;
+		if (_initiatives){
+			console.log("* initiatives of "+targetData[t].id+": "+_initiatives);
+			var _items = _initiatives.split(",");
+			for (var j in _items){
+				console.log("  + checking "+_items[j]+ "=="+ item.id);
+				if (_items[j]==item.id){
+					_targets.push(targetData[t].id);
+				} 
+			}
+		}
+	}
+	return _targets;
+}
 
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -1994,7 +2029,6 @@ function drawItems(){
 
 		// sizingPD portfolio view
 		if(d.Swag){
-			console.log("****** sizingPDIndicator !");
 			d3.select("#sizings")
 			.append("circle")
 			.attr("cx", _itemXPlanned)
@@ -2150,6 +2184,8 @@ function _drawStartDateIndicator(svg,x1,x2,y,size){
 /**
  * handler for tooltip mouse over 
  * called within item rendering
+ * => is currently doing stuff for items AND targets !!!
+ * quite crappy.....
  */
 function onTooltipOverHandler(d,tooltip){
 	// and fadeout rest
@@ -2213,15 +2249,33 @@ function onTooltipOverHandler(d,tooltip){
 		_dependingItems = d.initiatives.split(",");
 	}
 	
-	if (_dependingItems){
+	var _targets=_getTargetsByItem(d);
 
-		for (var j=0;j<_dependingItems.length;j++) {	
-			var _di = _dependingItems[j];
+	
+	if (_dependingItems) _highlightItems(_dependingItems,filteredInitiativeData,"#item_");
+	
+	if (_targets){
+		_highlightItems(_targets,targetData,"#target_");
+		// and connect 
+		//[TODO]
+		// draw line from d.id to each in _targets.id
+		
+		
+	}
+	
+	
+	
+}
+
+
+function _highlightItems(items,data,type){
+		for (var j=0;j<items.length;j++) {	
+			var _di = items[j];
 			
-			var _item = getItemByID(filteredInitiativeData,_di);
+			var _item = getItemByID(data,_di);
 			
 			if (_item){
-				var dep=d3.select("#item_"+_di)
+				var dep=d3.select(type+_di)
 					.transition()            
 					.delay(200)            
 					.duration(500)
@@ -2242,8 +2296,8 @@ function onTooltipOverHandler(d,tooltip){
 				*/
 			}
 		}// end check depending items
-	}
 }
+
 
 /** returns HTML for item tooltip content
  */
@@ -2479,27 +2533,20 @@ function drawMetrics(){
 	
 // -------------------------- baseline -----------------------------------------------
 		var gMetricsBaseline = gMetrics.append("g").attr("id","metrics_baseline");
-		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline",(x(KANBAN_START)-_primaryXOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
+		_baselineResultSum = _renderMetrics(gMetricsBaseline,"baseline","",(x(KANBAN_START)-_primaryXOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
 
 
-/*[TODO]
-
-1) check actual is BEFORE TODAY (in the past)
-2) take the most closest to TODAY if there are more than 1
-3) and render it accordingly
-
-*/
-// -------------------------- actual -----------------------------------------------
-		//var gMetricsActual = gMetrics.append("g").attr("id","metrics_actual");
-		//_actualResultSum = _renderMetrics(gMetricsActual,"actual",(x(KANBAN_START)-_primaryXOffset),(x(KANBAN_START)-_secondaryXOffset),METRICS_SCALE);
-// * => the actual (TODAY) metric snapshot x = (x(TODAY)+LANE_LABELBOX_LEFT_WIDTH)
- 
-
-// -------------------------- target 1-year (2014) -------------------------------
-		var _1Offset = 70;
+	var _offset = 70;
+// -------------------------- forecast 1-year (2014) -------------------------------
+		
+		// !!! forecast is always for ONE target date = e.g. forecast for 2014
+		// forecast can be re-forecasted multiple times - and it is essential to show the history and deltas between each reforecast 
+		
 
 		var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
-		_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",x(KANBAN_END)+_primaryXOffsetRight-_1Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
+		// read configured basedate
+		var _baseDate1 = _getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate;
+		_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",_baseDate1,x(KANBAN_END)+_primaryXOffsetRight-_offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 		
 		if (SHOW_METRICS_FORECAST2)
 			d3.select("#metrics_forecast1").style("opacity",0.5);
@@ -2510,11 +2557,11 @@ function drawMetrics(){
 
 		_drawMetricSeparator(gMetrics,x(KANBAN_END)+_secondaryXOffsetRight-40);
 		
-// -------------------------- target 2-years (2015)-------------------------------
-		var _2Offset = 70;
-		
+// -------------------------- forecast 2-years (2015)-------------------------------
+		// read configured basedate
+		var _baseDate2 = _getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate;
 		var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
-		_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",x(KANBAN_END)+_primaryXOffsetRight-_2Offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
+		_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",_baseDate2,x(KANBAN_END)+_primaryXOffsetRight-_offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 
 		_primaryXOffsetRight += METRIC_WIDTH;
 		_secondaryXOffsetRight += METRIC_WIDTH;
@@ -2599,10 +2646,10 @@ function _getDataBy(name,value,data){
 
 
 /**
- * @dimension "baseline,targe1,target2
+ * @dimension "baseline,forecast1,forecast2"
  * 
  */
-function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
+function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 	// y space between KPIs
 	var _kpiYOffset = 15;
 	var _primTextYOffset=18; 
@@ -2611,8 +2658,11 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	if (!scale) scale=METRICS_SCALE;
 	_kpiYOffset = _kpiYOffset*scale;
 	_primTextYOffset = _primTextYOffset*scale;
-		
-	var _met = metricData.filter(function(d){return d.dimension==dimension && ( (d.class=="result") || (d.class=="kpi"))});
+	
+	//basedate hardcode is just experiemnt for re-forecasts .....
+	// currently there a multiple values per dimension allowed qualified by "baseDate"	
+	var _met = metricData.filter(function(d){return d.dimension==dimension && ( (d.class=="result") || (d.class=="kpi")) &&(d.baseDate==baseDate)});
+	
 	var _metByLane = _.nest(_met,"lane");
 	
 	var _kpiDir = "left";
@@ -2626,7 +2676,8 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 			_resultDir="left";
 	}
 	
-	if (dimension=="actual"){
+	/* one option to show actuals is to overlay within KANVBAN board on the according reforecast baseDate 
+	 * if (dimension=="actual"){
 		
 		gMetrics.append("rect")
 		.attr("x",-METRIC_BASE_X_OFFSET)
@@ -2637,7 +2688,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 		.style("opacity",0.8);
 		
 	}
-	
+	*/
 	
 	var _resultSum=0;
 	
@@ -2682,7 +2733,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	_drawTextMetric(gCorp,_total,"metricBig",x1Base,_yTotal,10,_resultDir,scale);
 
 	// corp KPIs
-	var _corpKpis = metricData.filter(function(d){return d.dimension==dimension && d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
+	var _corpKpis = metricData.filter(function(d){return d.dimension==dimension && d.baseDate==baseDate && d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
 	
 	var _yTotalKpiBase = _yTotal-(10*METRICS_SCALE);
 	for (var k in _corpKpis){
@@ -2691,13 +2742,13 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 
 	// pie
 	var _yPie = METRIC_PIE_BASE_Y;
-	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% sustainable"});
+	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="marketshare" && d.scale=="% sustainable"});
 
 	_drawPie(gCorp,dimension,_met[0],x1Base-20,_yPie);
 
 	// cx baseline 
 	var _yCX =METRIC_CX_BASE_Y;
-	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="loyaltyindex"});
+	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="loyaltyindex"});
     var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
 	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
 
@@ -2706,7 +2757,7 @@ function _renderMetrics(svg,dimension,x1Base,x2Base,scale){
 	
 	//market share overall
 	var _yMarketShare = METRIC_SHARE_BASE_Y;
-	_met = metricData.filter(function(d){return d.dimension==dimension && d.type=="marketshare" && d.scale=="% overall"});
+	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="marketshare" && d.scale=="% overall"});
 	_drawTextMetric(gCorp,_met[0],"metricBig",x1Base-10,_yMarketShare,10,"left");
 	
 	return _resultSum;
@@ -2730,6 +2781,23 @@ function _drawBracket(svg,color,direction,x,y,scaleX,scaleY,type,opacity){
 		.attr("transform","translate ("+x+","+y+") scale("+scaleX+","+scaleY+")");
 }
 
+
+
+function checkPreviousForecasts(metric){
+	var _history = new Array();
+	for (var i in metricData){
+		var _m = metricData[i];
+		if (_m.dimension==metric.dimension&&_m.type==metric.type&&_m.lane==metric.lane&&_m.date==metric.date&&_m.scale==metric.scale){
+			// do not add the identical metric and also only add older than current baseDate
+			if (_m.id !=metric.id && _m.baseDate < metric.baseDate){
+				_history.push(_m);
+			}
+		}
+	}
+
+	return _history;
+}
+
 /**
  *@direction can be "left" = default or "right" 
  * => left = first number then scale
@@ -2745,6 +2813,14 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 		
 		else _metricColor="grey";
 		
+	
+		// experiment with trending
+		// lets see whether we have for this dimension+date multiple class.lane.type metrics 
+		// means do we have previous forecasts ? => if yes we can show a trending indicator
+	
+		// i have the concrete metric which is configured to be shown
+		// _history = checkPreviousForecasts(metric);
+	
 		if(!scale) scale=METRICS_SCALE;
 		space=space*scale;
 		
@@ -2786,6 +2862,69 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 			.style("fill",_metricColor)
 			.style("text-anchor",_anchor)
 			.attr("class",css+"Type");
+			
+		var _previous = checkPreviousForecasts(metric);
+		
+		// now we have to take the last of the array as default = show trend from existing to moist recent previous forecast
+		
+		if (_previous.length>0){
+			_pmetric = _.last(_previous);
+			// do some calculations
+			// stupid javascript sucks in decimal/float
+			var _delta = ((metric.number*100)-(_pmetric.number*100))/100;
+			var _color;
+			var _xoffset;
+			var _yoffset;
+			var _symbol;
+			var _scale=scale*0.8;
+			
+			_xoffset = 75*scale;
+			_yoffsetText = -5;
+			_yoffsetSymbol = -1;
+			
+			
+			if (metric.class=="kpi") {
+				_scale =scale*0.5;
+				_xoffset = 85*scale;
+				_yoffsetSymbol=1;
+				_yoffsetText=0;
+			}
+				
+			
+			if (_delta >0) {
+				_color="green";
+				_symbol = "triangle-up";
+				_delta = "+"+_delta;
+				
+			}
+			else if (_delta==0){
+				_color = "grey";
+				_symbol = "circle";
+			}
+			else {
+				_color="red";
+				_symbol="triangle-down";
+				// the triangle-down needs slight different y-position ..
+				if (metric.class=="result") _yoffsetSymbol=-2;
+			}
+			
+			// draw trend indicator 
+			gMetric.append("path")
+			.attr("transform","translate("+(x+_xoffset)+","+(y-_yoffsetSymbol)+") rotate("+(0)+") scale("+_scale+")")
+			.attr("d",d3.svg.symbol().type(_symbol))
+			.style("fill",_color)
+			
+			// and the delta
+			gMetric.append("text")
+			.text(_delta)
+			.attr("transform","translate ("+(x+_xoffset-(8*_scale))+","+(y-_yoffsetText)+") scale("+_scale+")")
+			.style("fill",_color)
+			.style("text-anchor","end")
+			.style("font-weight","bold")
+			.style("font-size","10px");
+			
+		}	
+			
 }
 
 function _drawMetricSeparator(svg,x){
@@ -2799,9 +2938,13 @@ function _drawMetricSeparator(svg,x){
 function _drawMetricDate(svg,x,y,data){
 	var gDate = svg.append("g").attr("id","metric_date_"+data.title);
 	_drawText(gDate,data.title,x,y,16,"bold","start",COLOR_BPTY,null);
-	_drawText(gDate,data.sub+": ",x,y+6,5,"normal","start",COLOR_BPTY,null);
-	_drawText(gDate,data.date.toString('yyyy-MM-dd'),x,y+16,6,"bold","start",COLOR_BPTY,null);
 	
+	_drawText(gDate,data.sub+": ",x,y+7,5,"normal","start",COLOR_BPTY,null);
+	_drawText(gDate,data.date.toString('yyyy-MM-dd'),x+30,y+7,6,"bold","start",COLOR_BPTY,null);
+	
+	_drawText(gDate,data.subBase+": ",x,y+14,5,"normal","start",COLOR_BPTY,null);
+	_drawText(gDate,data.baseDate.toString('yyyy-MM-dd'),x+30,y+14,6,"bold","start",COLOR_BPTY,null);
+
 }
 
 
@@ -3747,7 +3890,6 @@ function createAbsoluteCoordinates(_itemData,_start,_stop,base){
 calculates the offset to center elements / text per sublane 
 */
 function getSublaneCenterOffset(sublane){
-	console.log("+++++call getSublaneByNameNEW("+sublane+")");
 	if(sublane){
 		var _sublane = getSublaneByNameNEW(sublane);
 		var _height = _sublane.yt2-_sublane.yt1;
@@ -3975,7 +4117,6 @@ function timeFormat(formats) {
 /** helper to return fully qualified (FQ) name over all nest levels
  */
 function getFQName(d){
-	console.log("d:"+d);
 	if (d){
 			//root node.name
 			var _fq= CONTEXT;//NEST_ROOT;
@@ -4014,11 +4155,8 @@ function calculateQueueMetrics(){
 		});
 	
 	for(_d in _filteredItems){	
-		
-		console.log("metric caluclation: "+_d);
 		_item = _filteredItems[_d];
 		var _date = _item.actualDate;
-		console.log("date: "+_date);
 		
 		var _sizingPD = parseInt(_item.Swag);
 		var _delay = diffDays(_item.planDate,_item.actualDate);
@@ -4037,15 +4175,12 @@ function calculateQueueMetrics(){
 			ITEMS_FUTURE++;
 			
 			if (!isNaN(_sizingPD)) SIZING_FUTURE+=_sizingPD;
-
 		}
-		
 		//calculate delays
 		if (_delay>0 && new Date(_item.planDate)>KANBAN_START){
 			ITEMS_DELAYED++;
 			DAYS_DELAYED = DAYS_DELAYED+_delay;
 		}
-		
 	}
 	ITEMS_TOTAL=ITEMS_DONE+ITEMS_WIP+ITEMS_FUTURE;
 	SIZING_TOTAL = SIZING_DONE+SIZING_WIP+SIZING_FUTURE;	
