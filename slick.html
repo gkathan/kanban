@@ -23,9 +23,20 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:1600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div style="width:2000px;">
+    <b>initiatives</b>
+    <br>
+    <div id="itemGrid" style="width:100%;height:500px;"></div>
+    <b>targets</b>
+    <br>
+    <div id="targetGrid" style="width:100%;height:500px;"></div>
+    
+     <b>v1 Epics</b>
+    <br>
+    <div id="v1Grid" style="width:100%;height:500px;"></div>
+
   </div>
+
 
  </div>
 
@@ -52,16 +63,25 @@
   }
 
 var initiativeData;
+var targetData;
+var epicData;
+
 	$.when($.getJSON("/data/data.php?type=initiatives"),
-				$.getJSON("/data/data.php?type=metrics"))
+				$.getJSON("/data/data.php?type=targets"),
+				$.getJSON("http://10.80.8.11:8080/rest/epics"))
 				
-			.done(function(initiatives,metrics){
+			.done(function(initiatives,targets,epics){
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
 					else throw new Exception("error loading initiatives");
-					if (metrics[1]=="success") metricData=metrics[0];
-					else throw new Exception("error loading metrics");
+					if (targets[1]=="success") targetData=targets[0];
+					else throw new Exception("error loading targets");
+					if (epics[1]=="success") epicData=epics[0];
+					else throw new Exception("error loading epics");
 					
-					renderGrid();
+					renderInitiativeGrid();
+					renderTargetGrid();
+					renderV1EpicGrid();
+					
 				});
 
 				
@@ -80,7 +100,7 @@ $.ajax(settings).done(function(data) {
 */
 
 
-function renderGrid(){
+function renderInitiativeGrid(){
 
 
 var columns = [
@@ -120,20 +140,126 @@ var columns = [
 		}    
 	}
 }
-
- 
-    grid = new Slick.Grid("#myGrid", initiativeData, columns, options);
+    itemgrid = new Slick.Grid("#itemGrid", initiativeData, columns, options);
     
-     grid.setSelectionModel(new Slick.CellSelectionModel());
+     itemgrid.setSelectionModel(new Slick.CellSelectionModel());
 
-    grid.onAddNewRow.subscribe(function (e, args) {
+    itemgrid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
-      grid.invalidateRow(data.length);
+      itemgrid.invalidateRow(data.length);
       data.push(item);
-      grid.updateRowCount();
-      grid.render();
+      itemgrid.updateRowCount();
+      itemgrid.render();
     });
 }
+
+
+function renderTargetGrid(){
+
+
+var columns = [
+
+        { id:"id", name: "id", field: "id",sortable:true },
+        { id:"ranking", name: "ranking", field: "ranking",sortable:true },
+        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"},
+        { id: "name2", name: "name2",  field: "name2",width:150 },
+        { id: "Swag", name: "Swag", field: "Swag",width:50,editor:Slick.Editors.Integer },
+		{ id: "targetDate", name: "targetDate", field: "targetDate", editor: Slick.Editors.Date,sortable:true },
+		{ id: "description", name: "description", field: "description", editor: Slick.Editors.LongText },
+	    { id: "scope", name: "scope", field: "scope", editor: Slick.Editors.LongText },
+	    { id: "nonscope", name: "nonscope", field: "nonscope", editor: Slick.Editors.LongText },
+	    { id: "metrics", name: "metrics", field: "metrics", editor: Slick.Editors.LongText },
+	    { id: "risk", name: "risk", field: "risk", editor: Slick.Editors.LongText },
+	    { id: "status", name: "status",  field: "status" },
+        { id: "targetOwner", name: "targetOwner",  field: "targetOwner",width:150 },
+        { id: "syndicate", name: "syndicate",  field: "syndicate",width:150 },
+	    { id: "commercialScope", name: "commercialScope", field: "commercialScope", editor: Slick.Editors.LongText },
+	    { id: "remark", name: "remark", field: "remark", editor: Slick.Editors.LongText },
+	    { id: "initiatives", name: "initiatives", field: "initiatives"},
+        { id: "bm", name: "businessmodel",  field: "bm" },
+        { id: "theme", name: "theme",  field: "theme" },
+        { id: "lane", name: "lane",  field: "lane" },
+        { id: "sublane", name: "sublane",  field: "sublane" }
+
+
+  ];
+
+  var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    cellHighlightCssClass: "changed",
+    autoEdit: true,
+	dataItemColumnValueExtractor: function(item, columnDef) {
+		if(columnDef.editor == Slick.Editors.SelectOption){
+			return eval(columnDef.options)[item[columnDef.field]];
+		}else{
+			return item[columnDef.field];
+		}    
+	}
+}
+
+
+ 
+    targetgrid = new Slick.Grid("#targetGrid", targetData, columns, options);
+    
+     targetgrid.setSelectionModel(new Slick.CellSelectionModel());
+
+    targetgrid.onAddNewRow.subscribe(function (e, args) {
+      var item = args.item;
+      targetgrid.invalidateRow(data.length);
+      data.push(item);
+      targetgrid.updateRowCount();
+      targetgrid.render();
+    });
+}
+
+
+function renderV1EpicGrid(){
+
+
+var columns = [
+
+        { id:"id", name: "id", field: "id",sortable:true },
+        { id:"number", name: "number", field: "number",sortable:true },
+        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"}
+
+
+  ];
+
+  var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    cellHighlightCssClass: "changed",
+    autoEdit: true,
+	dataItemColumnValueExtractor: function(item, columnDef) {
+		if(columnDef.editor == Slick.Editors.SelectOption){
+			return eval(columnDef.options)[item[columnDef.field]];
+		}else{
+			return item[columnDef.field];
+		}    
+	}
+}
+
+
+ 
+    v1grid = new Slick.Grid("#v1Grid", epicData, columns, options);
+    
+     v1grid.setSelectionModel(new Slick.CellSelectionModel());
+
+    v1grid.onAddNewRow.subscribe(function (e, args) {
+      var item = args.item;
+      targetgrid.invalidateRow(data.length);
+      data.push(item);
+      v1grid.updateRowCount();
+      v1grid.render();
+    });
+}
+
+
  </script>
 </body>
 </html>
