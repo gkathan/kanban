@@ -232,11 +232,16 @@ var METRICS_SCALE=1;
 
 
 //config of metrics
+
+/* 
+ baseDate:
+ * list of forecast calculation dates, historical => e.g. initial forecast was calculated on 2013-10-31, first reforecast was done on 2014-03-11, ....")
+ */
 METRICDATES_DATA=[
-					{"dimension": "baseline", "data": {"sub":"results for","date":new Date("2013-12-31"),"title":"BASELINE 2013" ,"subBase":"calc-base","baseDate":"2013-12-31"}},
-					{"dimension": "forecast1", "data": {"sub":"best-case","date":new Date("2014-12-31"),"title":"FORECAST 2014" ,"subBase":"calc-base","baseDate":"2013-10-31"}},
-					{"dimension": "forecast2", "data": {"sub":"best-case","date":new Date("2015-12-31"),"title":"FORECAST 2015" ,"subBase":"calc-base","baseDate":"2013-10-31"}},
-					{"dimension": "goal", "data": {"sub":"norbert says","date":new Date("2015-12-31"),"title":"GOAL" ,"subBase":"calc-base","baseDate":"2013-10-31"}}
+					{"dimension": "baseline", "data": {"sub":"results for","date":new Date("2013-12-31"),"title":"BASELINE 2013" ,"subBase":"calc-base","baseDate":["2013-12-31"]}},
+					{"dimension": "forecast1", "data": {"sub":"best-case","date":new Date("2014-12-31"),"title":"FORECAST 2014" ,"subBase":"calc-base","baseDate":["2013-10-31","2014-03-11"]}},
+					{"dimension": "forecast2", "data": {"sub":"best-case","date":new Date("2015-12-31"),"title":"FORECAST 2015" ,"subBase":"calc-base","baseDate":["2013-10-31","2014-03-11"]}},
+					{"dimension": "goal", "data": {"sub":"norbert says","date":new Date("2015-12-31"),"title":"GOAL" ,"subBase":"calc-base","baseDate":["2013-10-31","2014-03-11"]}}
 		];
 
 var x,y,svg,whiteboard,drag,drag_x;
@@ -877,11 +882,13 @@ function showNGR(){
 
 function hideGoalRisk(){
 	d3.selectAll("#metrics_goal,#metrics_risk").transition().style("visibility","hidden");
+	hideNGR();
 	SHOW_METRICS_GOAL=false;
 }
 
 function showGoalRisk(){
 	d3.selectAll("#metrics_goal,#metrics_risk").transition().style("visibility","visible");
+	showNGR();
 	SHOW_METRICS_GOAL=true;
 }
 
@@ -2366,8 +2373,6 @@ function _targetTooltipHTML(d){
 	_htmlBase+="<tr><td class=\"tiny\">syndicate:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.syndicate)+"</td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">scope:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.scope)+"</b> </td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">non-scope:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.nonScope)+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">commercial:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.commercialScope)+"</b> </td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">remark:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.remark)+"</b> </td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">risk:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.risk)+"</b> </td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">metrics:</td><td class=\"small\" style=\"text-align:left\">"+wiki2html.parse(d.metrics)+"</b> </td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">prio:</td><td><b>"+d.ranking+"</b> </td></tr>";
@@ -2503,8 +2508,7 @@ function onTooltipOutHandler(d,tooltip){
 function drawMetrics(){
 	d3.select("#metrics").remove();
 	
-	//only show metrics in b2c business model view
-	//if (SHOW_METRICS){
+	
 
 		//console.log("----------------------------->drawMetrics:svg="+svg);
 		var i=0;
@@ -2545,7 +2549,8 @@ function drawMetrics(){
 
 		var gMetricsForecast1 = gMetrics.append("g").attr("id","metrics_forecast1");
 		// read configured basedate
-		var _baseDate1 = _getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate;
+		// take the last date in the baseDate array as the one to show 
+		var _baseDate1 = _.last(_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate);
 		_targetResultSum1 = _renderMetrics(gMetricsForecast1,"forecast1",_baseDate1,x(KANBAN_END)+_primaryXOffsetRight-_offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 		
 		if (SHOW_METRICS_FORECAST2)
@@ -2559,7 +2564,8 @@ function drawMetrics(){
 		
 // -------------------------- forecast 2-years (2015)-------------------------------
 		// read configured basedate
-		var _baseDate2 = _getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate;
+		// take the last date in the baseDate array as the one to show 
+		var _baseDate2 = _.last(_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate);
 		var gMetricsForecast2 = gMetrics.append("g").attr("id","metrics_forecast2");
 		_targetResultSum2 = _renderMetrics(gMetricsForecast2,"forecast2",_baseDate2,x(KANBAN_END)+_primaryXOffsetRight-_offset,x(KANBAN_END)+_secondaryXOffsetRight,METRICS_SCALE);
 
@@ -2569,6 +2575,8 @@ function drawMetrics(){
 	
 
 // ------------------------------ potentials ------------------------------------------------
+		var _baseDateG = _.last(_getDataBy("dimension","goal",METRICDATES_DATA).data.baseDate);
+		
 		_primaryXOffsetRight-=120;
 
 		var gMetricsRisk = gMetricsForecast2.append("g").attr("id","metrics_risk");
@@ -2576,10 +2584,10 @@ function drawMetrics(){
 		var _yRisk = 50;
 		var _xRisk = x(KANBAN_END)+_primaryXOffsetRight+30;
 	/* ----------------------------------------- opportunities -----------------------------------------*/
-		_drawPotentials(gMetricsRisk,"forecast2","opportunity",_xRisk,_yRisk);
+		_drawPotentials(gMetricsRisk,"forecast2","opportunity",_baseDateG,_xRisk,_yRisk);
 
 	/* ----------------------------------------- risks ------------------------------------------------ */
-		_drawPotentials(gMetricsRisk,"forecast2","risk",_xRisk,_yRisk+220);
+		_drawPotentials(gMetricsRisk,"forecast2","risk",_baseDateG,_xRisk,_yRisk+220);
 
 	/* ------------------------------------- goal column ------- ------------------------------------*/
 		var gMetricsGoal = gMetricsForecast2.append("g").attr("id","metrics_goal");
@@ -2589,7 +2597,7 @@ function drawMetrics(){
 		 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
 		_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal,10,"left",METRICS_SCALE);
 
-		var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal" });
+		var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal" && d.baseDate==_baseDateG});
 		var _yTotalKpiBase = _yTotal-10;
 		for (var k in _goalKpis){
 			_drawTextMetric(gMetricsGoal,_goalKpis[k],"metricSmall",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,"right",METRICS_SCALE);
@@ -2600,7 +2608,7 @@ function drawMetrics(){
 		_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_primaryXOffsetRight-85,_yTotal+7,1.1,.8,"bracket",0.1);
 		
 		var _diff = _goalResult[0].number-_targetResultSum2;
-		var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":1 };
+		var _delta = {"number":"= "+_diff ,"scale":"mio EUR" ,"type":"missing", "sustainable":-1 };
 
 		_drawTextMetric(gMetricsGoal,_delta,"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal+(30*METRICS_SCALE),10,"left",METRICS_SCALE);
 		// delta end
@@ -2619,8 +2627,8 @@ function drawMetrics(){
 
 /** risks and opportunitis from metricData
  */
-function _drawPotentials(svg,dimension,type,xBase,yBase,scale){
-	var _data= metricData.filter(function(d){return (d.dimension==dimension) && (d.class==type)});
+function _drawPotentials(svg,dimension,type,baseDate,xBase,yBase,scale){
+	var _data= metricData.filter(function(d){return (d.dimension==dimension) && (d.class==type) && d.baseDate==baseDate});
 	var _ySign;
 	
 	if(!scale) scale=METRICS_SCALE;
@@ -2676,21 +2684,10 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 			_resultDir="left";
 	}
 	
-	/* one option to show actuals is to overlay within KANVBAN board on the according reforecast baseDate 
-	 * if (dimension=="actual"){
-		
-		gMetrics.append("rect")
-		.attr("x",-METRIC_BASE_X_OFFSET)
-		.attr("width",METRIC_WIDTH-30)
-		.attr("y",METRIC_BASE_Y)
-		.attr("height",y(100))
-		.style("fill","white")
-		.style("opacity",0.8);
-		
-	}
-	*/
-	
 	var _resultSum=0;
+	var _deltaSum=0;
+	var _delta = 0;
+	
 	
 	for (var m in _metByLane.children){
 		var _l = getLaneByNameNEW(_metByLane.children[m].name);
@@ -2711,8 +2708,15 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 					_drawTextMetric(gMetrics,_mm,"metricSmall",x2Base,_y+_secTextYOffset,6,_kpiDir,scale);
 				}
 				else if (_mm.class=="result") {
-					_drawTextMetric(gMetrics,_mm,"metricBig",x1Base,_y+_primTextYOffset,10,_resultDir,scale);
-					if (_mm.sustainable==1) _resultSum = _resultSum+parseInt(_mm.number);
+					_delta = _drawTextMetric(gMetrics,_mm,"metricBig",x1Base,_y+_primTextYOffset,10,_resultDir,scale);
+					console.log("*** _delta= "+_delta);
+					
+					if (_mm.sustainable==1) {
+						_resultSum = _resultSum+parseInt(_mm.number);
+						_deltaSum = _deltaSum+parseInt(_delta);
+						console.log("******* _deltaSum = "+_deltaSum);
+						
+					}
 				}
 				i++
 			}
@@ -2725,8 +2729,9 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 	// calculated sum
 	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
 	var _yTotal = MARKER_DATE_TOP;
-	var _total = {"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1 };
+	var _total = {"dimension":dimension,"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1, "delta":_deltaSum };
 
+	console.log("************************************************** _total.delta = "+_total.delta);
 
 	// corp result
 	var gCorp = svg.append("g").attr("id","corp_metrics");
@@ -2744,11 +2749,14 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 	var _yPie = METRIC_PIE_BASE_Y;
 	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="marketshare" && d.scale=="% sustainable"});
 
+
 	_drawPie(gCorp,dimension,_met[0],x1Base-20,_yPie);
 
 	// cx baseline 
 	var _yCX =METRIC_CX_BASE_Y;
 	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="loyaltyindex"});
+    
+
     var _met2 = metricData.filter(function(d){return d.dimension==dimension && d.type=="promoterscore"});
 	var _cxData = {"loyalty":_met[0].number,"promoter":_met2[0].number};
 
@@ -2758,6 +2766,8 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 	//market share overall
 	var _yMarketShare = METRIC_SHARE_BASE_Y;
 	_met = metricData.filter(function(d){return d.dimension==dimension  && d.baseDate==baseDate && d.type=="marketshare" && d.scale=="% overall"});
+	
+	
 	_drawTextMetric(gCorp,_met[0],"metricBig",x1Base-10,_yMarketShare,10,"left");
 	
 	return _resultSum;
@@ -2787,7 +2797,7 @@ function checkPreviousForecasts(metric){
 	var _history = new Array();
 	for (var i in metricData){
 		var _m = metricData[i];
-		if (_m.dimension==metric.dimension&&_m.type==metric.type&&_m.lane==metric.lane&&_m.date==metric.date&&_m.scale==metric.scale){
+		if (_m.class==metric.class&&_m.dimension==metric.dimension&&_m.type==metric.type&&_m.lane==metric.lane&&_m.date==metric.date&&_m.scale==metric.scale){
 			// do not add the identical metric and also only add older than current baseDate
 			if (_m.id !=metric.id && _m.baseDate < metric.baseDate){
 				_history.push(_m);
@@ -2801,15 +2811,24 @@ function checkPreviousForecasts(metric){
 /**
  *@direction can be "left" = default or "right" 
  * => left = first number then scale
- * => right = first scale then number*/
+ * => right = first scale then number
+ * 
+ * returns _delta or 0
+ * */
 function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 		var _metricColor;
+		var _deltaOffset=75;
 		if (metric.sustainable==1) _metricColor=COLOR_BPTY;//"174D75";
 		//risks
-		else if (metric.sustainable==-1) _metricColor="ED1C24";
-		
+		else if (metric.sustainable==-1){
+			_metricColor="ED1C24";
+			_deltaOffset = 105;
+		}
 		//opportunities
-		else if (metric.sustainable==2) _metricColor="00A14B";
+		else if (metric.sustainable==2){
+			_metricColor="00A14B";
+			_deltaOffset = 105;
+		}
 		
 		else _metricColor="grey";
 		
@@ -2830,6 +2849,7 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 			_anchor = "start";
 			_xNumber = _xNumber+space;
 		}
+		
 		
 		var gMetric=svg.append("g").attr("id","metric_"+metric.id+"."+metric.lane+"."+metric.class+"."+metric.type);
 		
@@ -2864,67 +2884,73 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 			.attr("class",css+"Type");
 			
 		var _previous = checkPreviousForecasts(metric);
-		
+		var _delta = 0;
 		// now we have to take the last of the array as default = show trend from existing to moist recent previous forecast
 		
-		if (_previous.length>0){
+		if ((_previous.length>0 && !isNaN(metric.number )) || metric["delta"]!=null ){
 			_pmetric = _.last(_previous);
 			// do some calculations
 			// stupid javascript sucks in decimal/float
-			var _delta = ((metric.number*100)-(_pmetric.number*100))/100;
-			var _color;
-			var _xoffset;
-			var _yoffset;
-			var _symbol;
-			var _scale=scale*0.8;
 			
-			_xoffset = 75*scale;
-			_yoffsetText = -5;
-			_yoffsetSymbol = -1;
+			if (metric["delta"]!=null) _delta = metric.delta;
+			else _delta = Math.round(((metric.number*100)-(_pmetric.number*100)))/100;
 			
-			
-			if (metric.class=="kpi") {
-				_scale =scale*0.5;
-				_xoffset = 85*scale;
-				_yoffsetSymbol=1;
-				_yoffsetText=0;
-			}
+			if (metric.dimension!="baseline"){
+				var _color;
+				var _xoffset;
+				var _yoffset;
+				var _symbol;
+				var _scale=scale*0.8;
 				
-			
-			if (_delta >0) {
-				_color="green";
-				_symbol = "triangle-up";
-				_delta = "+"+_delta;
+				_xoffset = _deltaOffset*scale;
+				_yoffsetText = -5;
+				_yoffsetSymbol = -1;
 				
+				
+				if (metric.class=="kpi") {
+					_scale =scale*0.5;
+					_xoffset = 85*scale;
+					_yoffsetSymbol=1;
+					_yoffsetText=0;
+				}
+					
+				
+				if (_delta >0) {
+					_color="green";
+					_symbol = "triangle-up";
+					_delta = "+"+_delta;
+					
+				}
+				else if (_delta==0){
+					_color = "grey";
+					_symbol = "circle";
+				}
+				else {
+					_color="red";
+					_symbol="triangle-down";
+					// the triangle-down needs slight different y-position ..
+					if (metric.class=="result") _yoffsetSymbol=-2;
+				}
+				
+				// draw trend indicator 
+				gMetric.append("path")
+				.attr("transform","translate("+(x+_xoffset)+","+(y-_yoffsetSymbol)+") rotate("+(0)+") scale("+_scale+")")
+				.attr("d",d3.svg.symbol().type(_symbol))
+				.style("fill",_color)
+				
+				// and the delta
+				gMetric.append("text")
+				.text(_delta)
+				.attr("transform","translate ("+(x+_xoffset-(8*_scale))+","+(y-_yoffsetText)+") scale("+_scale+")")
+				.style("fill",_color)
+				.style("text-anchor","end")
+				.style("font-weight","bold")
+				.style("font-size","10px");
 			}
-			else if (_delta==0){
-				_color = "grey";
-				_symbol = "circle";
-			}
-			else {
-				_color="red";
-				_symbol="triangle-down";
-				// the triangle-down needs slight different y-position ..
-				if (metric.class=="result") _yoffsetSymbol=-2;
-			}
-			
-			// draw trend indicator 
-			gMetric.append("path")
-			.attr("transform","translate("+(x+_xoffset)+","+(y-_yoffsetSymbol)+") rotate("+(0)+") scale("+_scale+")")
-			.attr("d",d3.svg.symbol().type(_symbol))
-			.style("fill",_color)
-			
-			// and the delta
-			gMetric.append("text")
-			.text(_delta)
-			.attr("transform","translate ("+(x+_xoffset-(8*_scale))+","+(y-_yoffsetText)+") scale("+_scale+")")
-			.style("fill",_color)
-			.style("text-anchor","end")
-			.style("font-weight","bold")
-			.style("font-size","10px");
-			
 		}	
-			
+		
+		console.log("...returning _delta of: "+_delta);
+		return _delta;	
 }
 
 function _drawMetricSeparator(svg,x){
@@ -4485,112 +4511,10 @@ function get_metrics(el) {
     return obj;
 }
 
-
-
-var PACKAGE_VERSION="20140105_1132";
-var PACKAGE_VERSION="20140105_1225";
-var PACKAGE_VERSION="20140107_1602";
-var PACKAGE_VERSION="20140112_1144";
-var PACKAGE_VERSION="20140113_2047";
-var PACKAGE_VERSION="20140113_2117";
-var PACKAGE_VERSION="20140114_1509";
-var PACKAGE_VERSION="20140115_1756";
-var PACKAGE_VERSION="20140115_2028";
-var PACKAGE_VERSION="20140116_0800";
-var PACKAGE_VERSION="20140117_0810";
-var PACKAGE_VERSION="20140118_2252";
-var PACKAGE_VERSION="20140120_1919";
-var PACKAGE_VERSION="20140120_1944";
-var PACKAGE_VERSION="20140120_1954";
-var PACKAGE_VERSION="20140121_2131";
-var PACKAGE_VERSION="20140122_2107";
-var PACKAGE_VERSION="20140122_2126";
-var PACKAGE_VERSION="20140123_0702";
-var PACKAGE_VERSION="20140123_1817";
-var PACKAGE_VERSION="20140123_1817";
-var PACKAGE_VERSION="20140123_1824";
-var PACKAGE_VERSION="20140124_1110";
-var PACKAGE_VERSION="20140124_1113";
-var PACKAGE_VERSION="20140124_1430";
-var PACKAGE_VERSION="20140124_1457";
-var PACKAGE_VERSION="20140124_1458";
-var PACKAGE_VERSION="20140124_1506";
-var PACKAGE_VERSION="20140124_1509";
-var PACKAGE_VERSION="20140124_1510";
-var PACKAGE_VERSION="20140124_1520";
-var PACKAGE_VERSION="20140124_1551";
-var PACKAGE_VERSION="20140124_1753";
-var PACKAGE_VERSION="20140124_1831";
-var PACKAGE_VERSION="20140128_1034";
-var PACKAGE_VERSION="20140128_1331";
-var PACKAGE_VERSION="20140128_1915";
-var PACKAGE_VERSION="20140128_1920";
-var PACKAGE_VERSION="20140128_1936";
-var PACKAGE_VERSION="20140128_1937";
-var PACKAGE_VERSION="20140129_1135";
-var PACKAGE_VERSION="20140129_1156";
-var PACKAGE_VERSION="20140129_1750";
-var PACKAGE_VERSION="20140130_1811";
-var PACKAGE_VERSION="20140130_1930";
-var PACKAGE_VERSION="20140131_0828";
 	
-var PACKAGE_VERSION="20140131_1820";
+var PACKAGE_VERSION="20140309_1000";
+var PACKAGE_VERSION="20140312_1759";
+	var PACKAGE_VERSION="20140312_1759";
 	
-var PACKAGE_VERSION="20140204_0911";
-	
-var PACKAGE_VERSION="20140205_1820";
-	
-var PACKAGE_VERSION="20140206_0835";
-	
-var PACKAGE_VERSION="20140206_1704";
-	
-var PACKAGE_VERSION="20140207_1428";
-	
-var PACKAGE_VERSION="20140207_1803";
-	
-var PACKAGE_VERSION="20140207_1901";
-	
-var PACKAGE_VERSION="20140218_1509";
-	var PACKAGE_VERSION="20140218_1512";
-	var PACKAGE_VERSION="20140218_1528";
-	var PACKAGE_VERSION="20140218_1540";
-	
-var PACKAGE_VERSION="20140218_1713";
-	var PACKAGE_VERSION="20140218_1727";
-	
-var PACKAGE_VERSION="20140218_1806";
-	
-var PACKAGE_VERSION="20140218_1842";
-	
-var PACKAGE_VERSION="20140220_1441";
-	
-var PACKAGE_VERSION="20140220_1525";
-	var PACKAGE_VERSION="20140221_1640";
-	
-var PACKAGE_VERSION="20140221_1709";
-	
-var PACKAGE_VERSION="20140222_0754";
-	
-var PACKAGE_VERSION="20140225_0911";
-	
-var PACKAGE_VERSION="20140226_1804";
-	
-var PACKAGE_VERSION="20140226_1833";
-	var PACKAGE_VERSION="20140226_1834";
-	var PACKAGE_VERSION="20140226_1835";
-	var PACKAGE_VERSION="20140226_1837";
-	var PACKAGE_VERSION="20140226_1838";
-	var PACKAGE_VERSION="20140226_1839";
-	
-var PACKAGE_VERSION="20140227_0823";
-	
-var PACKAGE_VERSION="20140227_0917";
-	
-var PACKAGE_VERSION="20140227_1538";
-	var PACKAGE_VERSION="20140228_1019";
-	var PACKAGE_VERSION="20140228_1023";
-	
-var PACKAGE_VERSION="20140228_1742";
-	
-var PACKAGE_VERSION="20140228_1743";
+var PACKAGE_VERSION="20140312_1807";
 	
