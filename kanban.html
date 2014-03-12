@@ -353,7 +353,7 @@ function submit_download_form(output_format)
 <div class="btn-group-xs">
 	<span style="font-size:8px">forecast basedate:</span><select id="basedate" class="multiselect">
 	  <option value="2013-10-31">2013-10-31</option>
-	  <option value="2014-02-28">2014-02-28</option>
+	  <option value="2014-03-11" selected>2014-03-11</option>
 	</select>
 </div>	
 
@@ -386,8 +386,15 @@ function submit_download_form(output_format)
 				
 			
 			console.log("element: "+_val+" checked: "+checked);
-			_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate=_val;
-			//_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate=_val;
+			
+			if (_val=="2013-10-31"){
+				_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate=[_val];
+				_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate=[_val];
+			}
+			else if(_val=="2014-03-11"){
+				_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate=["2013-10-31",_val];
+				_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate=["2013-10-31",_val];
+			}
 			drawAll();
 			
 		}
