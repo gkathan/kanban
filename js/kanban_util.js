@@ -1,4 +1,4 @@
-/** first version of mudularized kanban.js
+/** kanban_utils
  * extracted kanban_core stuff (hierarchy calculation...)
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
@@ -107,7 +107,7 @@ function getThemesNEW(){
 
 function getElementsByDepth(depth){
 	var _elements = new Array();
-	traverse(itemData,0,depth,_elements);
+	traverse(itemTree,0,depth,_elements);
 	return _elements;
 }
 
@@ -309,25 +309,14 @@ function layout(elements,yBase){
 
 	for (var i in elements){
 		if (elements[i].node()) {
-		console.log("...layout get metrics of: "+elements[i]);
-		var _m =get_metrics(elements[i].node());
-		_total+=_m.height
-		console.log("height: "+_m.height+" total:"+_total+" m.y: "+_m.y);
-		_yList.push(_m.y);
-		_number++;
+			console.log("...layout get metrics of: "+elements[i]);
+			var _m =get_metrics(elements[i].node());
+			_total+=_m.height
+			console.log("height: "+_m.height+" total:"+_total+" m.y: "+_m.y);
+			_yList.push(_m.y);
+			_number++;
+		}
 	}
-	}
-	
-	/*
-	elements.each(function (d){
-		console.log("this: "+d);
-		var _m =get_metrics(d3.select(this).node());
-		_total+=_m.height
-		console.log("height: "+_m.height+" total:"+_total+" m.y: "+_m.y);
-		_yList.push(_m.y);
-		_number++;
-	})
-	*/
 
 	//var _ids = d3.select("#items").selectAll("g")[0];
 	var _min = d3.min(_yList);
@@ -341,21 +330,15 @@ function layout(elements,yBase){
 	
 	for (var e in elements){
 		if (elements[e].node()) {
-		var _m =get_metrics(elements[e].node());
-		elements[e].attr("transform","translate(0,"+(yBase+i-_m.y)+")");
-		
-		i+=_m.height+_space;
+			var _m =get_metrics(elements[e].node());
+			elements[e].attr("transform","translate(0,"+(yBase+i-_m.y)+")");
+			i+=_m.height+_space;
+		}
 	}
-	}
-
-/*
-	elements.each(function (d){
-		d3.select(this).attr("transform",function(d){return "translate(0,"+(_min+i-get_metrics(d3.select(this).node()).y)+")";});
-		i+=get_metrics(d3.select(this).node()).height+_space;
-	})
-	*/
 }
 
+
+// =================================== auto-layout END =====================================
 
 
 function wrapText(caption,maxChars){
@@ -506,24 +489,47 @@ function _registerDragDrop(){
 }
 
 	
-// ---------------- D3 helper functions -----------------------------------
+// =================================== D3 helper functions ==========================================
 
-/**
- */
-function _drawText(svg,text,x,y,size,weight,anchor,color,style){
-	if (!style) style="normal";
-	if (!color) color="black";
-	svg.append("text")
-	.text(text)
-	.style("font-size",size+"px")
-	.style("font-weight",weight)
-	.style("font-style",style)
-	.style("fill",color)
-	.style("text-anchor",anchor)
-	.attr("x",x)
-	.attr("y",y);
+function _drawXlink(svg,href,x,y,style){
+	if (!style.rotate) style.rotate=0;
+	if (!style.scale) style.scale=1;
 	
+	var _xlink = svg.append("use")
+		.attr("xlink:href",href)
+		.attr("transform","translate("+x+","+y+") scale("+style.scale+") rotate("+style.rotate+")");
+	if (style.cursor) _xlink.style("cursor",style.cursor);
+	if (style.opacity) _xlink.style("opacity",style.opacity);
+	
+	return _xlink;
 }
+
+
+//_drawText(svg,"text",100,100,1,{"weight":bold,"color":"blue","anchor":"end"})
+ 
+function _drawText(svg,text,x,y,style){
+	if (!style.style) style.style="normal";
+	if (!style.anchor) style.anchor="start";
+	if (!style.rotate) style.rotate=0;
+	if (!style.scale) style.scale=1;
+    
+	var _text = svg.append("text")
+	.text(text)
+	.style("font-style",style.style)
+	.style("text-anchor",style.anchor)
+ 	.attr("transform","translate ("+x+","+y+") scale("+style.scale+") rotate("+style.rotate+")");
+	
+    if (style.color) _text.style("fill",style.color);
+	if (style.size) _text.style("font-size",style.size);
+    if (style.weight) _text.style("font-weight",style.weight);
+    if (style.opacity) _text.style("opacity",style.opacity);
+    if (style.mode) _text.style("writing-mode","tb"); 
+    if (style.css) _text.attr("class",style.css); 
+
+    return _text;
+}
+ 
+
 
 
 /**
