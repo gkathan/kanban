@@ -1,4 +1,4 @@
-/** first version of mudularized kanban.js
+/** kanban_queues
  * extracted kanban_core stuff (hierarchy calculation...)
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
@@ -14,9 +14,6 @@
 var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
 	
 var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
-
-
-
 
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -102,10 +99,8 @@ function drawQueues(){
 
 /* ------------------------------------------------- drawQueues() helper functions ----------------------------------------------------------- */
 		function _drawTodayMarker(svg,x,y,text){
-				svg.append("use").attr("xlink:href","#today_marker")
-				.attr("transform","translate("+(x-5.5)+",-70) scale(1.1)");
-
-				_drawText(svg,text,x,y,"18px","bold","middle","red","normal");
+				_drawXlink(svg,"#today_marker",(x-5.5),-70,{"scale":"1.1"});
+				_drawText(svg,text,x,y,{"size":"18px","weight":"bold","anchor":"middle","color":"red"});
 		}
 
 		/**
@@ -125,23 +120,10 @@ function drawQueues(){
 		 * 
 		 */
 		function _drawQueueMarker(svg,date,css,x,y){
-			svg.append("text")
-				.text(date.toString("d-MMM-yyyy"))
-				.attr("class",css+"Text")
-				.style("text-anchor","start")
-				.attr("x",x+5)
-				.attr("y",(y+3));
-
-			svg.append("text")
-				.text(date.toString("d-MMM-yyyy"))
-				.attr("class",css+"Text")
-				.style("text-anchor","start")
-				.style("font-weigth","bold")
-				.attr("x",x+5)
-				.attr("y",height-y+3);
+			_drawText(svg,date.toString("d-MMM-yyyy"),(x+5),(y+3),{"css":css+"Text","anchor":"start"});
+			_drawText(svg,date.toString("d-MMM-yyyy"),(x+5),(height-y+3),{"weight":"bold","css":css+"Text","anchor":"start"});
 
 			_drawLine(svg,(x+0.5),y,(x+0.5),(height-y),css+"Line",[{"start":"rect_red"},{"end":"rect_red"}]);
-			
 		}
 
 		/**
@@ -149,35 +131,11 @@ function drawQueues(){
 		function _drawQueueMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space,color,orientation){
 			if(!color) color=COLOR_BPTY;
 			if (width){
-				svg.append("use")
-				.attr("xlink:href","#icon_bracket_"+orientation+"_blue")
-				.style("opacity",0.15)
-				.attr("transform","translate("+bracketX+","+bracketY+") scale("+(width/100)+",1) rotate(0)");
+				_drawXlink(svg,"#icon_bracket_"+orientation+"_blue",bracketX,bracketY,{"scale":(width/100)+",1","opacity":0.15});
 			}
-			
-			svg.append("text")
-			.text(metric.text)
-			.style("text-anchor","middle")
-			.style("font-size","18px")
-			.style("fill",color)
-			.attr("class","metricItems")
-			.attr("transform","translate("+metricX+","+metricY+") rotate(0)");
-
-			svg.append("text")
-			.text(metric.items+ " items")
-			.attr("class","metricItems")
-			.style("text-anchor","middle")
-			.style("font-size","9px")
-			.style("fill",color)
-			.attr("transform","translate("+metricX+","+(metricY+space)+") rotate(0)");
-
-			svg.append("text")
-			.text("["+metric.swag+" PD]")
-			.attr("class","metricItems")
-			.style("text-anchor","middle")
-			.style("font-size","7px")
-			.style("fill",color)
-			.attr("transform","translate("+metricX+","+(metricY+space+(space-2))+") rotate(0)");
+			_drawText(svg,metric.text,metricX,metricY,{"size":"18px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,metric.items+ " items",metricX,(metricY+space),{"size":"9px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,"["+metric.swag+" PD]",metricX,(metricY+space+(space-2)),{"size":"7px","css":"metricItems","color":color,"anchor":"middle"});
 		}
 
 /* ------------------------------------------------- END drawQueues() helper functions ----------------------------------------------------------- */

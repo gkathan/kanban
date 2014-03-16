@@ -1,4 +1,4 @@
-/** first version of mudularized kanban.js
+/** kanban_metrics
  * extracted kanban_core stuff (hierarchy calculation...)
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
@@ -183,7 +183,8 @@ function drawMetrics(){
 		}
 		
 		//delta symbol
-		_drawSign(gMetricsGoal,x(KANBAN_END)+_primaryXOffsetRight-36,_yTotal+20,"icon_delta",0.4);
+		_drawXlink(gMetricsGoal,"#icon_delta",(x(KANBAN_END)+_primaryXOffsetRight-36),(_yTotal+20),{"scale":0.4});
+
 		_drawBracket(gMetricsGoal,"blue","bottom",x(KANBAN_END)+_primaryXOffsetRight-85,_yTotal+7,1.1,.8,"bracket",0.1);
 		
 		var _diff = _goalResult[0].number-_targetResultSum2;
@@ -219,7 +220,7 @@ function _drawPotentials(svg,dimension,type,baseDate,xBase,yBase,scale){
 	if (type=="risk")_ySign = yBase-65;
 	else if (type=="opportunity")_ySign= yBase+((i*20)*scale)+10;
 	
-	_drawSign(svg,xBase+5,_ySign,type);
+	_drawXlink(svg,"#"+type,(xBase+5),_ySign,{"scale":1});
 }
 
 
@@ -352,22 +353,14 @@ function _renderMetrics(svg,dimension,baseDate,x1Base,x2Base,scale){
 	return _resultSum;
 }
 
-function _drawSign(svg,x,y,type,scale){
-		if (!scale) scale = 1;
-		svg.append("use").attr("xlink:href","#"+type)
-		.attr("transform","translate ("+x+","+y+") scale("+scale+")");
-}
-
 /**
  * icon_bracket<direction><type>
  */
 function _drawBracket(svg,color,direction,x,y,scaleX,scaleY,type,opacity){
 		if (!type) type="bracket";
 		if (!opacity) opacity = 0.15;
-		//svg.append("use").attr("xlink:href","#icon_triangle_"+direction+_bracketType)
-		svg.append("use").attr("xlink:href","#icon_"+type+"_"+direction+"_"+color)
-		.style("opacity",opacity)
-		.attr("transform","translate ("+x+","+y+") scale("+scaleX+","+scaleY+")");
+	
+		_drawXlink(svg,"#icon_"+type+"_"+direction+"_"+color,x,y,{"scale":+scaleX+","+scaleY,"opacity":opacity});
 }
 
 
@@ -429,39 +422,17 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 			_xNumber = _xNumber+space;
 		}
 		
-		
 		var gMetric=svg.append("g").attr("id","metric_"+metric.id+"."+metric.lane+"."+metric.class+"."+metric.type);
-		
-		gMetric.append("text")
-			.text(metric.number)
-			.attr("transform","translate ("+_xNumber+","+(y+space/2)+") scale("+scale+")")
-			//.attr("x",_xNumber)
-			//.attr("y",y+space/2)
-			.style("fill",_metricColor)
-			.style("text-anchor",_anchor)
-			.attr("class",css+"Number");
+
+		_drawText(gMetric,metric.number,_xNumber,(y+space/2),{"anchor":_anchor,"color":_metricColor,"css":css+"Number","scale":scale});
 			
 		_anchor = "start";
 		if (direction=="right") _anchor = "end";
 		
-		gMetric.append("text")
-			.text(metric.scale)
-			.attr("transform","translate ("+(x+space/2)+","+(y-space/2)+") scale("+scale+")")
-			//.attr("x",x+space/2)
-			//.attr("y",y-space/2)
-			.style("fill",_metricColor)
-			.style("text-anchor",_anchor)
-			.attr("class",css+"Scale");
+		_drawText(gMetric,metric.scale,(x+space/2),(y-space/2),{"anchor":_anchor,"color":_metricColor,"css":css+"Scale","scale":scale});
+		_drawText(gMetric,metric.type,(x+space/2),(y+space/2),{"anchor":_anchor,"color":_metricColor,"css":css+"Type","scale":scale});
 
-		gMetric.append("text")
-			.text(metric.type)
-			.attr("transform","translate ("+(x+space/2)+","+(y+space/2)+") scale("+scale+")")
-			//.attr("x",x+space/2)
-			//.attr("y",y+space/2)
-			.style("fill",_metricColor)
-			.style("text-anchor",_anchor)
-			.attr("class",css+"Type");
-			
+		
 		var _previous = checkPreviousForecasts(metric);
 		var _delta = 0;
 		// now we have to take the last of the array as default = show trend from existing to moist recent previous forecast
@@ -485,14 +456,12 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 				_yoffsetText = -5;
 				_yoffsetSymbol = -1;
 				
-				
 				if (metric.class=="kpi") {
 					_scale =scale*0.5;
 					_xoffset = 85*scale;
 					_yoffsetSymbol=1;
 					_yoffsetText=0;
 				}
-					
 				
 				if (_delta >0) {
 					_color="green";
@@ -510,25 +479,15 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale){
 					// the triangle-down needs slight different y-position ..
 					if (metric.class=="result") _yoffsetSymbol=-2;
 				}
-				
 				// draw trend indicator 
 				gMetric.append("path")
 				.attr("transform","translate("+(x+_xoffset)+","+(y-_yoffsetSymbol)+") rotate("+(0)+") scale("+_scale+")")
 				.attr("d",d3.svg.symbol().type(_symbol))
 				.style("fill",_color)
-				
 				// and the delta
-				gMetric.append("text")
-				.text(_delta)
-				.attr("transform","translate ("+(x+_xoffset-(8*_scale))+","+(y-_yoffsetText)+") scale("+_scale+")")
-				.style("fill",_color)
-				.style("text-anchor","end")
-				.style("font-weight","bold")
-				.style("font-size","10px");
+				_drawText(gMetric,_delta,(x+_xoffset-(8*_scale)),(y-_yoffsetText),{"size":"10px","weight":"bold","anchor":"end","color":_color,"scale":_scale});
 			}
 		}	
-		
-		console.log("...returning _delta of: "+_delta);
 		return _delta;	
 }
 
@@ -542,14 +501,13 @@ function _drawMetricSeparator(svg,x){
  * */
 function _drawMetricDate(svg,x,y,data){
 	var gDate = svg.append("g").attr("id","metric_date_"+data.title);
-	_drawText(gDate,data.title,x,y,16,"bold","start",COLOR_BPTY,null);
+	_drawText(gDate,data.title,x,y,{"size":"16px","weight":"bold","anchor":"start","color":COLOR_BPTY});
 	
-	_drawText(gDate,data.sub+": ",x,y+7,5,"normal","start",COLOR_BPTY,null);
-	_drawText(gDate,data.date.toString('yyyy-MM-dd'),x+30,y+7,6,"bold","start",COLOR_BPTY,null);
+	_drawText(gDate,data.sub+": ",x,y+7,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+	_drawText(gDate,data.date.toString('yyyy-MM-dd'),x+30,y+7,{"size":"6px","weight":"bold","anchor":"start","color":COLOR_BPTY});
 	
-	_drawText(gDate,data.subBase+": ",x,y+14,5,"normal","start",COLOR_BPTY,null);
-	_drawText(gDate,data.baseDate.toString('yyyy-MM-dd'),x+30,y+14,6,"bold","start",COLOR_BPTY,null);
-
+	_drawText(gDate,data.subBase+": ",x,y+14,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+	_drawText(gDate,data.baseDate.toString('yyyy-MM-dd'),x+30,y+14,{"size":"6px","weight":"bold","anchor":"start","color":COLOR_BPTY});
 }
 
 
@@ -557,11 +515,9 @@ function _drawMetricDate(svg,x,y,data){
 /** helper function
  * */
 function _drawPie(svg,id,_data,x,y,scale){
-	
 	if (!scale)scale=METRICS_SCALE;
 	
 	var radius =40*scale;//40*METRICS_SCALE;
-
 
     var data = [{"type":"sustainable","percentage":_data.number},{"type":"notsustainable","percentage":100-_data.number}];
     
@@ -586,6 +542,7 @@ function _drawPie(svg,id,_data,x,y,scale){
 	  .style("stroke", "#ffffff")
 	  .style("stroke-width", 4*scale+"px");
 
+
 	gPie.append("text")
 	  .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
 	  .attr("dy", ".35em")
@@ -607,48 +564,17 @@ function _drawCX (svg,data,x,y,scale){
 		
 		if(!scale) scale=METRICS_SCALE;
 		
-		gCX.append("use").attr("xlink:href","#customer")
-		.attr("transform","translate ("+x+","+y+") scale("+(.5*scale)+")");
-	
-		gCX.append("text")
-		.text(data.promoter)
-		.style("font-size","8px")
-		.style("font-weight","bold")
-		.style("fill","white")
-		.attr("x",x+7)
-		.attr("y",y+12)
-			.append("tspan")
-			.text("%")
-			.style("font-size","4px")
-			.style("font-weight","normal");
-
-		gCX.append("text")
-		.text("promoter-score")
-		.style("font-size","5px")
-		.style("font-weight","normal")
-		.style("fill",COLOR_BPTY)
-		.attr("x",x-4)
-		.attr("y",y-2)
+		_drawXlink(gCX,"#customer",x,y,{"scale":(.5*scale)});
 		
-		gCX.append("text")
-		.text(data.loyalty)
-		.style("font-size","12px")
-		.style("font-weight","bold")
-		.style("fill","white")
-		.attr("x",x+5)
-		.attr("y",y+38)
-			.append("tspan")
-			.text("%")
-			.style("font-size","4px")
-			.style("font-weight","normal");
-			
-		gCX.append("text")
-		.text("loyalty-index")
-		.style("font-size","5px")
-		.style("font-weight","normal")
-		.style("fill",COLOR_BPTY)
-		.attr("x",x)
-		.attr("y",y+50);
+		_drawText(gCX,data.promoter,x+7,y+12,{"size":"8px","weight":"bold","anchor":"start","color":"white"})
+			.append("tspan").text("%").style("font-size","4px").style("font-weight","normal");;
+
+		_drawText(gCX,"promoter-score",x-4,y-2,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+
+		_drawText(gCX,data.loyalty,x+5,y+38,{"size":"12px","weight":"bold","anchor":"start","color":"white"})
+			.append("tspan").text("%").style("font-size","4px").style("font-weight","normal");
+
+		_drawText(gCX,"loyalty-index",x,y+50,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY})
 }
 
 

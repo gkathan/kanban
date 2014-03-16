@@ -1,4 +1,4 @@
-/** first version of mudularized kanban.js
+/** kanban_items
  * extracted kanban_core stuff (hierarchy calculation...)
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
@@ -18,12 +18,10 @@ var targetData;
 // depending on context we filter this data for every view
 var filteredInitiativeData;
 
-
-
 var postitData;
 
 // hierarchical data enriched with y-coords based on lanestructure
-var itemData;
+var itemTree;
 var targetTree;
 
 
@@ -125,9 +123,9 @@ function drawTargets(){
 		// ------------  targeticon & names & postits --------------
 		// if isCorporate flag is not set use "tactic" icon 
 		var _iconRef=d.Type;
-		d3.select(this)
-			.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
-			.attr("transform","translate("+(_itemXTarget-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
+		
+		_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
+
 		
 		_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
 		
@@ -319,9 +317,7 @@ function drawItems(){
 				// ----------- circle icons -------------
 				// only append icon if we have declared on in external.svg
 				if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
-					d3.select(this)
-						.append("use").attr("xlink:href","#icon_"+d.theme+"."+d.lane+"."+d.sublane)
-						.attr("transform","translate("+(_itemX-(1.2*_size/2))+","+(_itemY-(1.2*_size/2))+") scale("+_size/10+") ");
+					_drawXlink(d3.select(this),"#icon_"+d.theme+"."+d.lane+"."+d.sublane,(_itemX-(1.2*_size/2)),(_itemY-(1.2*_size/2)),{"scale":_size/10});
 				}
 			}
 		} //end if d.Type!="target"
@@ -333,9 +329,7 @@ function drawItems(){
 			if (!d.isCorporate) {
 				_iconRef = "tactic";
 			}
-			d3.select(this)
-				.append("use").attr("xlink:href",function(d){return "#"+_iconRef})
-				.attr("transform","translate("+(_itemXPlanned-(1.2*_size))+","+(_itemY-(1.2*_size))+") scale("+_size/10+") ");
+			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXPlanned-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 			
 			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
 			
@@ -458,27 +452,13 @@ function _drawPostit(svg,d){
 		var _rotate = Math.floor(Math.random() * (_rmax - _rmin + 1) + _rmin);
 		var _scale = (_size/8)*POSTIT_SCALE;
 		
-		var postit = gPostit
-		/*.on("mouseover", function(d){
-			d3.select(this)
-			.style("cursor","pointer");
-			onTooltipOverHandler(d,tooltip,"#postit_");}); 
-	*/
-		postit.append("use")
-		.attr("xlink:href","#postit_yellow")
-		.attr("transform","translate("+postit_x+","+postit_y+") scale("+_scale+") rotate("+_rotate+")")
+		_drawXlink(gPostit,"#postit_yellow",postit_x,postit_y,{"scale":_scale,"rotate":_rotate});
 		
-		postit.append("text")
-		.text("todo:")
-		.style("text-anchor","start")
-		.style("font-size",(3+_size/6)+"px")
-		.style("font-weight","bold")
-		.style("fill","red")
-		.attr("transform","translate("+(postit_x+1)+","+(postit_y+5)+") rotate("+_rotate+") scale("+POSTIT_SCALE+")")
-		.append("tspan")
-		.attr("dy",5)
-		.attr("x",0)
-		.text("id:"+d.id);
+		_drawText(gPostit,"todo:",(postit_x+1),(postit_y+5),{"size":(3+_size/6)+"px","color":"red","weight":"bold","anchor":"start","rotate":_rotate,"scale":POSTIT_SCALE})
+			.append("tspan")
+			.attr("dy",5)
+			.attr("x",0)
+			.text("id:"+d.id);
 	}
 }
 
@@ -1023,10 +1003,8 @@ Postit.prototype.draw=function(svg){
 	
 	var _split = this.text.split("/");
 
-	postit.append("use")
-		.attr("xlink:href","#postit_"+this.color)
-		.style("cursor","pointer")		
-		.attr("transform","translate("+this.x+","+this.y+") scale("+this.scale+") rotate("+_rotate+")");
+	_drawXlink(postit,"#postit_"+this.color,this.x,this.y,{"scale":this.scale,"rotate":_rotate,"cursor":"pointer"});
+
 		
 	var _x = (getInt(this.x)+Math.sqrt(this.scale)+1);
 	var _y = (getInt(this.y)+Math.sqrt(this.scale)-1);

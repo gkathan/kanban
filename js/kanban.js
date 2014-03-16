@@ -143,8 +143,6 @@ var COLOR_BPTY="#174D75";
 
 var COLOR_TARGET = COLOR_BPTY;
 
-// size of white space around boxes
-var WIDTH_WHITESTROKE ="5px";
 
 
 
@@ -227,9 +225,6 @@ function init(){
 }
 
 
-
-
-
 /** main etry point
  * 
  */
@@ -299,37 +294,11 @@ function renderB2CGaming() {
 					initiativeData=initiatives;
 					// do not show sensitive data
 					safeMetrics();
-					
 					drawAll();
 					drawCustomPostits();
 					initHandlers();
-					
 				});
  
- var grid;
-  var columns = [
-
-        { id:"id", name: "id", field: "id" },
-        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text },
-        { id: "name2", name: "name2",  field: "name2" },
-        { id: "Swag", name: "Swag", field: "Swag" },
-		{ id: "planDate", name: "planDate", field: "planDate", editor: Slick.Editors.Date },
-		{ id: "actualDate", name: "actualDate", field: "actualDate", editor: Slick.Editors.Date },
-        { id: "lane", name: "lane",  field: "lane" }
-
-  ];
-
-  var options = {
-	editable: true,
-    enableAddRow: true,
-    enableCellNavigation: true,
-    asyncEditorLoading: false,
-    autoEdit: false
-     };
-
-  
-    //grid = new Slick.Grid("#grid_items", initiativeData, columns, options);
-  
 }
 
 function renderHistory() {
@@ -357,7 +326,6 @@ function renderHistory() {
 					initHandlers();
 					
 				});
-		
 }
 
 function hideWhiteboard(){
@@ -380,8 +348,8 @@ function renderWhiteboard() {
 					d3.select("#kanban").style("visibility","hidden");
 
 					d3.select("#whiteboard").style("visibility","visible");
-					whiteboard.append("use").attr("xlink:href","#whiteboard")
-					.attr("transform","translate(20,20) scale(3) ");
+					
+					_drawXlink(whiteboard,"#whiteboard",20,20,{"scale":3});
 
 					//drawWhiteboardPostits();
 					for (var i in initiativeData){
@@ -611,7 +579,7 @@ function drawAll(){
 	
 
 	var _context = {"yMin":Y_MIN,"yMax":Y_MAX,"name":CONTEXT};
-	itemData = createLaneHierarchy(initiativeData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
+	itemTree = createLaneHierarchy(initiativeData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	targetTree = createLaneHierarchy(targetData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	
 	drawInitiatives();
@@ -687,10 +655,8 @@ function drawWC2014(svg){
 		.style("fill","white")
 		.style("opacity",0.4);
 		
-		
-		svg.append("use").attr("xlink:href","#wc2014")
-		.attr("transform","translate ("+(_x1+15)+","+(-65)+") scale(.3) ")
-		.style("opacity",1);
+		_drawXlink(svg,"#wc2014",(_x1+15),-65,{"scale":.3});
+
 	}
 }
 
@@ -721,48 +687,29 @@ function drawReleases(){
 			console.log("*** release: "+d.ReleaseName+" date: "+d.CurrentReleaseDate);
 			if (_releaseDate > KANBAN_START){
 				_drawLine(d3.select(this),x(_releaseDate),-5,x(_releaseDate),height+5,"releaseLine",[{"start":"rect_blue"}]);
-				
-				d3.select(this).append("text")
-				.text(d.ReleaseName)
-				.style("fill","blue")
-				.style("font-size","7px")
-				.style("font-weight","bold")
-				.style("opacity",0.5)
-				.attr("transform","translate("+x(_releaseDate)+",-15) rotate(-45)");
+		
+			_drawText(d3.select(this),d.ReleaseName,x(_releaseDate),-15,{"size":"7px","weight":"bold","opacity":0.5,"color":"blue","rotate":-45})
+		
 		}
 	});
 			
 }
 
-
-
-
-
-
-
+/**
+ * prototype for showing inline graphcharts
+ */
 function drawLineChart()
 {
 	var linechart = svg.select("#metrics").append("g").attr("id","linechart").style("visibility","hidden");
-
 	var parseDate = d3.time.format("%d-%b-%y").parse;
-
 	var _lane = getLaneByNameNEW("bwin");
 
 	if (_lane){
-
-		var _y1 = y(getLaneByNameNEW("bwin").yt1);
+	var _y1 = y(getLaneByNameNEW("bwin").yt1);
 		var _y2 = y(getLaneByNameNEW("bwin").yt2);
-
-
 		var _height = _y2-_y1;
-
-		console.log("height: bwin"+_height+" y1:"+_y1);
-
-		var x_line = d3.time.scale()
-			.range([0, x(WIP_START)]);
-
-		var y_line = d3.scale.linear()
-			.range([_height,_y1]);
+		var x_line = d3.time.scale().range([0, x(WIP_START)]);
+		var y_line = d3.scale.linear().range([_height,_y1]);
 
 		var xLineAxis = d3.svg.axis()
 			.scale(x_line)
@@ -782,8 +729,6 @@ function drawLineChart()
 			.x(function(d) { return x_line(d.date); })
 			.y0(_height)
 			.y1(function(d) { return y_line(d.NGR_bwin); });
-			
-			
 
 		var NGR_sum=360.0;
 

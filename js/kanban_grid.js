@@ -15,99 +15,6 @@ var VISION_SUBTEXT = "\"be the leader in regulated and to be regulated markets\"
 
 
 
-
-function drawGuides(){
-	LANE_LABELBOX_RIGHT_START = x(KANBAN_END)+TARGETS_COL_WIDTH;
-
-	var gGuides= svg.append("g").attr("id","guides");
-	
-	// horizontal top
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,0-margin.top,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0-margin.top,"rasterLine");
-	_drawText(gGuides,"0-margin.top"+(-margin.top)+"px",x(KANBAN_START)-margin.left,(-margin.top+2),"4","normal",null,"#cccccc");
-
-	//horizontal TIMELINE top 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,-TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,-TIMELINE_HEIGHT,"rasterLine");
-	_drawText(gGuides,"TIMELINE_HEIGHT: "+(-TIMELINE_HEIGHT)+"px",x(KANBAN_START)-margin.left,(-TIMELINE_HEIGHT-2),"4","normal",null,"#cccccc");
-
-	//horizontal MARKER_DATE top 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,MARKER_DATE_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,MARKER_DATE_TOP,"rasterLine");
-	_drawText(gGuides,"MARKER_DATE_TOP: "+(MARKER_DATE_TOP)+"px",x(KANBAN_START)-margin.left,(MARKER_DATE_TOP-2),"4","normal",null,"#cccccc");
-
-	// horizontal KANBAN top
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,0,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0,"rasterLineThick");
-	_drawText(gGuides,"KANBAN Y base: "+0+"px",x(KANBAN_START)-margin.left,-2,"4","normal",null,"#cccccc");
-	//vertical METRIC_BASE
-	_drawLine(gGuides,x(KANBAN_START)-METRIC_BASE_X_OFFSET,0-margin.top,x(KANBAN_START)-METRIC_BASE_X_OFFSET,height+margin.bottom,"rasterLine");
-	
-	//vertical KANBAN_START
-	_drawLine(gGuides,x(KANBAN_START),0-margin.top,x(KANBAN_START),height+margin.bottom,"rasterLineThick");
-	//vertical LANELABELBOX start
-	_drawLine(gGuides,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,0-margin.top,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,height+margin.bottom,"rasterLine");
-	//horizontal KANBAN bottom
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,height,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height,"rasterLine");
-	_drawText(gGuides,"height: "+height+"px",x(KANBAN_START)-margin.left,height,"4","normal",null,"#cccccc");
-
-	//horizontal METRICS 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_BASE_Y,"rasterLine");
-	_drawText(gGuides,"METRIC_BASE_Y: "+(METRIC_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_BASE_Y-2),"4","normal",null,"#cccccc");
-	//horizontal METRICS_PIE 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_PIE_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_PIE_BASE_Y,"rasterLine");
-	_drawText(gGuides,"METRIC_PIE_BASE_Y: "+(METRIC_PIE_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_PIE_BASE_Y-2),"4","normal",null,"#cccccc");
-	//horizontal METRICS_CX 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_CX_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_CX_BASE_Y,"rasterLine");
-	_drawText(gGuides,"METRIC_CX_BASE_Y: "+(METRIC_CX_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_CX_BASE_Y-2),"4","normal",null,"#cccccc");
-	//horizontal METRICS_SHARE 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_SHARE_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_SHARE_BASE_Y,"rasterLine");
-	_drawText(gGuides,"METRIC_SHARE_BASE_Y: "+(METRIC_SHARE_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_SHARE_BASE_Y-2),"4","normal",null,"#cccccc");
-	//horizontal METRICS BASE top 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,PILLAR_TOP,"rasterLine");
-	_drawText(gGuides,"PILLAR_TOP: "+PILLAR_TOP+"px",x(KANBAN_START)-margin.left,(PILLAR_TOP-2),"4","normal",null,"#cccccc");
-	//horizontal TIMELINE bottom 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,height+TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height+TIMELINE_HEIGHT,"rasterLine");
-	_drawText(gGuides,"height+TIMELINE: "+(height+TIMELINE_HEIGHT)+"px",x(KANBAN_START)-margin.left,(height+TIMELINE_HEIGHT-2),"4","normal",null,"#cccccc");
-
-	//horizontal METRIC BRACKET bottom 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,height+METRIC_BRACKET_Y_OFFSET,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height+METRIC_BRACKET_Y_OFFSET,"rasterLine");
-	_drawText(gGuides,"height+METRIC_BRACKET_Y_OFFSET: "+(height+METRIC_BRACKET_Y_OFFSET)+"px",x(KANBAN_START)-margin.left,(height+METRIC_BRACKET_Y_OFFSET-2),"4","normal",null,"#cccccc");
-	//horizontal METRIC PILLAR bottom 
-	_drawLine(gGuides,x(KANBAN_START)-margin.left,height-PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height-PILLAR_TOP,"rasterLine");
-	_drawText(gGuides,"height-PILLAR_TOP "+(height-PILLAR_TOP)+"px",x(KANBAN_START)-margin.left,(height-PILLAR_TOP-2),"4","normal",null,"#cccccc");
-	
-	//vertical KANBAN_END
-	_drawLine(gGuides,x(KANBAN_END),0-margin.top,x(KANBAN_END),height+margin.bottom,"rasterLine");
-	//vertical LANEBOX_RIGHT_START 
-	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START,0-margin.top,LANE_LABELBOX_RIGHT_START,height+margin.bottom,"rasterLine");
-	//vertical LANEBOX_RIGHT_END 
-	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,height+margin.bottom,"rasterLine");
-	
-	//vertical LANEBOX_RIGHT_END PILLAR 
-	if (LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET>100)
-		_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET,height+margin.bottom,"rasterLine");
-	
-	//vertical METRIC FORECAST2
-	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+METRIC_WIDTH,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+METRIC_WIDTH,height+margin.bottom,"rasterLine");
-	
-	//vertical METRIC GOAL 
-	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+(2*METRIC_WIDTH),0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+(2*METRIC_WIDTH),height+margin.bottom,"rasterLine");
-	
-	d3.select("#guides").style("visibility","hidden");
-	
-}
-
-
-
-
-function showVision(){
-	d3.select("#vision").style("visibility","visible"); 
-}
-
-function hideVision(){
-	d3.select("#vision").style("visibility","hidden"); 
-}
-
-
-
-
 /** draws grid
 *
 */
@@ -211,6 +118,94 @@ function drawAxes(){
 }
 
 
+function drawGuides(){
+	LANE_LABELBOX_RIGHT_START = x(KANBAN_END)+TARGETS_COL_WIDTH;
+
+	var gGuides= svg.append("g").attr("id","guides");
+	
+	var _style = {"size":"4px", "weight":"normal","anchor":"start","color":"#cccccc"};
+	
+	// horizontal top
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,0-margin.top,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0-margin.top,"rasterLine");
+	_drawText(gGuides,"0-margin.top"+(-margin.top)+"px",x(KANBAN_START)-margin.left,(-margin.top+2),_style);
+
+	//horizontal TIMELINE top 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,-TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,-TIMELINE_HEIGHT,"rasterLine");
+	_drawText(gGuides,"TIMELINE_HEIGHT: "+(-TIMELINE_HEIGHT)+"px",x(KANBAN_START)-margin.left,(-TIMELINE_HEIGHT-2),_style);
+
+	//horizontal MARKER_DATE top 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,MARKER_DATE_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,MARKER_DATE_TOP,"rasterLine");
+	_drawText(gGuides,"MARKER_DATE_TOP: "+(MARKER_DATE_TOP)+"px",x(KANBAN_START)-margin.left,(MARKER_DATE_TOP-2),_style);
+
+	// horizontal KANBAN top
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,0,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,0,"rasterLineThick");
+	_drawText(gGuides,"KANBAN Y base: "+0+"px",x(KANBAN_START)-margin.left,-2,_style);
+	//vertical METRIC_BASE
+	_drawLine(gGuides,x(KANBAN_START)-METRIC_BASE_X_OFFSET,0-margin.top,x(KANBAN_START)-METRIC_BASE_X_OFFSET,height+margin.bottom,"rasterLine");
+	
+	//vertical KANBAN_START
+	_drawLine(gGuides,x(KANBAN_START),0-margin.top,x(KANBAN_START),height+margin.bottom,"rasterLineThick");
+	//vertical LANELABELBOX start
+	_drawLine(gGuides,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,0-margin.top,x(KANBAN_START)-LANE_LABELBOX_LEFT_WIDTH,height+margin.bottom,"rasterLine");
+	//horizontal KANBAN bottom
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,height,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height,"rasterLine");
+	_drawText(gGuides,"height: "+height+"px",x(KANBAN_START)-margin.left,height,_style);
+
+	//horizontal METRICS 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_BASE_Y,"rasterLine");
+	_drawText(gGuides,"METRIC_BASE_Y: "+(METRIC_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_BASE_Y-2),_style);
+	//horizontal METRICS_PIE 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_PIE_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_PIE_BASE_Y,"rasterLine");
+	_drawText(gGuides,"METRIC_PIE_BASE_Y: "+(METRIC_PIE_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_PIE_BASE_Y-2),_style);
+	//horizontal METRICS_CX 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_CX_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_CX_BASE_Y,"rasterLine");
+	_drawText(gGuides,"METRIC_CX_BASE_Y: "+(METRIC_CX_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_CX_BASE_Y-2),_style);
+	//horizontal METRICS_SHARE 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,METRIC_SHARE_BASE_Y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,METRIC_SHARE_BASE_Y,"rasterLine");
+	_drawText(gGuides,"METRIC_SHARE_BASE_Y: "+(METRIC_SHARE_BASE_Y)+"px",x(KANBAN_START)-margin.left,(METRIC_SHARE_BASE_Y-2),_style);
+	//horizontal METRICS BASE top 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,PILLAR_TOP,"rasterLine");
+	_drawText(gGuides,"PILLAR_TOP: "+PILLAR_TOP+"px",x(KANBAN_START)-margin.left,(PILLAR_TOP-2),_style);
+	//horizontal TIMELINE bottom 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,height+TIMELINE_HEIGHT,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height+TIMELINE_HEIGHT,"rasterLine");
+	_drawText(gGuides,"height+TIMELINE: "+(height+TIMELINE_HEIGHT)+"px",x(KANBAN_START)-margin.left,(height+TIMELINE_HEIGHT-2),_style);
+
+	//horizontal METRIC BRACKET bottom 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,height+METRIC_BRACKET_Y_OFFSET,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height+METRIC_BRACKET_Y_OFFSET,"rasterLine");
+	_drawText(gGuides,"height+METRIC_BRACKET_Y_OFFSET: "+(height+METRIC_BRACKET_Y_OFFSET)+"px",x(KANBAN_START)-margin.left,(height+METRIC_BRACKET_Y_OFFSET-2),_style);
+	//horizontal METRIC PILLAR bottom 
+	_drawLine(gGuides,x(KANBAN_START)-margin.left,height-PILLAR_TOP,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+TARGETS_COL_WIDTH+margin.right,height-PILLAR_TOP,"rasterLine");
+	_drawText(gGuides,"height-PILLAR_TOP "+(height-PILLAR_TOP)+"px",x(KANBAN_START)-margin.left,(height-PILLAR_TOP-2),_style);
+	
+	//vertical KANBAN_END
+	_drawLine(gGuides,x(KANBAN_END),0-margin.top,x(KANBAN_END),height+margin.bottom,"rasterLine");
+	//vertical LANEBOX_RIGHT_START 
+	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START,0-margin.top,LANE_LABELBOX_RIGHT_START,height+margin.bottom,"rasterLine");
+	//vertical LANEBOX_RIGHT_END 
+	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH,height+margin.bottom,"rasterLine");
+	
+	//vertical LANEBOX_RIGHT_END PILLAR 
+	if (LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET>100)
+		_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET,height+margin.bottom,"rasterLine");
+	
+	//vertical METRIC FORECAST2
+	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+METRIC_WIDTH,0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+METRIC_WIDTH,height+margin.bottom,"rasterLine");
+	
+	//vertical METRIC GOAL 
+	_drawLine(gGuides,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+(2*METRIC_WIDTH),0-margin.top,LANE_LABELBOX_RIGHT_START+LANE_LABELBOX_RIGHT_WIDTH+(2*METRIC_WIDTH),height+margin.bottom,"rasterLine");
+	
+	d3.select("#guides").style("visibility","hidden");
+	
+}
+
+
+function showVision(){
+	d3.select("#vision").style("visibility","visible"); 
+}
+
+function hideVision(){
+	d3.select("#vision").style("visibility","hidden"); 
+}
 
 
 
@@ -224,14 +219,9 @@ function drawVision(){
 	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
 	var _y = -200;
 	
-//  text version	
 
-	gVision.append("use").attr("xlink:href","#world")
-	.attr("transform","translate ("+(_x-175)+","+(_y+27)+") scale(1) ");
-
-	gVision.append("use").attr("xlink:href","#vision_statement")
-	.attr("transform","translate ("+(_x-160)+","+(_y-30)+") scale(2) ");
-
+	_drawXlink(gVision,"#world",(_x-175),(_y+27),{"scale":1});
+	_drawXlink(gVision,"#vision_statement",(_x-160),(_y-30),{"scale":2});
 	
 	// --- mission strategy stuff ------
 	_drawBracket(gVision,"blue","bottom",_x-160,_y+90,3.3,.8,"triangle",1);
@@ -282,8 +272,8 @@ function drawVersion(){
 	var gVersion= svg.append("g")
 		.attr("id","version");
 	
-	gVersion.append("use").attr("xlink:href","#bpty")
-	.attr("transform","translate ("+(_x-40)+","+(_y-15)+") scale(0.40) ");
+	_drawXlink(gVersion,"#bpty",(_x-40),(_y-15),{"scale":.4});
+
 	
 	_drawLegendLine(gVersion,(_x-50),(_x+90),_y);
 		
@@ -297,7 +287,6 @@ function drawVersion(){
 			{"name":"version: ","value": new Date().toString('yyyy-MM-dd_hh:mm:ss')},
 			{"name":"package: ","value":PACKAGE_VERSION},
 			{"name":"author: ","value":"@cactus | twitter.com/gkathan"}
-			
 		];
 
 	var _yRunning;
@@ -309,15 +298,15 @@ function drawVersion(){
 	_yRunning+=5;
 	_drawLegendLine(gVersion,(_x-50),(_x+90),_yRunning);
 	
-	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",(_x+90),_yRunning+7,5,"normal","end");
+	_drawText(gVersion,"* auto-generated D3 svg | batik png pdf transcoded",(_x+90),_yRunning+7,{"size":"5px", "weight":"normal","anchor":"end"});
 }
 
 /**
  */
 function _drawVersionText(svg,text,x,y,size){
 	
-	_drawText(svg,text.name,x-15,y,size-1,"normal","end");
-	_drawText(svg,text.value,x+3,y,size,"normal","start");
+	_drawText(svg,text.name,x-15,y,{"size":size-1, "weight":"normal","anchor":"end"});
+	_drawText(svg,text.value,x+3,y,{"size":size, "weight":"normal","anchor":"start"});
 }
 
 
@@ -328,42 +317,35 @@ function drawLegend(){
 	var _fontsize=4;
 	
 	_x=-margin.left+20;
-	
-	
-	
+
 	var t;
 
 	var gLegend= svg.select("#version")
 		.append("g")
 		.attr("id","legend");
 	
-	gLegend.append("use").attr("xlink:href","#item")
-		.attr("transform","translate ("+_x+","+(_y+2)+") scale(0.30) ");
-	_drawText(gLegend,"... corporate initiative [planned finish]",_x+12,(_y+7),_fontsize,"normal","start",null,"italic");
+	var _style = {"size":_fontsize, "weight":"normal","anchor":"start","style":"italic"}
 	
-	gLegend.append("use").attr("xlink:href","#tactic")
-		.attr("transform","translate ("+_x+","+(_y+11)+") scale(0.30) ");
-	_drawText(gLegend,"... tactical initiative [planned finish]",_x+12,(_y+16),_fontsize,"normal","start",null,"italic");
+	_drawXlink(gLegend,"#item",_x,(_y+2),{"scale":.3});
+	_drawText(gLegend,"... corporate initiative [planned finish]",_x+12,(_y+7),_style);
 	
-	gLegend.append("use").attr("xlink:href","#innovation")
-		.attr("transform","translate ("+_x+","+(_y+20)+") scale(0.30) ");
-	_drawText(gLegend,"... innovation initiative [planned finish]",_x+12,(_y+25),_fontsize,"normal","start",null,"italic");
+	_drawXlink(gLegend,"#tactic",_x,(_y+11),{"scale":.3});
+	_drawText(gLegend,"... tactical initiative [planned finish]",_x+12,(_y+16),_style);
+	
+	_drawXlink(gLegend,"#innovation",_x,(_y+20),{"scale":.3});
+	_drawText(gLegend,"... innovation initiative [planned finish]",_x+12,(_y+25),_style);
 
 	
-	gLegend.append("use").attr("xlink:href","#item")
-		.attr("transform","translate ("+_x+","+(_y+29)+") scale(0.30) ");
+	_drawXlink(gLegend,"#item",_x,(_y+29),{"scale":.3});
 	
-	gLegend.append("use").attr("xlink:href","#postit_yellow")
-		.attr("transform","translate ("+_x+","+(_y+27)+") scale(0.35) ");
-	_drawText(gLegend,"... fuzzy initiative [planned finish]",_x+12,(_y+34),_fontsize,"normal","start",null,"italic");
+	_drawXlink(gLegend,"#postit_yellow",_x,(_y+27),{"scale":.35});
+	_drawText(gLegend,"... fuzzy initiative [planned finish]",_x+12,(_y+34),_style);
 
-	gLegend.append("use").attr("xlink:href","#postit_blue")
-		.attr("transform","translate ("+_x+","+(_y+36)+") scale(0.35) ");
-	_drawText(gLegend,"... custom note",_x+12,(_y+43),_fontsize,"normal","start",null,"italic");
+	_drawXlink(gLegend,"#postit_blue",_x,(_y+36),{"scale":.35});
+	_drawText(gLegend,"... custom note",_x+12,(_y+43),_style);
 	
-	gLegend.append("use").attr("xlink:href","#target")
-		.attr("transform","translate ("+(_x)+","+(_y+45)+") scale(0.35) ");
-	_drawText(gLegend,"... pulling goal",_x+12,(_y+52),_fontsize,"normal","start",null,"italic");
+	_drawXlink(gLegend,"#target",_x,(_y+45),{"scale":.35});
+	_drawText(gLegend,"... pulling goal",_x+12,(_y+52),_style);
 	
 	
 	gLegend.append("circle").attr("r",10)
@@ -371,47 +353,28 @@ function drawLegend(){
 		.style("opacity",0.5)
 		.attr("transform","translate ("+(_x+4)+","+(_y+57)+") scale(0.30) ");
 		
-	_drawText(gLegend,"... initiative [done]",(_x+12),(_y+59),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [done]",(_x+12),(_y+59),_style);
 	
 	gLegend.append("circle").attr("r",10)
 		.attr("transform","translate ("+(_x+4)+","+(_y+64)+") scale(0.30) ")
 		.style("opacity",0.5)
 		.style("fill","red");
-	_drawText(gLegend,"... initiative [delayed]",(_x+12),(_y+66),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [delayed]",(_x+12),(_y+66),_style);
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","gold")
 		.attr("transform","translate ("+(_x+4)+","+(_y+71)+") scale(0.30) ");
-	_drawText(gLegend,"... initiative [planned]",(_x+12),(_y+72),_fontsize,"normal","start",null,"italic");
+	_drawText(gLegend,"... initiative [planned]",(_x+12),(_y+72),_style);
 	
 	gLegend.append("circle").attr("r",10)
 		.style("opacity",0.5)
 		.style("fill","grey")
 		.attr("transform","translate ("+(_x+4)+","+(_y+78)+") scale(0.30) ");
-	_drawText(gLegend,"... initiative [future]",(_x+12),(_y+80),_fontsize,"normal","start",null,"italic");
-	
-	
-	
-	
+	_drawText(gLegend,"... initiative [future]",(_x+12),(_y+80),_style);
 	
 	_drawLegendLine(gLegend,_x-5,_x+100,_y);
 		
-	//title
-
-	var i=0;
-
-	t = [	{"name":"context: ","value": CONTEXT},
-			{"name":"URL: ","value": document.URL},
-			{"name":"version: ","value": new Date().toString('yyyy-MM-dd_hh:mm:ss')},
-			{"name":"package: ","value":PACKAGE_VERSION},
-			{"name":"author: ","value":"@cactus | twitter.com/gkathan"}
-			
-		];
-
-	//bottom disclaimer
-	i++;
-	
 }
 
 
@@ -420,9 +383,6 @@ function drawLegend(){
 function _drawLegendLine(svg,x1,x2,y){
 	_drawLine(svg,x1,y,x2,y,"legendLine");
 }
-
-
-
 
 
 function customAxis(g) {

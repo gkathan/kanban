@@ -1,4 +1,4 @@
-/** first version of mudularized kanban.js
+/** kanban_lanes
  * extracted kanban_core stuff (hierarchy calculation...)
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
@@ -17,6 +17,8 @@ var PILLAR_TOP = -75;
 // pillars will use LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET space
 var PILLAR_X_OFFSET=90;
 
+// size of white space around boxes
+var WIDTH_WHITESTROKE ="5px";
 
 
 
@@ -145,14 +147,9 @@ function _drawPillarColumns(svg,data,x,y,width){
 	for (var i in data){
 		//1) pillar header
 		var _offset = (getInt(i)*_pillarWidth)+_pillarWidth/2;
-		svg.append("text")
-			.text(data[i].name)
-			.attr("x",x+_offset+(i*_spacer))
-			.attr("y",y+_spacer)
-			.style("fill",_color)
-			.style("font-weight","bold")
-			.style("writing-mode","tb")
-			.style("font-size",_headlineSize);
+
+		_drawText(svg,data[i].name,(x+_offset+(i*_spacer)),(y+_spacer),{"size":_headlineSize,"color":_color,"mode":"tb","weight":"bold"});
+
 		//2) pillar rect
 		svg.append("rect")
 			.attr("x",x+(i*_pillarWidth)+(i*_spacer))
@@ -171,15 +168,8 @@ function _drawHowPillars(svg,data,x,y,width){
 	var _textSize="5px";
 	var _d = _.nest(data,"lane");
 	//0 HOW
-	svg.append("text")
-			.text("HOW")
-			.attr("x",x+width/2)
-			.attr("y",y-(3*_spacer))
-			.style("fill","grey")
-			.style("opacity",0.1)
-			.style("text-anchor","middle")
-			.style("font-weight","bold")
-			.style("font-size","40px");
+	_drawText(svg,"HOW",(x+width/2),(y-(3*_spacer)),{"size":"40px","color":"grey","opacity":0.1,"anchor":"middle","weight":"bold"});
+
 	// for each lane
 	for (l in _d.children){
 		var _data = _d.children[l];
@@ -194,32 +184,17 @@ function _drawHowPillars(svg,data,x,y,width){
 		for (var i in _data.children){
 			var _offset = (getInt(i)*_pillarWidth)+_pillarWidth/2;
 			//3) content title
-			svg.append("text")
-				.text(_data.children[i].title)
-				.attr("x",x+_offset+(i*_spacer))
-				.attr("y",_y+10)
-				.style("fill",_color)
-				.style("text-anchor","middle")
-				.style("font-weight","bold")
-				.style("font-size","5px");
+			_drawText(svg,_data.children[i].title,(x+_offset+(i*_spacer)),(_y+10),{"size":"5px","color":_color,"anchor":"middle","weight":"bold"});
 			//4) content / text
 			for (var c in _data.children[i].content){
 				var _text = _data.children[i].content[c].text;
-				svg.append("text")
-				.text(_text)
-				.attr("x",(x-6+((getInt(i)+1)*_pillarWidth)+(i*_spacer)-(c*6)))
-				.attr("y",_y+12)
-				.style("fill",_color)
-				.style("font-weight","normal")
-				.style("writing-mode","tb")
-				.style("font-size",_textSize);
+				_drawText(svg,_text,(x-6+((getInt(i)+1)*_pillarWidth)+(i*_spacer)-(c*6)),(_y+12),{"size":_textSize,"color":_color,"weight":"normal","mode":"tb"});
 			}
 		}
 	}
 }
 
-function _drawLaneText(svg,lane,side,logoHeight)
-{
+function _drawLaneText(svg,lane,side,logoHeight){
 	var i=0;
 	var _anchor ="start";
 	if (side=="target") _anchor ="end";
@@ -238,18 +213,10 @@ function _drawLaneText(svg,lane,side,logoHeight)
 	if (laneTextData){
 	var _lanetext = laneTextData.filter(function(d){return (d.lane==lane && d.side==side)});
 		if (_lanetext && CONTEXT!="holding"){
-			var gLanetext = svg.append("g")
-			.attr("id","text_"+lane);
+			var gLanetext = svg.append("g").attr("id","text_"+lane);
 	
 			for (var i in _lanetext){
-					gLanetext.append("text")
-					.text(_lanetext[i].text)
-					.attr("x",_xBase)
-					.attr("y",_yBase+(i*(parseInt(_lanetext[i].size)+1)))
-					.style("font-size",_lanetext[i].size+"px")
-					.style("font-weight",_lanetext[i].format)
-					.style("text-anchor",_anchor)
-					.style("fill",_color);
+					_drawText(gLanetext,_lanetext[i].text,_xBase,(_yBase+(i*(parseInt(_lanetext[i].size)+1))),{"size":_lanetext[i].size+"px","color":_color,"anchor":_anchor,"weight":_lanetext[i].format});
 			}
 		}
 	}
@@ -263,15 +230,7 @@ function _drawLaneText(svg,lane,side,logoHeight)
 			var _textOffsetX = 7;
 			var _textOffsetY = 5;
 			
-			svg.append("text")
-			.text("CONTEXT= "+context)
-			.attr("x",x+_textOffsetX)
-			.attr("y",y+_textOffsetY)
-			.style("fill","#dddddd")
-			.style("writing-mode","tb")
-			.style("font-size","7px")
-			.style("font-weight","bold")
-			.style("opacity",1);
+			_drawText(svg,"CONTEXT= "+context,(x+_textOffsetX),(y+_textOffsetY),{"size":"7px","color":"#dddddd","weight":"bold","mode":"tb"});
 			
 			svg.append("rect")
 			.attr("x",x)
@@ -308,20 +267,16 @@ function _drawLaneText(svg,lane,side,logoHeight)
 				var _x = x+_x_offset;
 				var _y = y+_y_offset;
 				
-				var _logo = svg.append("use")
-				.attr("xlink:href","#"+lane)
-				.attr("transform","translate("+0+","+0+") scale(1)");
+				var _logo = _drawXlink(svg,"#"+lane,0,0,{"scale":1});
+
 				
 				_metrics = get_metrics(_logo.node());
 				// i need to know the width of the logo....
 				if (side=="right"){
-					
 					_x= x+LANE_LABELBOX_RIGHT_WIDTH-_metrics.width-10;
 				}
-				_logo
-				.attr("transform","translate("+_x+","+_y+") scale(1)");
+				_logo.attr("transform","translate("+_x+","+_y+") scale(1)");
 			}
-		console.log("metrics: "+_metrics);
 		return _metrics;
 		}
 		
@@ -343,16 +298,7 @@ function _drawLaneText(svg,lane,side,logoHeight)
 		/**
 		 */
 		function _drawLaneSideText(svg,text,x,y,size,anchor){
-				svg.append("text")
-				.text(text)
-				.attr("x",x)
-				.attr("y",y)
-				.style("fill","grey")
-				.style("font-weight","normal")
-				.style("text-align","left")
-				.style("writing-mode","tb")
-				.style("font-size",size)
-				.attr("text-anchor",anchor);
+			_drawText(svg,text,x,y,{"size":size,"color":"grey","weight":"normal","mode":"tb","anchor":anchor});
 		}
 /* ------------------------------------------------- END drawLanes() helper functions ----------------------------------------------------------- */
 
