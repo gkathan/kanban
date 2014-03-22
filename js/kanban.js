@@ -1,6 +1,14 @@
 /** first version of mudularized kanban.js
- * extracted kanban_core stuff (hierarchy calculation...)
- * @version: 0.6
+* depends on:
+	+ kanban_core.js
+	+ kanban_util.js
+	+ kanban_grid.js
+	+ kanban_lanes.js
+	+ kanban_queues.js
+	+ kanban_items.js
+	+ kanban_metrics.js
+	+ kanban.js
+* @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16
  * @copyright: 
@@ -788,4 +796,11 @@ var PACKAGE_VERSION="20140312_1759";
 	
 var PACKAGE_VERSION="20140312_1807";
 	var PACKAGE_VERSION="20140313_0834";
+	
+var PACKAGE_VERSION="20140320_0954";
+	var PACKAGE_VERSION="20140320_1428";
+	var PACKAGE_VERSION="20140321_1610";
+	var PACKAGE_VERSION="20140321_1616";
+	var PACKAGE_VERSION="20140321_1628";
+	var PACKAGE_VERSION="20140321_1805";
 	

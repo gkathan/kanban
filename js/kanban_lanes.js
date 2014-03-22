@@ -1,5 +1,7 @@
 /** kanban_lanes
- * extracted kanban_core stuff (hierarchy calculation...)
+* depends on:
+	+ kanban_core.js
+	+ kanban_util.js
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16
@@ -20,6 +22,9 @@ var PILLAR_X_OFFSET=90;
 // size of white space around boxes
 var WIDTH_WHITESTROKE ="5px";
 
+var LANE_LABELBOX_LEFT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_WIDTH =100;
+var LANE_LABELBOX_RIGHT_START;
 
 
 // ----------------------------------------------------------------------------------------------------------------

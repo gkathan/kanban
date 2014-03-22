@@ -1,5 +1,7 @@
 /** kanban_core.js
  * core layout functions / recursive stuff
+ * depends on:
+
  * @version: 0.5
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16
@@ -7,8 +9,6 @@
  * @license: 
  * @website: www.kathan.at
  */
-
-
 
 
 

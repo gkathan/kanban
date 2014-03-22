@@ -1,5 +1,7 @@
 /** kanban_utils
  * extracted kanban_core stuff (hierarchy calculation...)
+ * depends on:
+
  * @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16

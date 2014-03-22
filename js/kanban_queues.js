@@ -1,6 +1,8 @@
 /** kanban_queues
- * extracted kanban_core stuff (hierarchy calculation...)
- * @version: 0.6
+ * depends on:
+	+ kanban_core.js
+	+ kanban_util.js
+* @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16
  * @copyright: 

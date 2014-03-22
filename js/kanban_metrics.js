@@ -1,6 +1,8 @@
 /** kanban_metrics
- * extracted kanban_core stuff (hierarchy calculation...)
- * @version: 0.6
+ * depends on:
+	+ kanban_core.js
+	+ kanban_util.js
+* @version: 0.6
  * @author: Gerold Kathan (www.kathan.at)
  * @date: 2014-03-16
  * @copyright: 
@@ -9,9 +11,6 @@
  */
 
 
-var LANE_LABELBOX_LEFT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_WIDTH =100;
-var LANE_LABELBOX_RIGHT_START;
 
 
 
