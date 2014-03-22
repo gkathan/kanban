@@ -342,8 +342,8 @@ function submit_download_form(output_format)
 	  <button id="b73" type="button" class="btn btn-success">Bwin</button>
 	  <button id="b77" type="button" class="btn btn-success">Techdebt</button>
 	  <button id="b78" type="button" class="btn btn-success">Shared</button>
-	  <button id="b74" type="button" class="btn btn-danger">Bwin Drill-in</button>
-	  <button id="b75" type="button" class="btn btn-danger">EntIT Drill-in</button>
+	  <button id="b74" type="button" class="btn btn-success">Bwin Drill-in</button>
+	  <button id="b75" type="button" class="btn btn-success">EntIT Drill-in</button>
 	  <button id="bwhiteboard" type="button" class="btn btn-success">Whiteboard</button>
 	</div>
 
@@ -482,6 +482,8 @@ function submit_download_form(output_format)
 	  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
 	  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
 	  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
+	  <button id="l4" type="button" class="btn btn-danger">V1 sync admin</button>
+	  
 	</div>
 
 	  <div class="control-zoom">
@@ -513,8 +515,16 @@ function switchVisibility(button,ref){
 		if (dep.style("visibility") =="visible") dep.style("visibility","hidden");
 		else dep.style("visibility","visible");
 	});
-	
-}		
+}
+
+
+function redirect(button,url){
+	d3.select(button).on("click", function(){
+	window.location.href=url;
+	});		
+}
+
+		
 function initHandlers(){	
 	
 	d3.select("#b0").on("click", function(){
@@ -537,6 +547,14 @@ function initHandlers(){
 	switchVisibility("#b4","#axes");
 	switchVisibility("#bguides","#guides");
 	switchVisibility("#bvision","#vision");
+
+
+	
+	redirect ("#l1","treemap.html");
+	redirect ("#l2","tree.html");
+	redirect ("#l3","force.html");
+	redirect ("#l4","v1sync.html");
+
 
 	d3.select("#b5").on("click", function(){
 		if (SHOW_METRICS_NGR){
@@ -746,17 +764,6 @@ function initHandlers(){
 	});	
 
 
-	d3.select("#l1").on("click", function(){
-		window.location.href="treemap.html";
-	});	
-
-	d3.select("#l2").on("click", function(){
-		window.location.href="tree.html";
-	});	
-
-	d3.select("#l3").on("click", function(){
-		window.location.href="force.html";
-	});	
 }
     </script>
 
