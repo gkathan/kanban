@@ -482,7 +482,8 @@ function submit_download_form(output_format)
 	  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
 	  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
 	  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
-	  <button id="l4" type="button" class="btn btn-danger">V1 sync admin</button>
+	  <button id="l4" type="button" class="btn btn-info">Backlog Orgchart</button>
+	  <button id="l5" type="button" class="btn btn-danger">V1 sync admin</button>
 	  
 	</div>
 
@@ -553,7 +554,8 @@ function initHandlers(){
 	redirect ("#l1","treemap.html");
 	redirect ("#l2","tree.html");
 	redirect ("#l3","force.html");
-	redirect ("#l4","v1sync.html");
+	redirect ("#l4","org.html");
+	redirect ("#l5","v1sync.html");
 
 
 	d3.select("#b5").on("click", function(){
