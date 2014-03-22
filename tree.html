@@ -79,7 +79,7 @@ function submit_download_form(output_format)
 	var form = document.getElementById("svgform");
 	
 	var WIDTH = 2000;
-	var HEIGHT = 2000;
+	var HEIGHT = 2500;
 	var CONTEXT="backlog tree";
 	
 	//console.log(declaration+svg_xml);
@@ -109,6 +109,8 @@ var i = 0,
     duration = 750,
     root;
 
+var backlogData;
+
 var tree = d3.layout.tree()
     .size([height, width]);
 
@@ -130,11 +132,29 @@ var svg = d3.select("body").append("svg")
 
 //d3.tsv("data/backlog.csv",function(data){
 //d3.tsv("data/initiatives_v20.csv",function(data){
-d3.csv("data/businessbacklogs.csv",function(data){
+d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
 //	d3.json("/data/data.php?type=initiatives",function(data){
 
+
+// and fill in missing values due to v1 export
+	var _length = data.length;
+	for (var i=0; i<_length; i++){
+		//console.log(orgData[i]);
+		for (var l=0;l<=5;l++){
+			if (data[i-1]){
+				console.log("** we have a precedessor");
+				if (!data[i]["l"+l] && (data[i-1]["l"+(l-1)]==data[i]["l"+(l-1)])) data[i]["l"+l] = data[i-1]["l"+l]; 
+			}
+		}
+	}
+
+	backlogData = data;
+	
+
+
+
 //	root = _.nest(data,["bm","theme","lane","sublane"]);
-root = _.nest(data,["l1","l2","l3","l4","l5","l6"]);
+root = _.nest(data,["l1","l2","l3","l4","l5"]);
 
 //  root = flare;
   root.x0 = height / 2;
