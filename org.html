@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel="stylesheet" type="text/css" href="css/b.css">
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="js/jquery-2.1.0.min.js"></script>
+
+
+<script src="js/underscore-min.js"></script>
+<script src="js/underscore.nest.min.js"></script>
+
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script src="js/underscore-min.js"></script>
+<script src="js/underscore.nest.min.js"></script>
+<script src="js/flippant.min.js"></script>
+<script src="js/moment.min.js"></script>
+<script src="js/daterangepicker.js"></script>
+<script src="js/jquery.sidr.min.js"></script>
+
+<script src="js/kanban_util.js"></script>
+<script src="js/org.js"></script>
+
+
+<link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+<link href="css/font-awesome-4.0.3/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="css/jquery.sidr.light.css">
+
+
+
+<div class="btn-group-xs">
+  <button id="kanban_menu" type="button" class="btn btn-primary btn-xs">org menu</button>
+</div>
+
+<script>
+$(document).ready(function() {
+  $('#kanban_menu').sidr({speed:300});
+
+});
+</script>	
+<!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
+     The form is populated and submitted by the JavaScript below. -->
+     
+<!-- production transcoder (tomcat6): http://www.kathan.at/transcode/--> 
+<!-- dev transcoder(jetty on ubuntu): http://localhost:8080/transcode/--> 
+<form id="svgform" method="post" action="http://tomcat.ea.bwinparty.corp/transcode/">
+
+<!--<form id="svgform" method="post" action="localhost:8080/transcode/">-->
+
+ <input type="hidden" id="format" name="format" value="">
+ <input type="hidden" id="data" name="data" value="">
+ <input type="hidden" id="context" name="context" value="">
+ <input type="hidden" id="svg_width" name="svg_width" value="">
+ <input type="hidden" id="svg_height" name="svg_height" value="">
+ <input type="hidden" id="png_scale" name="png_scale" value="">
+ 
+</form>
+<script>
+
+render("external_org.svg","org");
+/*
+   Utility function: populates the <FORM> with the SVG data
+   and the requested output format, and submits the form.
+*/
+function submit_download_form(output_format)
+{
+	//dirty hack for the CSS declaration
+	// last css is for bootstrap => exclude !
+	
+	var declaration ="";
+	for (var i=0;i<2;i++){
+		console.log("***"+i);
+		declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
+	}
+	//declaration = declaration+"<?xml-stylesheet href=\""+document.styleSheets[i].href+"\" type=\"text/css\"?>";
+	console.log("***declaration"+declaration);
+
+	// Get the d3js SVG element
+	var svg = document.getElementsByTagName("svg")[0];
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+	var form = document.getElementById("svgform");
+	
+	//console.log(declaration+svg_xml);
+	form.action=TRANSCODE_URL;
+	form["format"].value = output_format;
+	form["data"].value = declaration+svg_xml ;
+	form["context"].value = CONTEXT ;
+	form["svg_width"].value = WIDTH ;
+	form["svg_height"].value = HEIGHT ;
+	//high res scale
+	form["png_scale"].value = 3 ;
+	console.log("*going to submit");
+	
+	form.submit();
+}
+</script>
+
+
+
+<div id="sidr" style="margin-left:10px;margin-top:10px">
+
+
+
+	<div class="btn-group-xs">
+	  <button id="b70" type="button" class="btn btn-success">Holding</button>
+	  <button id="b71" type="button" class="btn btn-success">B2C Gaming</button>
+	</div>
+
+
+  
+  
+
+	<div style="width:250px" class="input-group input-group-sm">
+      <input id="input_postit" type="text" class="form-control input-sm">
+      <span class="input-group-btn">
+        <button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
+      </span>
+   </div><!-- /input-group -->
+
+
+	<!-- ########### The Export Section ####### -->
+	<div>
+			<button class="btn btn-primary btn-xs" id="save_as_svg" value="">
+				Save as SVG</button>
+			<button class="btn btn-primary btn-xs" id="save_as_pdf" value="">
+				Save as PDF</button>
+			<button class="btn btn-primary btn-xs" id="save_as_png" value="">
+				Save as PNG</button>
+
+			<div style="width:250px" class="input-group input-group-sm">
+				  <input id="input_transcode_url" type="text" class="form-control input-sm">
+				  <span class="input-group-btn">
+					<button id="b99" class="btn btn-default input-sm" type="button">URL</button>
+				  </span>
+			</div><!-- /input-group -->
+	</div>
+	
+	  <div class="control-zoom">
+			  <a class="control-zoom-in" href="#" title="Zoom in"></a>
+			  <a class="control-zoom-out" href="#" title="Zoom out"></a>
+	  </div>
+
+
+
+
+</div>
+<script>
+	// Attached actions to the buttons
+	
+	
+	initHandlers();	
+		
+
+		
+		
+function switchVisibility(button,ref){
+	d3.select(button).on("click", function(){
+		var dep = d3.select(ref);
+		if (dep.style("visibility") =="visible") dep.style("visibility","hidden");
+		else dep.style("visibility","visible");
+	});
+	
+}		
+function initHandlers(){	
+	console.log("button handling..");
+	
+	$("#show_svg_code").click(function() { show_svg_code(); });
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
+	$("#save_as_png").click(function() { submit_download_form("png"); });
+	document.getElementById("input_transcode_url").value = TRANSCODE_URL;
+	$("#b99").click(function() { TRANSCODE_URL = document.getElementById("input_transcode_url").value });
+	
+}
+</script>
+</body>
+</html>
