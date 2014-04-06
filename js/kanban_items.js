@@ -559,7 +559,10 @@ function onTooltipOverHandler(d,tooltip){
 	if (d.Type=="target") highlight="#target_";
 	
 	//bugfix 
-	tooltip.attr("class",d.Type+"Tooltip");
+	var _tooltipCSS = d.Type+"Tooltip";
+	if (d.Type=="innovation") _tooltipCSS= "itemTooltip";
+	
+	tooltip.attr("class",_tooltipCSS);
 	
 	d3.select("#item_circle_"+d.id)
 	.transition().delay(0).duration(500)
