@@ -575,11 +575,20 @@ function onTooltipOverHandler(d,tooltip){
 	.attr("r", d.size*ITEM_SCALE*2)
 	.style("cursor","pointer");
 
+	d3.select("#vision").transition().delay(0).duration(500).style("opacity",0.1);
+	
 	d3.selectAll("#items,#targets").selectAll("g")
 		.transition()            
 		.delay(0)            
 		.duration(500)
 		.style("opacity",0.1);
+		
+	// dim metrics
+	d3.select("#metrics").selectAll("[id*=metric_]").transition().delay(0).duration(500).style("opacity",0.1)	
+	// and highlight depending metrics
+	//test hardcoded
+	d3.selectAll("[id*=metric_251]").transition().delay(100).duration(500).style("opacity",1);
+	d3.selectAll("[id*=metric_253]").transition().delay(100).duration(500).style("opacity",1);
 	
 	//highlight the selected mouseover element
 	d3.select(highlight+d.id)
@@ -819,6 +828,12 @@ function onTooltipOutHandler(d,tooltip){
 		.attr("r", d.size*ITEM_SCALE);
 			//.transition().delay(0).duration(500)
 					
+	d3.select("#vision").transition().delay(0).duration(500).style("opacity",1);
+
+	
+	// show metrics
+	d3.select("#metrics").selectAll("[id*=metric_]").transition().delay(0).duration(500).style("opacity",1)	
+	
 		
 	d3.select("#depID_"+d.id)
 		.transition()            
