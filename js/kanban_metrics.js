@@ -66,7 +66,7 @@ var METRIC_CONTEXT_CONFIG=[{"view":"FORECAST_2015","context":[
 		]}];
 
 //default context		
-METRIC_CONTEXT = _getDataBy("view","FORECAST_2015",METRIC_CONTEXT_CONFIG).context;
+METRIC_CONTEXT = _getDataBy("view","REVIEW_Q1_2014",METRIC_CONTEXT_CONFIG).context;
 
 function _setMetricContext(context){
 	METRIC_CONTEXT = _getDataBy("view",context,METRIC_CONTEXT_CONFIG).context; 
@@ -396,8 +396,11 @@ function checkPreviousForecasts(metric,comparison){
 		var _m = metricData[i];
 		if (_m.class==metric.class&&_m.dimension==comparison&&_m.type==metric.type&&_m.lane==metric.lane &&_m.intervalStart==metric.intervalStart&&_m.intervalEnd==metric.intervalEnd &&_m.scale==metric.scale){
 			// do not add the identical metric and also only add older than current forecastDate
-			if (_m.id !=metric.id && _m.forecastDate < metric.forecastDate){
-				_history.push(_m);
+			if (_m.id !=metric.id ){
+				if (metric.dimension=="forecast"){
+					if (_m.forecastDate < metric.forecastDate) _history.push(_m);
+				}
+				else _history.push(_m);
 			}
 		}
 	}
