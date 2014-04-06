@@ -73,7 +73,8 @@ var comparedData;
 
 	$.when($.getJSON("/data/data.php?type=initiatives"),
 				$.getJSON("/data/data.php?type=targets"),
-				$.getJSON("http://10.80.8.23/v1proxy/rest/epics"))
+				$.getJSON("http://knbnprxy.ea.bwinparty.corp/rest/epics"))
+				//$.getJSON("/data/epics.json"))
 				
 			.done(function(initiatives,targets,epics){
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -88,6 +89,8 @@ var comparedData;
 					
 					cleanupEpicData();
 					compareData  = compareData(initiativeData,epicData);
+					
+					epicData = filterByNameValue(epicData,"CategoryName","Initiative");
 					
 					renderV1EpicGrid();
 					renderInitiativeGrid();
@@ -142,6 +145,14 @@ function compareData(initiatives,epics){
 	return _compare;
 }
 
+function filterByNameValue(list,name,value){
+	var _filtererdList = new Array();
+	for (var l in list){
+		if (list[l][name]==value) _filtererdList.push(list[l]);
+	}
+	return _filtererdList;
+}
+
 
 function lookupByField(list,field,value){
 	for (var i in list){
@@ -164,15 +175,16 @@ function renderV1EpicGrid(){
 
 var columns = [
 
-        { id:"id", name: "v1.id", field: "ID",sortable:true,width:100,editor: Slick.Editors.Text },
-        { id:"number", name: "v1.number", field: "Number",sortable:true ,},
-        { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true},
+        { id:"id", name: "v1.id", field: "ID",sortable:true,width:100,editor: Slick.Editors.Text, sorter:NumericSorter },
+        { id:"number", name: "v1.number", field: "Number",sortable:true, sorter:NumericSorter},
+        { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true, sorter:NumericSorter},
         
-        { id: "name", name: "v1.name", field: "Name", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
+        { id: "name", name: "v1.name", field: "Name", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title",sortable:true, sorter:NumericSorter},
         { id: "kanbanName", name: "kanban.name", field: "kanbanName",width:500 },
-        { id:"swag", name: "v1.swag", field: "Swag",sortable:true },
-        { id:"kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",sortable:true },
+        { id:"swag", name: "v1.swag", field: "Swag",sortable:true, sorter:NumericSorter },
+        { id:"kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",sortable:true, sorter:NumericSorter },
         { id:"status", name: "v1.status", field: "Status",sortable:true },
+        { id:"categoryName", name: "v1.categoryName", field: "CategoryName",sortable:true ,sorter:NumericSorter},
         { id:"health", name: "v1.health", field: "Health",sortable:true },
 		{ id:"scope", name: "v1.backlog", field: "Scope",sortable:true },
 		{ id:"createdBy", name: "v1.createdBy", field: "CreatedBy",sortable:true },
@@ -180,6 +192,7 @@ var columns = [
         { id:"plannedStart", name: "v1.plannedStart", field: "PlannedStart",sortable:true,width:150 },
         { id:"plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",sortable:true,width:150 },
         { id:"launchDate", name: "v1.launchDate", field: "LaunchDate",sortable:true,width:150 },
+        { id:"changeDate", name: "v1.changeDate", field: "ChangeDateUTC",sortable:true,width:150 },
         { id:"kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",sortable:true,width:150 },
         //{ id:"estimatedDone", name: "estimatedDone", field: "EstimatedDone",sortable:true,width:150 },
           { id:"createDate", name: "v1.createDate", field: "CreateDateUTC",sortable:true,width:150 },{ id: "healthComment", name: "health comment", field: "HealthComment", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
@@ -225,6 +238,15 @@ var columns = [
 		isAsc = args.sortAsc;
 		v1grid.invalidateAllRows();
 		v1grid.render();
+	});
+	
+	v1grid.onSort.subscribe(function(e, args) {
+		sortdir = args.sortAsc ? 1 : -1;
+		sortcol = args.sortCol.field;
+
+		epicData.sort(args.sortCol.sorter, sortdir);
+		args.v1grid.invalidateAllRows();
+		args.v1grid.render();
   });
     
     
@@ -345,6 +367,13 @@ var columns = [
     });
 }
 
+
+
+// Define some sorting functions
+function NumericSorter(a, b) {
+  var x = a[sortcol], y = b[sortcol];
+  return sortdir * (x == y ? 0 : (x > y ? 1 : -1));
+}
 
 
 
