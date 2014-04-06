@@ -14,6 +14,10 @@
 
 // queue metrics
 var ITEMS_DONE,ITEMS_WIP,ITEMS_FUTURE,ITEMS_TOTAL,ITEMS_DELAYED,DAYS_DELAYED;
+
+var ITEMS_PLANNED_TOBEDONE, ITEMS_INRANGE_DONE;
+
+
 	
 var SIZING_DONE,SIZING_WIP,SIZING_FUTURE,SIZING_TOTAL;
 
@@ -56,6 +60,13 @@ function drawQueues(){
 	// --------------- DONE METRICS ---------------------
 	var _metric = {"text":"DONE" ,"items":ITEMS_DONE ,"swag": SIZING_DONE}
 	_drawQueueMetric(gQueueDone,_metric,x(KANBAN_START),_yMetricBracketOffset,_xWIPStart,_xWIPStart/2,_yMetricBase,_yMetricDetailsOffset,null,"bottom");
+	
+	_metric = {"text":"FINISH RATE" ,"finishrate":((ITEMS_INRANGE_DONE/ITEMS_PLANNED_TOBEDONE)*100) ,"finished": ITEMS_INRANGE_DONE,"planned":ITEMS_PLANNED_TOBEDONE}
+	_drawDoneMetric(gQueueDone,_metric,x(KANBAN_START),-50,_xWIPStart,_xWIPStart/2,-75,_yMetricDetailsOffset,null,"top");
+
+
+	//_drawDoneMetrics(gQueueDone,x(KANBAN_START)+150,-40);
+	
 
 	// prevent render queuareas over KANBAN_END border
 	if (WIP_START < KANBAN_END){
@@ -139,7 +150,35 @@ function drawQueues(){
 			_drawText(svg,metric.items+ " items",metricX,(metricY+space),{"size":"9px","css":"metricItems","color":color,"anchor":"middle"});
 			_drawText(svg,"["+metric.swag+" PD]",metricX,(metricY+space+(space-2)),{"size":"7px","css":"metricItems","color":color,"anchor":"middle"});
 		}
-
+		
+		
+		function _drawDoneMetric(svg,metric,bracketX,bracketY,width,metricX,metricY,space,color,orientation){
+			if(!color) color=COLOR_BPTY;
+			
+			
+			if (metric.finishrate<25) finishcolor="red";
+			else if (metric.finishrate>25 && metric.finishrate<50) finishcolor="gold";
+			else finishcolor="green";
+			
+			if (width){
+				_drawXlink(svg,"#icon_bracket_"+orientation+"_blue",bracketX,bracketY,{"scale":(width/100)+",1","opacity":0.15});
+			}
+			_drawText(svg,metric.finishrate+"%",metricX,metricY,{"size":"18px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,metric.text,metricX,(metricY+space),{"size":"9px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,"FINISHED: "+metric.finished+" / PLANNED: "+metric.planned,metricX,(metricY+space+(space-2)),{"size":"7px","css":"metricItems","color":color,"anchor":"middle"});
+		}
+		
+		
+		/*function _drawDoneMetrics(svg,x,y){
+			_drawText(svg,"INRANGE: ",x,y,{"size":"8px","color":COLOR_BPTY,"anchor":"start"});
+			_drawText(svg,ITEMS_INRANGE_DONE,x+40,y,{"weight":"bold","size":"10px","color":COLOR_BPTY,"anchor":"start"});
+			_drawText(svg,"PLANNED: ",x,y+9,{"size":"8px","color":COLOR_BPTY,"anchor":"start"});
+			_drawText(svg,ITEMS_PLANNED_TOBEDONE,x+40,y+9,{"weight":"bold","size":"10px","color":COLOR_BPTY,"anchor":"start"});
+			
+			_drawText(svg,"FINISH RATE: "+((ITEMS_INRANGE_DONE/ITEMS_PLANNED_TOBEDONE)*100)+"%",x-100,y-15,{"weight":"bold","size":"18px","color":COLOR_BPTY,"anchor":"start"});
+			
+		}
+*/
 /* ------------------------------------------------- END drawQueues() helper functions ----------------------------------------------------------- */
 
 
@@ -162,6 +201,9 @@ function calculateQueueMetrics(){
 	ITEMS_TOTAL=0;
 	ITEMS_WIP=0;
 	DAYS_DELAYED=0;
+	// items in shown DONE range which have been planned to be finished in this corridor and really have been finished
+	ITEMS_INRANGE_DONE=0;
+	ITEMS_PLANNED_TOBEDONE=0;
 	
 	var _item;
 	
@@ -172,15 +214,25 @@ function calculateQueueMetrics(){
 	
 	for(_d in _filteredItems){	
 		_item = _filteredItems[_d];
-		var _date = _item.actualDate;
 		
+		var _date = _item.actualDate;
+		var _planDate = _item.planDate;
+				
 		var _sizingPD = parseInt(_item.Swag);
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_date)<WIP_START && new Date(_date)>KANBAN_START && _item.state=="done" ){
-			ITEMS_DONE++;
-			if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
+		if (new Date(_date)<WIP_START && new Date(_date)>KANBAN_START){
+			if (_item.state!="done") ITEMS_PLANNED_TOBEDONE++;
+			if (_item.state=="done" ){
+				ITEMS_DONE++;
+				if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
+				
+				if (new Date(_planDate)<WIP_START && new Date(_planDate)>KANBAN_START){
+					ITEMS_INRANGE_DONE++;
+				}
+		}
+			
 		}
 		else if(new Date(_date)>WIP_START && new Date(_date)<WIP_END && new Date(_date)<KANBAN_END) {
 			ITEMS_WIP++;
