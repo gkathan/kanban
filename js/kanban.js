@@ -75,6 +75,17 @@ d3.select("#metrics_forecast1").transition().delay(300).style("visibility","hidd
 	1) change data e.g. WIP_WINDOW
 	2) drawAll()
 	
+	
+	
+	
+	highlight metrics
+	* ===============
+	1)dim all 
+	* d3.select("#metrics_forecast1").selectAll("[id*=metric_]").style("opacity",0.2)
+	2) highlight a specific one
+	* d3.selectAll("[id*=metric_701]").style("opacity",1)
+	
+	
 */
 
 var dcount=0;
@@ -127,8 +138,8 @@ var WIP_END;
 setWIP();
 
 // equals 1377993600000 in ticks (date.getTime()
-var KANBAN_START = new Date("2013-09-01");
-var KANBAN_START_DEFAULT = new Date("2013-09-01");
+var KANBAN_START = new Date("2014-01-01");
+var KANBAN_START_DEFAULT = new Date("2013-12-31");
 
 // equals 1422662400000 in ticks
 var KANBAN_END = new Date("2015-01-31");
@@ -184,7 +195,7 @@ function setMargin(){
 	var _offsetYTopCorporate =150;
 	
 	_offsetXLeft = _marginXLeft+ (SHOW_METRICS_BASELINE*_offsetXLeftBaseline);
-	_offsetXRight= _marginXRight + (SHOW_METRICS_FORECAST1*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2*_offsetXLeftForecast2)+ (SHOW_METRICS_FORECAST1_ACTUAL*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2_ACTUAL*_offsetXLeftForecast2)+(SHOW_METRICS_GOAL*_offsetXLeftGoal);
+	_offsetXRight= _marginXRight + (SHOW_METRICS_FORECAST1*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2*_offsetXLeftForecast2)+(SHOW_METRICS_GOAL*_offsetXLeftGoal);//+ (SHOW_METRICS_FORECAST1_ACTUAL*_offsetXLeftForecast1)+(SHOW_METRICS_FORECAST2_ACTUAL*_offsetXLeftForecast2)
 	_offsetYTop = (SHOW_METRICS_CORPORATE*_offsetYTopCorporate);
 	
 	margin = {top: 100+_offsetYTop, right: _offsetXRight+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH, bottom: 100, left: _offsetXLeft+150};
@@ -284,13 +295,15 @@ function renderB2CGaming() {
 	hideWhiteboard();
 	
 	HEIGHT=1100;
-	WIDTH=1900;
+	WIDTH=1600;
 	ITEM_SCALE=0.8;
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	
 	setKanbanDefaultDates();
 	
 	enableAllMetrics();
+	
+		
 	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
 	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
@@ -301,12 +314,19 @@ function renderB2CGaming() {
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					// do not show sensitive data
-					safeMetrics();
+					//safeMetrics();
+					
+					// default view for Q1 review exercise
+					q1_2014_reviewMetrics();
+					
 					drawAll();
 					drawCustomPostits();
 					initHandlers();
+					
+					//showNGR();
+					
 				});
- 
+	
 }
 
 function renderHistory() {
@@ -803,4 +823,6 @@ var PACKAGE_VERSION="20140320_0954";
 	var PACKAGE_VERSION="20140321_1616";
 	var PACKAGE_VERSION="20140321_1628";
 	var PACKAGE_VERSION="20140321_1805";
+	
+var PACKAGE_VERSION="20140325_0846";
 	
