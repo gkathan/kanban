@@ -82,6 +82,7 @@ d3.select("#metrics_forecast1").transition().delay(300).style("visibility","hidd
 	* ===============
 	1)dim all 
 	* d3.select("#metrics_forecast1").selectAll("[id*=metric_]").style("opacity",0.2)
+	* d3.select("#metrics").selectAll("[id*=metric_]").style("opacity",0.2)
 	2) highlight a specific one
 	* d3.selectAll("[id*=metric_701]").style("opacity",1)
 	
