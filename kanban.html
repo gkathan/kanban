@@ -53,6 +53,7 @@
 <script src="js/SlickGrid-master/slick.editors.js"></script>
 <script src="js/wiki2html.js"></script>
 
+<script src="js/d3_util.js"></script>
 <script src="js/kanban_core.js"></script>
 <script src="js/kanban_util.js"></script>
 <script src="js/kanban_grid.js"></script>
@@ -352,14 +353,22 @@ function submit_download_form(output_format)
 	<span style="font-size:8px">metric filter:</span>	<select id="metricfilter" class="multiselect" multiple="multiple">
 	  <option value="baseline">baseline</option>
 	  <option value="forecast1">forecast-1</option>
-	  <option value="forecast2">forecast-2</option>
+	  <option value="forecast2" selected>forecast-2</option>
 	  <option value="goal" selected>goal</option>
+	  <option value="potentials" selected>potentials</option>
+	</select>
+</div>	
+
+<div class="btn-group-xs">
+	<span style="font-size:8px">metric view:</span>	<select id="metricview" class="multiselect" >
+	  <option value="REVIEW_Q1_2014">REVIEW_Q1_2014</option>
+	  <option value="FORECAST_2015" selected>FORECAST_2015</option>
 	</select>
 </div>	
 
 
 <div class="btn-group-xs">
-	<span style="font-size:8px">forecast basedate:</span><select id="basedate" class="multiselect">
+	<span style="font-size:8px">(re)forecast date:</span><select id="basedate" class="multiselect">
 	  <option value="2013-10-31">2013-10-31</option>
 	  <option value="2014-03-11" selected>2014-03-11</option>
 	</select>
@@ -383,6 +392,22 @@ function submit_download_form(output_format)
 		}
 	});
   });
+ 
+ 
+  $(document).ready(function() {
+	  $('#metricview').multiselect({
+		buttonClass: 'btn-primary btn-sm',
+		onChange: function(element,checked){
+			
+			var _val = $(element).val()
+			_setMetricContext(_val);
+			drawAll();
+//			console.log("element: "+_val+" checked: "+checked);
+		}
+	});
+  });
+ 
+ 
   
   //change the configured forecast calculation basedate
   $(document).ready(function() {
@@ -396,12 +421,18 @@ function submit_download_form(output_format)
 			console.log("element: "+_val+" checked: "+checked);
 			
 			if (_val=="2013-10-31"){
-				_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate=[_val];
-				_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate=[_val];
+				_getMetricContextByColumn("right1").forecastDate=[_val];
+				_getMetricContextByColumn("right2").forecastDate=[_val];
+
+//				_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=[_val];
+//				_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=[_val];
 			}
 			else if(_val=="2014-03-11"){
-				_getDataBy("dimension","forecast1",METRICDATES_DATA).data.baseDate=["2013-10-31",_val];
-				_getDataBy("dimension","forecast2",METRICDATES_DATA).data.baseDate=["2013-10-31",_val];
+				_getMetricContextByColumn("right1").forecastDate=["2013-10-31",_val];
+				_getMetricContextByColumn("right2").forecastDate=["2013-10-31",_val];
+
+				//_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
+				//_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
 			}
 			drawAll();
 			
