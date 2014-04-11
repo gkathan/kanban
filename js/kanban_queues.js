@@ -43,7 +43,7 @@ function drawQueues(){
 	var _xFutureWidth = x(KANBAN_END) - _xFutureX;
 
 	var _yMetricBaseTop = PILLAR_TOP; //top
-	var _yMetricBase = height-PILLAR_TOP; //bottom
+	var _yMetricBase = height+52; //bottom
 	
 	var _yMetricDetailsOffset = 10;
 	var _yMetricDetails2Offset = 8;
@@ -61,8 +61,8 @@ function drawQueues(){
 	var _metric = {"text":"DONE" ,"items":ITEMS_DONE ,"swag": SIZING_DONE}
 	_drawQueueMetric(gQueueDone,_metric,x(KANBAN_START),_yMetricBracketOffset,_xWIPStart,_xWIPStart/2,_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 	
-	_metric = {"text":"FINISH RATE" ,"finishrate":((ITEMS_INRANGE_DONE/ITEMS_PLANNED_TOBEDONE)*100) ,"finished": ITEMS_INRANGE_DONE,"planned":ITEMS_PLANNED_TOBEDONE}
-	_drawDoneMetric(gQueueDone,_metric,x(KANBAN_START),-50,_xWIPStart,_xWIPStart/2,-75,_yMetricDetailsOffset,null,"top");
+	_metric = {"text":"FINISH RATE" ,"finishrate":Math.ceil(((ITEMS_INRANGE_DONE/ITEMS_PLANNED_TOBEDONE)*100)) ,"finished": ITEMS_INRANGE_DONE,"planned":ITEMS_PLANNED_TOBEDONE}
+	_drawDoneMetric(gQueueDone,_metric,x(KANBAN_START),-40,_xWIPStart,_xWIPStart/2,-65,_yMetricDetailsOffset,null,"top");
 
 
 	//_drawDoneMetrics(gQueueDone,x(KANBAN_START)+150,-40);
@@ -82,12 +82,12 @@ function drawQueues(){
 			_drawQueueMetric(gQueueWip,_metric,_xWIPStart,_yMetricBracketOffset,_xWIPWidth,(_xWIPWidth/2+x(WIP_START)),_yMetricBase,_yMetricDetailsOffset,null,"bottom");
 		}
 		//-------------- TODAY markerlines ----------------
-		_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),MARKER_DATE_TOP);
+		_drawQueueMarker(gQueueWip,WIP_START,"today",x(WIP_START),-TIMELINE_HEIGHT);
 		
 		_drawTodayMarker(gQueueWip,x(WIP_START),_yMetricBaseTop,"TODAY");
 		// ------------- WIP marker lines ---------------------
 		if (WIP_END < KANBAN_END){
-			_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),MARKER_DATE_TOP);
+			_drawQueueMarker(gQueueWip,WIP_END,"wip",x(WIP_END),-TIMELINE_HEIGHT);
 			//---------------- FUTURE queue --------------------
 			var gQueueFuture = gQueue.append("g").attr("id","future");
 			_drawQueueArea(gQueueFuture,_xFutureX,0,_xFutureWidth,height,"future",0);
@@ -112,8 +112,8 @@ function drawQueues(){
 
 /* ------------------------------------------------- drawQueues() helper functions ----------------------------------------------------------- */
 		function _drawTodayMarker(svg,x,y,text){
-				_drawXlink(svg,"#today_marker",(x-5.5),-70,{"scale":"1.1"});
-				_drawText(svg,text,x,y,{"size":"18px","weight":"bold","anchor":"middle","color":"red"});
+				_drawXlink(svg,"#today_marker",(x-3),y+3,{"scale":"0.5"});
+				_drawText(svg,text,x,y,{"size":"14px","weight":"bold","anchor":"middle","color":"red"});
 		}
 
 		/**
@@ -146,7 +146,7 @@ function drawQueues(){
 			if (width){
 				_drawXlink(svg,"#icon_bracket_"+orientation+"_blue",bracketX,bracketY,{"scale":(width/100)+",1","opacity":0.15});
 			}
-			_drawText(svg,metric.text,metricX,metricY,{"size":"18px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,metric.text,metricX,metricY,{"size":"14px","css":"metricItems","color":color,"anchor":"middle"});
 			_drawText(svg,metric.items+ " items",metricX,(metricY+space),{"size":"9px","css":"metricItems","color":color,"anchor":"middle"});
 			_drawText(svg,"["+metric.swag+" PD]",metricX,(metricY+space+(space-2)),{"size":"7px","css":"metricItems","color":color,"anchor":"middle"});
 		}
@@ -163,7 +163,7 @@ function drawQueues(){
 			if (width){
 				_drawXlink(svg,"#icon_bracket_"+orientation+"_blue",bracketX,bracketY,{"scale":(width/100)+",1","opacity":0.15});
 			}
-			_drawText(svg,metric.finishrate+"%",metricX,metricY,{"size":"18px","css":"metricItems","color":color,"anchor":"middle"});
+			_drawText(svg,metric.finishrate+"%",metricX,metricY,{"size":"14px","css":"metricItems","color":color,"anchor":"middle"});
 			_drawText(svg,metric.text,metricX,(metricY+space),{"size":"9px","css":"metricItems","color":color,"anchor":"middle"});
 			_drawText(svg,"FINISHED: "+metric.finished+" / PLANNED: "+metric.planned,metricX,(metricY+space+(space-2)),{"size":"7px","css":"metricItems","color":color,"anchor":"middle"});
 		}
@@ -207,10 +207,25 @@ function calculateQueueMetrics(){
 	
 	var _item;
 	
-	var _filteredItems = initiativeData.filter(function(d){
+	
+	
+	/*var _filteredItems = initiativeData.filter(function(d){
 		if (ITEMDATA_FILTER) return eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 		return true;
 		});
+	*/
+	
+	var _filteredItems = initiativeData.filter(function(d){
+		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
+		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
+		var _filterTargets = (d.Type !="target");
+		var _filterOnKanban = (d.onKanban ==1);
+		
+		if (ITEMDATA_FILTER){
+			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+		}
+		return _filterStart && _filterEnd;
+	});
 	
 	for(_d in _filteredItems){	
 		_item = _filteredItems[_d];
