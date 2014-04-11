@@ -219,11 +219,21 @@ var columns = [
 	}
 }
 
+    
+   /* https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-checkbox-row-select.html
+   	var checkboxSelector = new Slick.CheckboxSelectColumn({
+      cssClass: "slick-cell-checkboxsel"
+    });
+    columns.push(checkboxSelector.getColumnDefinition());
+*/
+    
 
  
     v1grid = new Slick.Grid("#v1Grid", epicData, columns, options);
     
-     v1grid.setSelectionModel(new Slick.CellSelectionModel());
+    v1grid.setSelectionModel(new Slick.CellSelectionModel());
+	//v1grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+
 
     v1grid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
@@ -232,6 +242,13 @@ var columns = [
       v1grid.updateRowCount();
       v1grid.render();
     });
+
+
+/*	
+	v1grid.registerPlugin(checkboxSelector);
+	var columnpicker = new Slick.Controls.ColumnPicker(columns, v1grid, options);
+
+*/
     
     v1grid.onSort.subscribe(function (e, args) {
 		currentSortCol = args.sortCol;
