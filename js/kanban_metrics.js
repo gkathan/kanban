@@ -15,9 +15,12 @@ var metricData;
 // metric dates
 var METRIC_CONTEXT;
 
+//name of metric view (default)
+var METRIC_VIEW="REVIEW_Q1_2014";
+
 
 // y coord of marker / dates 
-var MARKER_DATE_TOP = -30;
+//var MARKER_DATE_TOP = -20;
 
 //width of a metric column
 var METRIC_WIDTH=150;
@@ -29,10 +32,11 @@ var METRIC_CX_BASE_Y = METRIC_BASE_Y+50;
 var METRIC_SHARE_BASE_Y = METRIC_BASE_Y+35;
 
 var METRIC_BASE_X_OFFSET = LANE_LABELBOX_LEFT_WIDTH +120;
+var Y_CORP_METRICS=-30;
 
 
 //bracket y offset
-var METRIC_BRACKET_Y_OFFSET = 40;
+var METRIC_BRACKET_Y_OFFSET = 25;
 
 // width of the targets block after KANBAN_END and before LANELABELBOX_RIGHT
 var TARGETS_COL_WIDTH=10;
@@ -51,25 +55,26 @@ var METRICS_SCALE=1;
 
 // ============== YEAR 2014/2015 FORECAST ====================
 var METRIC_CONTEXT_CONFIG=[{"view":"FORECAST_2015","context":[
-					{"column":"left","dimension": "actual", "intervalStart":"2013-01-01","intervalEnd":"2013-12-31","comparison":"","data": {"title":"RESULT 2013" ,"line1":"results for","line2":"forecast from"}},
-					{"column":"right1","dimension": "forecast", "intervalStart":"2014-01-01","intervalEnd":"2014-12-31","comparison":"forecast","forecastDate":["2013-10-31","2014-03-11"],"data": {"title":"FORECAST 2014" ,"line1":"best-case","line2":"forecast from"}},
-					{"column":"right2","dimension": "forecast", "intervalStart":"2015-01-01","intervalEnd":"2015-12-31","comparison":"forecast","forecastDate":["2013-10-31","2014-03-11"],"data": {"title":"FORECAST 2015" ,"line1":"best-case","line2":"forecast from"}},
+					{"column":"left","dimension": "actual", "intervalStart":"2013-01-01","intervalEnd":"2013-12-31","comparison":"","data": {"title":"RESULT 2013" ,"line1":"","line2":""}},
+					{"column":"right1","dimension": "forecast", "intervalStart":"2014-01-01","intervalEnd":"2014-12-31","comparison":"forecast","forecastDate":["2013-10-31","2014-03-11"],"data": {"title":"FORECAST 2014" ,"line1":"","line2":"forecast from"}},
+					{"column":"right2","dimension": "forecast", "intervalStart":"2015-01-01","intervalEnd":"2015-12-31","comparison":"forecast","forecastDate":["2013-10-31","2014-03-11"],"data": {"title":"FORECAST 2015" ,"line1":"","line2":"forecast from"}},
 					{"column":"right3","dimension": "goal", "intervalStart":"2015-01-01","intervalEnd":"2015-12-31","comparison":"","data": {"title":"GOAL" ,"line1":"norbert says","line2":"forecast from"}},
 					{"column":"top","dimension": "forecast", "intervalStart":"2015-01-01","intervalEnd":"2015-12-31","comparison":"","data": {"title":"POTENTIALS" ,"line1":"risks & opportunities"}}
 					]},
 
 
 		{"view":"REVIEW_Q1_2014","context":[
-					{"column":"left","dimension": "actual", "intervalStart":"2013-01-01","intervalEnd":"2013-03-31","comparison":"", "data": {"title":"RESULTS Q1-2013" ,"line1":"results for","line2":"forecast from","forecastDate":["2013-03-31"]}},
-					{"column":"right1","dimension": "actual", "intervalStart":"2014-01-01","intervalEnd":"2014-03-31","comparison":"forecast", "data": {"title":"REVIEW Q1-2014" ,"line1":"best-case","line2":"forecast from","forecastDate":["2013-10-31","2014-03-11"]}},
+					{"column":"left","dimension": "actual", "intervalStart":"2013-01-01","intervalEnd":"2013-03-31","comparison":"", "data": {"title":"RESULTS Q1-2013" ,"line1":"","line2":""}},
+					{"column":"right1","dimension": "actual", "intervalStart":"2014-01-01","intervalEnd":"2014-03-31","comparison":"forecast","forecastDate":["2013-10-31"],"data": {"title":"REVIEW Q1-2014" ,"line1":"actuals","line2":"compared to forecast from"}},
 					{"column":"top","dimension": "forecast", "intervalStart":"2015-01-01","intervalEnd":"2015-12-31","comparison":"","data": {"title":"POTENTIALS" ,"line1":"risks & opportunities"}}
 		]}];
 
 //default context		
-METRIC_CONTEXT = _getDataBy("view","REVIEW_Q1_2014",METRIC_CONTEXT_CONFIG).context;
+METRIC_CONTEXT = _getDataBy("view",METRIC_VIEW,METRIC_CONTEXT_CONFIG).context;
 
 function _setMetricContext(context){
 	METRIC_CONTEXT = _getDataBy("view",context,METRIC_CONTEXT_CONFIG).context; 
+	METRIC_VIEW = context;
 }
 
 
@@ -110,7 +115,7 @@ function drawMetrics(){
 	var gMetrics= svg.append("g").attr("id","metrics");
 	// y space between KPIs
 	var _kpiYOffset = 15;
-	var _yTotal = MARKER_DATE_TOP;
+	var _yTotal = TIMELINE_HEIGHT;
 	//left			
 	var _primaryXOffset = METRIC_BASE_X_OFFSET-60;
 	var _secondaryXOffset = METRIC_BASE_X_OFFSET-85;
@@ -168,7 +173,7 @@ function drawMetrics(){
 			
 			_primaryXOffsetRight-=120;
 
-			var gMetricsPotential = gMetrics.append("g").attr("id","metrics_"+context.dimension);
+			var gMetricsPotential = gMetrics.append("g").attr("id","metrics_potentials");
 			var _yRisk = -185;
 			var _xRisk = x(KANBAN_END)+30//-150;//-_primaryXOffsetRight;
 
@@ -290,9 +295,11 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 	
 	var gMetrics = svg.append("g").attr("id","lane_metrics");
 	
+
 	if (column=="left"){
 			_kpiDir="right";
 			_resultDir="left";
+			
 	}
 	
 	var _resultSum=0;
@@ -320,6 +327,13 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 				}
 				else if (_mm.class=="result") {
 					_delta = _drawTextMetric(gMetrics,_mm,"metricBig",x1Base,_y+_primTextYOffset,10,_resultDir,scale,_metricContext);
+					
+					//result breaks
+					/*var _xOffset = 45;
+					if (_resultDir =="left") _xOffset=35;
+					_drawXlink(gMetrics,"#result_break_"+_resultDir,(x1Base-_xOffset),_y+_primTextYOffset-15,{"scale":.6,"opacity":0.5});*/
+				
+					
 					console.log("*** _delta= "+_delta);
 					
 					if (_mm.sustainable==1) {
@@ -337,7 +351,7 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 
 	// calculated sum
 	//[TODO] build a proper class structure = this would be a TextMetric m = new TextMetric(...)
-	var _yTotal = MARKER_DATE_TOP;
+	var _yTotal = Y_CORP_METRICS;
 	var _total = {"dimension":dimension,"number":_resultSum ,"scale":"mio EUR" ,"type":"NGR", "sustainable":1, "delta":_deltaSum };
 
 	console.log("************************************************** _total.delta = "+_total.delta);
@@ -348,7 +362,16 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 
 	// corp result
 	var gCorp = svg.append("g").attr("id","corp_metrics");
-	_drawTextMetric(gCorp,_total,"metricBig",x1Base,_yTotal,10,_resultDir,scale,_metricContext);
+	var gCorpResult = gCorp.append("g").attr("id","corp_metrics_result");
+	_drawTextMetric(gCorpResult,_total,"metricBig",x1Base,_yTotal,10,_resultDir,scale,_metricContext);
+	
+	
+	
+	/* result_breaks
+	var _xOffset = 45;
+	if (_resultDir =="left") _xOffset=30;
+	_drawXlink(gCorpResult,"#result_break_"+_resultDir,(x1Base-_xOffset),_yTotal-15,{"scale":.6,"opacity":0.5});
+	*/
 
 	// corp KPIs
 	var _corpKpis = _met.filter(function(d){return d.lane=="corp" &&d.class=="kpi" &&(d.type=="churn rate" || d.type=="customer value" ||d.type=="channel reach"||d.type=="availability")});
@@ -358,10 +381,12 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 		_drawTextMetric(gCorp,_corpKpis[k],"metricSmall",x2Base,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,_kpiDir,scale,_metricContext);
 	}
 
+	
 // ============== sustain share PIE =================
 	var _yPie = METRIC_PIE_BASE_Y;
 	var _sustainShare= _met.filter(function(d){return d.type=="marketshare" && d.scale=="% sustainable"});
 	_drawPie(gCorp,dimension,_sustainShare[0],x1Base-20,_yPie);
+	
 
 // ============== CX =================
 	var _yCX =METRIC_CX_BASE_Y;
@@ -373,6 +398,8 @@ function _renderMetrics(svg,column,x1Base,x2Base,scale){
 // ============== overall share =================
 	var _yMarketShare = METRIC_SHARE_BASE_Y;
 	var _overallShare =_met.filter(function(d){return d.type=="marketshare" && d.scale=="% overall"});
+	
+	// BUG IN YEAR FORECAST VIEW !!!
 	_drawTextMetric(gCorp,_overallShare[0],"metricBig",x1Base-10,_yMarketShare,10,"left",scale,_metricContext);
 
 	return _resultSum;
@@ -414,11 +441,12 @@ function checkPreviousForecasts(metric,comparison){
  * 
  * returns _delta or 0
  * */
-
- 
 function _drawTextMetric(svg,metric,css,x,y,space,direction,scale,context){
 		var _metricColor;
 		var _deltaOffset=70;
+		
+		console.log("----- end drawTextMetric: "+metric);
+		
 		if (metric.sustainable==1) _metricColor=COLOR_BPTY;//"174D75";
 		//risks
 		else if (metric.sustainable==-1){
@@ -469,8 +497,12 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale,context){
 		if (context.comparison !=""){
 			
 			var _previous = checkPreviousForecasts(metric,context.comparison);
+			//absolute delta between number and comparison
 			var _delta = 0;
 			var _initial =0;
+			
+			// relative quotient between number and comparison => used in "hide sensitive views" instead of delta
+			var _quotient;
 			
 			// now we have to take the last of the array as default = show trend from existing to moist recent previous forecast
 			
@@ -481,11 +513,18 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale,context){
 				
 				console.log("********************************** _pmetric = "+_pmetric);
 				
-				if (metric["delta"]!=null) _delta = metric.delta;
+				if (metric["delta"]!=null) {
+					_delta = metric.delta;
+					_initial = (metric.number-metric["delta"]);
+				}
 				else {
 					 _delta = Math.round(((metric.number*100)-(_pmetric.number*100)))/100;
 					 _initial =_pmetric.number;
 				 }
+
+				if (metric["quotient"]!=null) _quotient = metric.quotient;
+				else _quotient = Math.round((metric.number/_initial)*100);
+				
 				
 				if (metric.dimension!="baseline"){
 					var _color;
@@ -505,7 +544,7 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale,context){
 						_yoffsetText=0;
 					}
 					
-					if (_delta >0) {
+					if ((_delta*metric.direction)  >0) {
 						_color="green";
 						_symbol = "triangle-up";
 						_delta = "+"+_delta;
@@ -529,6 +568,23 @@ function _drawTextMetric(svg,metric,css,x,y,space,direction,scale,context){
 					// and the delta
 					_drawText(gMetric,_delta,(x+_xoffset-(8*_scale)),(y-_yoffsetText),{"size":"10px","weight":"normal","anchor":"end","color":_color,"scale":_scale});
 					_drawText(gMetric,_initial,(x+_xoffset+(10*_scale)),(y-_yoffsetText),{"size":"10px","weight":"normal","anchor":"start","color":COLOR_BPTY,"scale":_scale});
+					
+					//quotient
+					_drawText(gMetric,_quotient+"%",(x+_xoffset-(8*_scale)),(y-_yoffsetText)+5,{"size":"6px","weight":"normal","anchor":"start","color":COLOR_BPTY,"scale":_scale});
+					
+					//quotient
+					if (metric.class=="result"){
+						var gNoNGRMetrics = d3.select("#metrics").append("g").attr("id","metric_noNGR");
+						_drawText(gNoNGRMetrics,_quotient+"%",_xNumber,(y+space/2),{"anchor":"start","color":_metricColor,"css":css+"Number","scale":scale});
+						_drawText(gNoNGRMetrics,"trend quotient",(x+space/2),(y-space/2),{"anchor":_anchor,"color":_metricColor,"css":css+"Scale","scale":scale});
+						_drawText(gNoNGRMetrics,metric.type,(x+space/2),(y+space/2),{"anchor":_anchor,"color":_metricColor,"css":css+"Type","scale":scale});
+						gNoNGRMetrics.append("path")
+						.attr("transform","translate("+(x+_xoffset)+","+(y-_yoffsetSymbol)+") rotate("+(0)+") scale("+_scale+")")
+						.attr("d",d3.svg.symbol().type(_symbol))
+						.style("fill",_color)
+
+					}
+					
 
 				}
 			}	
@@ -546,13 +602,18 @@ function _drawMetricSeparator(svg,x){
  * */
 function _drawMetricDate(svg,x,y,context){
 	var gDate = svg.append("g").attr("id","metric_date_"+context.data.title);
-	_drawText(gDate,context.data.title,x,y,{"size":"16px","weight":"bold","anchor":"start","color":COLOR_BPTY});
+	var _title = _drawText(gDate,context.data.title,x,y,{"size":"16px","weight":"bold","anchor":"start","color":COLOR_BPTY});
+	var _m =get_metrics(_title.node());
 	
-	_drawText(gDate,context.data.line1+": ",x,y+7,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
-	_drawText(gDate,context.intervalEnd.toString('yyyy-MM-dd'),x+30,y+7,{"size":"6px","weight":"bold","anchor":"start","color":COLOR_BPTY});
 	
-	_drawText(gDate,context.data.line2+": ",x,y+14,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
-	//_drawText(gDate,context.forecastDate.toString('yyyy-MM-dd'),x+30,y+14,{"size":"6px","weight":"bold","anchor":"start","color":COLOR_BPTY});
+	_drawText(gDate,context.data.line1+" ",x,y+7,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+	_drawText(gDate,"[from: "+context.intervalStart.toString('yyyy-MM-dd')+" to: "+context.intervalEnd.toString('yyyy-MM-dd')+" ]",(x+_m.width),y+7,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
+	
+	_drawText(gDate,context.data.line2+" ",x,y+14,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+	if (context.forecastDate)
+		_drawText(gDate,"[ "+_.last(context.forecastDate).toString('yyyy-MM-dd')+" ]",(x+_m.width),y+14,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
+		
+	
 }
 
 
@@ -690,29 +751,38 @@ function fullMetrics(){
 
 /** coss cutting view/hide filter
  * can be on column base 
+ * 
+ * to filter out ALL monetary values in safe mode use:
+ * d3.selectAll("[id*=EUR]").style("visibility","hidden");
  */
 function hideNGR(column){
 	
-	if (!column) d3.selectAll("[id*=EUR]").style("visibility","hidden");
-	else d3.select(column).selectAll("[id*=EUR]").style("visibility","hidden");
+	if (!column) d3.selectAll("[id*=NGR]").style("visibility","hidden");
+	else d3.select(column).selectAll("[id*=NGR]").style("visibility","hidden");
+	
+	d3.selectAll("#metric_noNGR").style("visibility","visible");
+	
 	SHOW_METRICS_NGR=false;
 }
 
 // null as value in style or attribute removes the attribute at all
 function showNGR(column){
-	if (!column) d3.selectAll("[id*=EUR]").style("visibility",null);
-	else d3.select(column).selectAll("[id*=EUR]").style("visibility",null);
+	if (!column) d3.selectAll("[id*=NGR]").style("visibility",null);
+	else d3.select(column).selectAll("[id*=NGR]").style("visibility",null);
+	
+	d3.selectAll("#metric_noNGR").style("visibility","hidden");
+	
 	SHOW_METRICS_NGR=true;
 }
 
-function hideGoalRisk(){
-	d3.selectAll("#metrics_goal,#metrics_potentials").transition().style("visibility","hidden");
+function hideGoal(){
+	d3.selectAll("#metrics_goal").transition().style("visibility","hidden");
 	//hideNGR();
 	SHOW_METRICS_GOAL=false;
 }
 
-function showGoalRisk(){
-	d3.selectAll("#metrics_goal,#metrics_potentials").transition().style("visibility",null);
+function showGoal(){
+	d3.selectAll("#metrics_goal").transition().style("visibility",null);
 	//showNGR();
 	SHOW_METRICS_GOAL=true;
 }
@@ -760,12 +830,15 @@ function filterMetrics(){
 		d3.select("#metrics_forecast2").attr("transform","translate(-150,0)");
 		}
 	
-	if (SHOW_METRICS_GOAL) showGoalRisk();
-	else hideGoalRisk();
+	if (SHOW_METRICS_GOAL) showGoal();
+	else hideGoal();
 	
 	if (SHOW_METRICS_NGR) showNGR();
 	else hideNGR();
 
+
+	if (SHOW_METRICS_POTENTIALS) showPotentials();
+	else hidePotentials();
 
 	if (SHOW_METRICS_CORPORATE) showCorpMetrics();
 	else hideCorpMetrics();
@@ -799,10 +872,10 @@ function hideMetrics(which){
 				SHOW_METRICS_FORECAST2=true;
 			}
 			if (which[i].name=="goal" && which[i].hide==true && SHOW_METRICS_GOAL==true){
-				hideGoalRisk();
+				hideGoal();
 			}
 			else if (which[i].name=="goal" && which[i].hide==false && SHOW_METRICS_GOAL==false){
-				showGoalRisk();
+				showGoal();
 			}
 			if (which[i].name=="potentials" && which[i].hide==true && SHOW_METRICS_POTENTIALS==true){
 				hidePotentials();
