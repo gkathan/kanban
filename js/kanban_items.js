@@ -40,6 +40,8 @@ var ITEMDATA_DEPTH_LEVEL;
 
 
 
+
+
 /**
  * the values in the override mean % of space the lanes will get => has to sum to 100% 
  */
@@ -93,15 +95,18 @@ function drawTargets(){
 	
 	svg.append("g").attr("id","targetDependencies");
 	
-	//visualize targets hack ;-) just highlight with a white box for now...
+
+
+	//target block
+	_drawText(svg,"TARGET",x(KANBAN_END)+(TARGETS_COL_WIDTH/2),(-5),{"size":"14px","color":COLOR_BPTY,"opacity":0.3,"anchor":"middle","weight":"bold"});
 	
 	gTargets.append("rect")
-		.attr("x",x(new Date("2014-12-15")))
-		.attr("width",65)
+		.attr("x",x(KANBAN_END))
+		.attr("width",TARGETS_COL_WIDTH)
 		.attr("y",0)
 		.attr("height",y(100))
 		.style("fill","white")
-		.style("opacity",0.7);
+		.style("opacity",0.1);
 	
 	var groups = gTargets.selectAll("targets")
 	.data(targetData)
@@ -111,7 +116,13 @@ function drawTargets(){
 	.attr("id",function(d){return "target_"+d.id})
 	.each(function(d){
 		var _size = d.size*ITEM_SCALE;
-		var _itemXTarget = x(new Date(d.targetDate));
+		
+		// if we want to show exactly targets on their dates .....
+		// var _itemXTarget = x(new Date(d.targetDate));
+		
+		//other option is to put them (visually cleaner) always after the timeline
+		var _itemXTarget = x(KANBAN_END)+(TARGETS_COL_WIDTH/2);
+		
 		
 		var _yOffset = getSublaneCenterOffset(getFQName(d));
 		var _sublane = getSublaneByNameNEW(getFQName(d));
@@ -128,6 +139,8 @@ function drawTargets(){
 		
 		_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 
+		//prio
+		_drawText(d3.select(this),d.ranking,_itemXTarget,(_itemY+1.3),{"anchor":"middle","size":"4px","color":"white","weight":"normal"});
 		
 		_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
 		
@@ -206,6 +219,25 @@ function _getTargetsByItem(item){
 	return _targets;
 }
 
+/** gets for an item all associated metrics this items is contributing to
+ */
+function _getMetricsByItem(item){
+	var _metrics = new Array();
+	for (var m in metricData){
+		var _targets = metricData[m].targets;
+		if (_targets){
+			console.log("* targets of "+metricData[m].id+": "+_targets);
+			var _items = _targets.split(",");
+			for (var j in _items){
+				if (_items[j]==item.id){
+					_metrics.push(metricData[m].id);
+				} 
+			}
+		}
+	}
+	return _metrics;
+}
+
 
 // ----------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------- ITEMS SECTION ---------------------------------------------------
@@ -238,9 +270,10 @@ function drawItems(){
 		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
 		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
 		var _filterTargets = (d.Type !="target");
+		var _filterOnKanban = (d.onKanban ==1);
 		
 		if (ITEMDATA_FILTER){
-			return _filterStart && _filterEnd && _filterTargets && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
 		}
 		return _filterStart && _filterEnd;
 	});
@@ -295,34 +328,38 @@ function drawItems(){
 		if (new Date(d.actualDate) > KANBAN_END){
 			 _startActualBeyond=true;
 		}
-		if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_lineX1,_lineX2,_itemY);
-		// ------------  line if before plan--------------
-		else if (d.actualDate<d.planDate) _drawItemDelayLine(d3.select(this),_itemX,(_itemXPlanned-_size-(_size/2)),_itemY);
 		
-		d3.select(this)
-			.style("opacity",d.accuracy/10);
-		
-		// ------------  circles --------------
-		if (d.Type !=="target"){
-			// only draw circle if we are inside KANBAN_START/END 
-			if (!_startActualBeyond && !_endBeyond){
-				d3.select(this)
-					.append("circle")
-						.attr("id","item_circle_"+d.id)
-						.attr("cx",_itemX)
-						.attr("cy",_itemY)
-						.attr("r",_size)
-						.attr("class",function(d){
-						if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
-						else if (new Date(d.actualDate)>WIP_END) {return "future";} 
-						else {return d.state}});
-				// ----------- circle icons -------------
-				// only append icon if we have declared on in external.svg
-				if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
-					_drawXlink(d3.select(this),"#icon_"+d.theme+"."+d.lane+"."+d.sublane,(_itemX-(1.2*_size/2)),(_itemY-(1.2*_size/2)),{"scale":_size/10});
+		if (d.state !="killed"){
+			if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_lineX1,_lineX2,_itemY);
+			// ------------  line if before plan--------------
+			else if (d.actualDate<d.planDate) _drawItemDelayLine(d3.select(this),_itemX,(_itemXPlanned-_size-(_size/2)),_itemY);
+			
+			d3.select(this)
+				.style("opacity",d.accuracy/10);
+			
+			// ------------  circles --------------
+			if (d.Type !=="target"){
+				// only draw circle if we are inside KANBAN_START/END 
+				if (!_startActualBeyond && !_endBeyond){
+					d3.select(this)
+						.append("circle")
+							.attr("id","item_circle_"+d.id)
+							.attr("cx",_itemX)
+							.attr("cy",_itemY)
+							.attr("r",_size)
+							.attr("class",function(d){
+							if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
+							else if (new Date(d.actualDate)>WIP_END) {return "future";} 
+							else {return d.state}});
+					// ----------- circle icons -------------
+					// only append icon if we have declared on in external.svg
+					if (document.getElementById("icon_"+d.theme+"."+d.lane+"."+d.sublane)){
+						_drawXlink(d3.select(this),"#icon_"+d.theme+"."+d.lane+"."+d.sublane,(_itemX-(1.2*_size/2)),(_itemY-(1.2*_size/2)),{"scale":_size/10});
+					}
 				}
-			}
-		} //end if d.Type!="target"
+			} //end if d.Type!="target"
+			
+		}//end kill check
 		
 		// ------------  item blocks & names & postits --------------
 		// if isCorporate flag is not set use "tactic" icon 
@@ -331,6 +368,10 @@ function drawItems(){
 			if (!d.isCorporate) {
 				_iconRef = "tactic";
 			}
+			
+			if (d.state=="killed") _iconRef+="_killed";
+			if (!d.ExtId) _iconRef="item_notsynced";
+			
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXPlanned-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 			
 			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
@@ -342,19 +383,11 @@ function drawItems(){
 		else if (new Date(d.actualDate)>KANBAN_START){
 			_drawItemName(d3.select(this),d,_itemXActual,(_itemY+_size+3),0.1);
 		}
-		// transparent circle on top for the event listener
-		d3.select(this)
-			.append("circle")
-				.attr("id","event_circle_"+d.id)
-				.attr("cx",_itemX)
-				.attr("cy",_itemY)
-				.attr("r",_size)
-				.style("opacity",0)
-				.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
-					
-				.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
-				.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
-				.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+		// transparent circle on top for the event listener 
+		if (d.state!="killed") _drawItemEventListenerCircle(d3.select(this),"event_circle_"+d.id,_itemX,_itemY,_size)
+		// and always over the planned block
+		_drawItemEventListenerCircle(d3.select(this),"event_planned_circle_"+d.id,_itemXPlanned,_itemY,_size)
+		
 		
 		// ------------- labels for Swag view -------------
 		_text = gLabels
@@ -423,6 +456,20 @@ function drawItems(){
 
 
 
+function _drawItemEventListenerCircle(svg,id,x,y,r){
+	svg.append("circle")
+		.attr("id",id)
+		.attr("cx",x)
+		.attr("cy",y)
+		.attr("r",r)
+		.style("opacity",0)
+		.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
+		.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+		.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
+		.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+}
+
+
 /** 
  * @svg d3 reference
  * @d data 
@@ -475,7 +522,7 @@ function _drawItemName(svg,d,x,y,scale,color){
 	var _textWeight="bold";
 	var _textStyle="normal";
 	var _textSize = 5+(size/5)*ITEM_FONTSCALE;
-	if (!d.isCorporate) {
+	if (!d.isCorporate && !d.Type=="target") {
 		_textWeight = "normal";
 		_textStyle="italic";
 		_textSize =_textSize * TACTIC_SCALE;
@@ -494,7 +541,12 @@ function _drawItemName(svg,d,x,y,scale,color){
 	   //.style("letter-spacing",-.2)
 	   //google font
 	   .style("font-family","arial, sans-serif")
-	   .style("fill",function(d){if ((d.actualDate>d.planDate && d.state!="done")) return "red"; else if (d.state=="done") return "green";else if (d.state=="todo") return "#aaaaaa"; else if (d.Type=="target") return COLOR_TARGET; return"black";})
+	   .style("fill",function(d){
+								if ((d.actualDate>d.planDate && d.state!="done" &&d.state!="killed")) return "red"; 
+								else if (d.state=="done") return "green";
+								else if (d.state=="todo" || d.state=="killed") return "#aaaaaa"; 
+								else if (d.Type=="target") return COLOR_TARGET; 
+								return"black";})
 	   .attr("x",x)
 	   .attr("y",y)
 	   //.text(d.name);
@@ -587,8 +639,22 @@ function onTooltipOverHandler(d,tooltip){
 	d3.select("#metrics").selectAll("[id*=metric_]").transition().delay(0).duration(500).style("opacity",0.1)	
 	// and highlight depending metrics
 	//test hardcoded
-	d3.selectAll("[id*=metric_251]").transition().delay(100).duration(500).style("opacity",1);
-	d3.selectAll("[id*=metric_253]").transition().delay(100).duration(500).style("opacity",1);
+	
+	
+	if (d.Type=="target"){
+		// get metrics to be highlighted
+		for (var m in metricData){
+			//comma delimited string shit
+			var _targets = metricData[m].targets;
+			if (_targets){
+				 var _targetsArray= _targets.split(",");
+				 if (_targetsArray.indexOf(d.id) >-1) d3.selectAll("[id*=metric_"+metricData[m].id+"]").transition().delay(100).duration(500).style("opacity",1);
+			}
+		}
+	}
+	
+	//d3.selectAll("[id*=metric_251]").transition().delay(100).duration(500).style("opacity",1);
+	//d3.selectAll("[id*=metric_253]").transition().delay(100).duration(500).style("opacity",1);
 	
 	//highlight the selected mouseover element
 	d3.select(highlight+d.id)
@@ -629,6 +695,8 @@ function onTooltipOverHandler(d,tooltip){
 	var _targets=_getTargetsByItem(d);
 
 	
+
+	
 	if (_dependingItems) _highlightItems(_dependingItems,filteredInitiativeData,"#item_");
 	
 	if (_targets){
@@ -636,12 +704,7 @@ function onTooltipOverHandler(d,tooltip){
 		// and connect 
 		//[TODO]
 		// draw line from d.id to each in _targets.id
-		
-		
 	}
-	
-	
-	
 }
 
 
@@ -657,20 +720,6 @@ function _highlightItems(items,data,type){
 					.delay(200)            
 					.duration(500)
 					.style("opacity",1);
-				
-				/*
-				// and a blue circle around the element
-				
-				var _x = x(new Date(_item.actualDate));
-				var _y = get_metrics(dep).y;
-				svg.append("circle").attr("r",20)
-				.style("stroke",COLOR_BPTY)
-				.style("stroke-width","5px")
-				.style("fill","white")
-				.style("fill-opacity",0.1)
-				.style("stroke-opacity",0.75)
-				.attr("transform","translate ("+_x+","+_y+")");
-				*/
 			}
 		}// end check depending items
 }
