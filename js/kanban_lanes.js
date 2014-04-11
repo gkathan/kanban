@@ -15,7 +15,7 @@ var laneTextData;
 var pillarData;
 
 
-var PILLAR_TOP = -75;
+var PILLAR_TOP = -40;
 // pillars will use LANE_LABELBOX_RIGHT_WIDTH-PILLAR_X_OFFSET space
 var PILLAR_X_OFFSET=90;
 
@@ -147,13 +147,13 @@ function _drawPillarColumns(svg,data,x,y,width){
 		var _length = data.length;
 		var _pillarWidth = (width/_length)-_spacer;
 		var _height = height-PILLAR_TOP;
-		var _headlineSize = "10px";
+		var _headlineSize = "8px";
 	
 	for (var i in data){
 		//1) pillar header
 		var _offset = (getInt(i)*_pillarWidth)+_pillarWidth/2;
 
-		_drawText(svg,data[i].name,(x+_offset+(i*_spacer)),(y+_spacer),{"size":_headlineSize,"color":_color,"mode":"tb","weight":"bold"});
+		_drawText(svg,data[i].name,(x+_offset+(i*_spacer)),(y+_spacer),{"size":_headlineSize,"color":_color,"mode":"tb","weight":"bold","opacity":0.3});
 
 		//2) pillar rect
 		svg.append("rect")
@@ -173,7 +173,9 @@ function _drawHowPillars(svg,data,x,y,width){
 	var _textSize="5px";
 	var _d = _.nest(data,"lane");
 	//0 HOW
-	_drawText(svg,"HOW",(x+width/2),(y-(3*_spacer)),{"size":"40px","color":"grey","opacity":0.1,"anchor":"middle","weight":"bold"});
+	_drawText(svg,"HOW",(x+width/2),(y-(3*_spacer)),{"size":"14px","color":COLOR_BPTY,"opacity":0.3,"anchor":"middle","weight":"bold"});
+	_drawText(svg,"WHERE",(x+width/2)+100,-5,{"size":"14px","color":COLOR_BPTY,"opacity":0.3,"anchor":"middle","weight":"bold"});
+
 
 	// for each lane
 	for (l in _d.children){
