@@ -116,7 +116,7 @@ var TIMELINE_HEIGHT = 20;
 
 
 // width of the targets block after KANBAN_END and before LANELABELBOX_RIGHT
-var TARGETS_COL_WIDTH=10;
+var TARGETS_COL_WIDTH=70;
 
 
 var margin;
@@ -234,6 +234,10 @@ function init(){
 		.attr("id","tooltip");
 	
 
+	// zoom experiment
+	//svg.call(d3.behavior.zoom().on("zoom", redraw));
+
+
 	drag_x = d3.behavior.drag()
 	.on("drag", function(d,i) {
 		d.x += d3.event.dx
@@ -242,6 +246,15 @@ function init(){
 			return "translate(" + [ d.x,d.y ] + ")"
 		})
 	});
+}
+
+
+/** zoom experiments...
+ */
+function redraw() {
+  svg.attr("transform",
+      "translate(" + d3.event.translate + ")"
+      + " scale(" + d3.event.scale + ")");
 }
 
 
@@ -324,7 +337,7 @@ function renderB2CGaming() {
 					drawCustomPostits();
 					initHandlers();
 					
-					//showNGR();
+					hideNGR();
 					
 				});
 	
@@ -826,4 +839,14 @@ var PACKAGE_VERSION="20140320_0954";
 	var PACKAGE_VERSION="20140321_1805";
 	
 var PACKAGE_VERSION="20140325_0846";
+	
+var PACKAGE_VERSION="20140409_1902";
+	
+var PACKAGE_VERSION="20140409_1909";
+	
+var PACKAGE_VERSION="20140410_1028";
+	var PACKAGE_VERSION="20140410_1427";
+	var PACKAGE_VERSION="20140410_1634";
+	var PACKAGE_VERSION="20140410_1718";
+	var PACKAGE_VERSION="20140410_1840";
 	
