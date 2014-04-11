@@ -254,7 +254,7 @@ function submit_download_form(output_format)
 	form.action=TRANSCODE_URL;
 	form["format"].value = output_format;
 	form["data"].value = declaration+svg_xml ;
-	form["context"].value = CONTEXT ;
+	form["context"].value = CONTEXT+"_"+METRIC_VIEW ;
 	form["svg_width"].value = WIDTH ;
 	form["svg_height"].value = HEIGHT ;
 	//high res scale
@@ -361,8 +361,8 @@ function submit_download_form(output_format)
 
 <div class="btn-group-xs">
 	<span style="font-size:8px">metric view:</span>	<select id="metricview" class="multiselect" >
-	  <option value="REVIEW_Q1_2014">REVIEW_Q1_2014</option>
-	  <option value="FORECAST_2015" selected>FORECAST_2015</option>
+	  <option value="REVIEW_Q1_2014" selected>REVIEW_Q1_2014</option>
+	  <option value="FORECAST_2015" >FORECAST_2015</option>
 	</select>
 </div>	
 
@@ -592,11 +592,11 @@ function initHandlers(){
 	d3.select("#b5").on("click", function(){
 		if (SHOW_METRICS_NGR){
 			 hideNGR();
-			 hideGoalRisk();
+			 
 		 }
 		else{
 			 showNGR();
-			 showGoalRisk();
+
 		 }
 	});	
 
