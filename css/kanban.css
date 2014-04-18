@@ -150,6 +150,19 @@ h1{
 	stroke-opacity:1;
 }
 
+.metaphorDemarcationLine {
+	stroke: #999999;
+	stroke-width:4;
+	stroke-dasharray: 5,5;
+	stroke-opacity:1;
+}
+
+.metaphorEnablingBlock {
+	fill: #aaaaaa;
+	opacity:0.3;
+}
+
+
 .rasterLine {
 	stroke: #cccccc;
 	stroke-width: 0.25;
