@@ -52,8 +52,10 @@ calculates the offset to center elements / text per sublane
 function getSublaneCenterOffset(sublane){
 	if(sublane){
 		var _sublane = getSublaneByNameNEW(sublane);
-		var _height = _sublane.yt2-_sublane.yt1;
-		return -(_height/2);
+		if (_sublane){
+			var _height = _sublane.yt2-_sublane.yt1;
+			return -(_height/2);
+		}
 	}
 }
 
