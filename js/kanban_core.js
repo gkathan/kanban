@@ -23,7 +23,10 @@ function createLaneHierarchy(data,dataFilter,nestConfig,context){
 	var _level = nestConfig.length;
 	
 	var _hierarchy = _.nest(data.filter(function(d){
-		if (dataFilter)	return eval("d."+dataFilter.name+dataFilter.operator+"\""+dataFilter.value+"\"");
+		if (dataFilter){
+				//return eval("d."+dataFilter.name+dataFilter.operator+"\""+dataFilter.value+"\"");
+				return eval(_buildFilter(dataFilter));
+		}
 		else return true;
 	}),nestConfig);
 	
@@ -34,6 +37,16 @@ function createLaneHierarchy(data,dataFilter,nestConfig,context){
 	return _hierarchy;
 }
 
+/** helper 
+ * **/
+function _buildFilter(filter){
+	var _f="";
+	for (var f in filter){
+		_f+="d."+filter[f].name+filter[f].operator+"\""+filter[f].value+"\"";
+		if (f <(filter.length-1)) _f+=" || ";
+	}
+	return _f;
+}
 
 /** recursive traversion to enrich the itemData structure with y coordinates
  * y1,y2 = local relative distribution per depth level
