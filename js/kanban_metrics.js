@@ -115,7 +115,7 @@ function drawMetrics(){
 	var gMetrics= svg.append("g").attr("id","metrics");
 	// y space between KPIs
 	var _kpiYOffset = 15;
-	var _yTotal = TIMELINE_HEIGHT;
+	var _yTotal = Y_CORP_METRICS;
 	//left			
 	var _primaryXOffset = METRIC_BASE_X_OFFSET-60;
 	var _secondaryXOffset = METRIC_BASE_X_OFFSET-85;
@@ -196,7 +196,7 @@ function drawMetrics(){
 			 var _goalResult = metricData.filter(function(d){return d.class=="result" && d.dimension=="goal" });
 			_drawTextMetric(gMetricsGoal,_goalResult[0],"metricBig",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotal,10,"left",METRICS_SCALE,_context);
 
-			var _goalKpis = metricData.filter(function(d){return d.class=="kpi" && d.dimension=="goal"});
+			var _goalKpis = metricData.filter(function(d){return  d.class=="kpi" && d.dimension=="goal"});
 			var _yTotalKpiBase = _yTotal-10;
 			for (var k in _goalKpis){
 				_drawTextMetric(gMetricsGoal,_goalKpis[k],"metricSmall",x(KANBAN_END)+_primaryXOffsetRight+30,_yTotalKpiBase-(((getInt(k)+1)*15)*METRICS_SCALE),6,"right",METRICS_SCALE,_context);
@@ -606,14 +606,15 @@ function _drawMetricDate(svg,x,y,context){
 	var _m =get_metrics(_title.node());
 	
 	
-	_drawText(gDate,context.data.line1+" ",x,y+7,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
-	_drawText(gDate,"[from: "+context.intervalStart.toString('yyyy-MM-dd')+" to: "+context.intervalEnd.toString('yyyy-MM-dd')+" ]",(x+_m.width),y+7,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
-	
-	_drawText(gDate,context.data.line2+" ",x,y+14,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
-	if (context.forecastDate)
-		_drawText(gDate,"[ "+_.last(context.forecastDate).toString('yyyy-MM-dd')+" ]",(x+_m.width),y+14,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
+	if (!context.dimension=="goal"){
+		_drawText(gDate,context.data.line1+" ",x,y+7,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+		_drawText(gDate,"[from: "+context.intervalStart.toString('yyyy-MM-dd')+" to: "+context.intervalEnd.toString('yyyy-MM-dd')+" ]",(x+_m.width),y+7,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
 		
-	
+		_drawText(gDate,context.data.line2+" ",x,y+14,{"size":"5px","weight":"normal","anchor":"start","color":COLOR_BPTY});
+		if (context.forecastDate)
+			_drawText(gDate,"[ "+_.last(context.forecastDate).toString('yyyy-MM-dd')+" ]",(x+_m.width),y+14,{"size":"6px","weight":"bold","anchor":"end","color":COLOR_BPTY});
+			
+	}
 }
 
 
@@ -757,18 +758,18 @@ function fullMetrics(){
  */
 function hideNGR(column){
 	
-	if (!column) d3.selectAll("[id*=NGR]").style("visibility","hidden");
-	else d3.select(column).selectAll("[id*=NGR]").style("visibility","hidden");
+	if (!column) d3.selectAll("[id*=NGR],[id*=missing]").style("visibility","hidden");
+	else d3.select(column).selectAll("[id*=NGR],[id*=missing]").style("visibility","hidden");
 	
-	d3.selectAll("#metric_noNGR").style("visibility","visible");
+	d3.selectAll("#metric_noNGR").style("visibility",null);
 	
 	SHOW_METRICS_NGR=false;
 }
 
 // null as value in style or attribute removes the attribute at all
 function showNGR(column){
-	if (!column) d3.selectAll("[id*=NGR]").style("visibility",null);
-	else d3.select(column).selectAll("[id*=NGR]").style("visibility",null);
+	if (!column) d3.selectAll("[id*=NGR],[id*=missing]").style("visibility",null);
+	else d3.select(column).selectAll("[id*=NGR],[id*=missing]").style("visibility",null);
 	
 	d3.selectAll("#metric_noNGR").style("visibility","hidden");
 	
