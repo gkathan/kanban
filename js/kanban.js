@@ -320,8 +320,8 @@ function renderB2CGaming() {
 		
 	
 	ITEMDATA_NEST= ["theme","lane","sublane"];
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
+	CONTEXT=ITEMDATA_FILTER[0].value;
     loadPostits();
 
 	$.when($.getJSON("/data/data.php?type=initiatives"))
@@ -414,17 +414,19 @@ function renderWhiteboard() {
 
 function renderBwin(){
 	hideWhiteboard();
-	HEIGHT=600;
+	HEIGHT=550;
 	WIDTH=1500;
-	LANE_LABELBOX_RIGHT_WIDTH =100;
+	LANE_LABELBOX_RIGHT_WIDTH =200;
 	//SHOW_METRICS=true;
 	enableAllMetrics();
 	setKanbanDefaultDates();
 	
-	ITEM_SCALE=1.3;
+	ITEM_SCALE=0.9;
 	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	//ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"bwin"},{"name":"lane", "operator":"==", "value":"shared"}];
+	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"bwin"}];
+	
+	CONTEXT=ITEMDATA_FILTER[0].value;
 
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
@@ -452,8 +454,8 @@ function renderBwinSecondLevel(){
 	//ITEMDATA_NEST= ["themesl","lane","sublane"];
 	//ITEMDATA_NEST= ["lane","sublane"];
 	//ITEMDATA_NEST= ["theme","themesl","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"bwin"};
-	CONTEXT=ITEMDATA_FILTER.value+".drill-in";
+	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"bwin"}];
+	CONTEXT=ITEMDATA_FILTER[0].value+".drill-in";
 	
 	console.log("*************************************************************************************calling getJSON..");
 	
@@ -483,8 +485,8 @@ function renderEntIT(){
 	//ITEMDATA_NEST= ["themesl","lane","sublane"];
 	//ITEMDATA_NEST= ["lane","sublane"];
 	//ITEMDATA_NEST= ["theme","themesl","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
-	CONTEXT=ITEMDATA_FILTER.value+".drill-in";
+	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"shared"}];
+	CONTEXT=ITEMDATA_FILTER[0].value+".drill-in";
 	
 	console.log("*************************************************************************************calling getJSON..");
 	
@@ -529,10 +531,10 @@ function renderShared(){
 	enableAllMetrics()
 	setKanbanDefaultDates();
 	
-	ITEM_SCALE=1.5;
+	ITEM_SCALE=0.9;
 	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"shared"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"shared"}];
+	CONTEXT=ITEMDATA_FILTER[0].value;
 
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
@@ -553,10 +555,10 @@ function renderNewBiz(){
 	
 	setKanbanDefaultDates();
 	
-	ITEM_SCALE=1.5;
+	ITEM_SCALE=0.9;
 	ITEMDATA_NEST= ["theme","lane","sublane"];
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"new biz"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"new biz"}];
+	CONTEXT=ITEMDATA_FILTER[0].value;
 
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
@@ -575,10 +577,10 @@ function renderTechdebt(){
 	enableAllMetrics();
 	setKanbanDefaultDates();
 	
-	ITEM_SCALE=1.5;
+	ITEM_SCALE=0.9;
 	ITEMDATA_NEST= ["lane","sublane"];
-	ITEMDATA_FILTER = {"name":"lane", "operator":"==", "value":"techdebt"};
-	CONTEXT=ITEMDATA_FILTER.value;
+	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"techdebt"}];
+	CONTEXT=ITEMDATA_FILTER[0].value;
 
 	$.when($.getJSON("/data/data.php?type=initiatives"))
 			.done(function(initiatives){
@@ -624,14 +626,18 @@ function drawAll(){
 	itemTree = createLaneHierarchy(initiativeData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	targetTree = createLaneHierarchy(targetData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	
+	
+	
+	
 	drawInitiatives();
 	drawTargets();
-
+	drawOverviewMetaphors(svg);
 	drawMetrics();
 	drawVision();
 	drawReleases();
 	drawVersion();
 	drawLegend();
+	
 
 	drawGuides();
 	
@@ -676,20 +682,52 @@ function setTODAY(){
 }
 
 
+/**
+ * high level metaphors (tree and stuff...)
+ */
+function drawOverviewMetaphors(svg){
+	
+	var gMetaphors = svg.append("g").attr("id","metaphors").style("visibility","hidden");
+	
+	// demarcation line between themes
+	var _y = _drawThemeDemarcation(gMetaphors,"metaphorDemarcationLine");
+	
+	// and a shaded "enabling rect"
+	_drawRect(gMetaphors,x(KANBAN_START)-margin.left,_y,x(KANBAN_END)+margin.right+margin.left,(height-_y),"metaphorEnablingBlock");
+	
+	
+	// same as the grid.drawVision trangle
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-130;
+	//tree.height is 1000px 
+	_drawXlink(gMetaphors,"#tree",_x,0,{"scale":(height/1000),"opacity":0.7});
+	
+	_drawXlink(gMetaphors,"#timeline",0,-85,{"scale":(1,(x(KANBAN_END)-x(KANBAN_START))/1000),"opacity":0.3});
+	_drawText(gMetaphors,"timeline",x(KANBAN_END)-55,-45,{"size":"20px","color":"#aaaaaa","weight":"bold","anchor":"end"});
+	
+	_drawBracket(gMetaphors,"grey","right",x(KANBAN_END)-60,0,1.5,(_y/100),"bracket",0.2);
+	_drawBracket(gMetaphors,"grey","right",x(KANBAN_END)-60,_y,1.5,(height-_y)/100,"bracket",0.2);
+	
+	_drawText(gMetaphors,"REVENUE STREAMS",x(KANBAN_END)-10,_y/2,{"size":(height-_y)/12,"opacity":0.7,"color":"#999999","weight":"bold","mode":"tb","anchor":"middle"});
+	_drawText(gMetaphors,"ENABLING STREAMS",x(KANBAN_END)-10,_y+20,{"size":_y/18,"opacity":0.7,"color":"#999999","weight":"bold","mode":"tb"});
+	
+	
+	
+}
+
 
 
 /**
- * soccer world championship 2014 block
+ * soccer world championship 2014 block => layer "events"
  */
-function drawWC2014(svg){
+function drawWC2014(){
 	
 	if (KANBAN_END > new Date("2014-07-13")){
 	
-		var svg = d3.select("#kanban");
+		var gEvents = svg.append("g").attr("id","events");
 		var _x1 = x(new Date("2014-06-13"));
 		var _x2 = x(new Date("2014-07-13"));
 		
-		svg.append("rect")
+		gEvents.append("rect")
 		.attr("x",_x1)
 		.attr("width",(_x2-_x1))
 		.attr("y",0)
@@ -697,7 +735,7 @@ function drawWC2014(svg){
 		.style("fill","white")
 		.style("opacity",0.4);
 		
-		_drawXlink(svg,"#wc2014",(_x1+15),-65,{"scale":.3});
+		_drawXlink(gEvents,"#wc2014",(_x1+15),-65,{"scale":.3});
 
 	}
 }
@@ -849,4 +887,15 @@ var PACKAGE_VERSION="20140410_1028";
 	var PACKAGE_VERSION="20140410_1634";
 	var PACKAGE_VERSION="20140410_1718";
 	var PACKAGE_VERSION="20140410_1840";
+	var PACKAGE_VERSION="20140415_1903";
+	
+var PACKAGE_VERSION="20140416_1754";
+	var PACKAGE_VERSION="20140417_0900";
+	
+var PACKAGE_VERSION="20140418_1430";
+	
+var PACKAGE_VERSION="20140418_1434";
+	var PACKAGE_VERSION="20140418_1444";
+	var PACKAGE_VERSION="20140418_1529";
+	var PACKAGE_VERSION="20140418_1803";
 	
