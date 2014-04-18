@@ -19,6 +19,36 @@
       background: orange;
     }
     
+    
+    .sync {
+      background: #FFE6E6;
+    }
+    
+    
+    .highlight {
+      background: #F9F9B4;
+	}
+	
+	
+	.slick-headerrow-column {
+      background: #87ceeb;
+      text-overflow: clip;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+
+    .slick-headerrow-column input {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+
+
+    
+    
   </style>
 </head>
 <body>
@@ -27,11 +57,12 @@
      <b>v1 epics | corporateInterest==true</b>
     <br>
     <div id="v1Grid" style="width:100%;height:800px;"></div>
+    
+    <!--
     <b>onKanban initiatives</b>
     <br>
     <div id="itemGrid" style="width:100%;height:300px;"></div>
 
-<!--
     <b>targets</b>
     <br>
     <div id="targetGrid" style="width:100%;height:500px;"></div>
@@ -42,12 +73,14 @@
 
  </div>
 
-
+<script src="js/d3.v3.min.js"></script>
 <script src="js/SlickGrid-master/lib/jquery-1.7.min.js"></script>
 <script src="js/SlickGrid-master/lib/jquery-ui-1.8.16.custom.min.js"></script>
 <script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
 
 <script src="js/SlickGrid-master/slick.core.js"></script>
+<script src="js/SlickGrid-master/slick.dataview.js"></script>
+
 <script src="js/SlickGrid-master/plugins/slick.cellrangedecorator.js"></script>
 <script src="js/SlickGrid-master/plugins/slick.cellrangeselector.js"></script>
 <script src="js/SlickGrid-master/plugins/slick.cellselectionmodel.js"></script>
@@ -90,10 +123,11 @@ var comparedData;
 					cleanupEpicData();
 					compareData  = compareData(initiativeData,epicData);
 					
-					epicData = filterByNameValue(epicData,"CategoryName","Initiative");
+					//epicData = filterByNameValue(epicData,"CategoryName","FeatureGroup");
+					compareData = filterByNameValue(compareData,"CategoryName","Initiative");
 					
 					renderV1EpicGrid();
-					renderInitiativeGrid();
+					//renderInitiativeGrid();
 					//renderTargetGrid();
 					
 					
@@ -101,6 +135,8 @@ var comparedData;
 
 				
   var grid;
+  
+  var columnFilters={};
 
 /*
 var url = "http://v1.bwinparty.corp/V1-Production/rest-1.v1/Data/Epic/3387482";
@@ -137,9 +173,17 @@ function compareData(initiatives,epics){
 				epics[e]["kanbanName"]=_initiative.name;
 				epics[e]["kanbanSwag"]=_initiative.Swag;
 				epics[e]["kanbanActualDate"]=_initiative.actualDate;
+				epics[e]["kanbanLane"]=_initiative.lane;
+				epics[e]["kanbanSubLane"]=_initiative.sublane;
+				epics[e]["kanbanHealth"]=_initiative.health;
+				epics[e]["kanbanId"]=_initiative.id;
+				epics[e]["kanbanState"]=_initiative.state;
 				
 			}
 			else epics[e]["isOnKanban"]=false;
+			
+			
+			
 			_compare.push(epics[e]);
 	}
 	return _compare;
@@ -156,9 +200,9 @@ function filterByNameValue(list,name,value){
 
 function lookupByField(list,field,value){
 	for (var i in list){
-		console.log("** checking: "+list[i][field]+" == "+value);
+		//console.log("** checking: "+list[i][field]+" == "+value);
 		if (list[i][field]==value) {
-			console.log ("==== MATCH !");
+			//console.log ("==== MATCH !");
 			return list[i];
 		}
 	}
@@ -175,27 +219,36 @@ function renderV1EpicGrid(){
 
 var columns = [
 
-        { id:"id", name: "v1.id", field: "ID",sortable:true,width:100,editor: Slick.Editors.Text, sorter:NumericSorter },
+        { id:"sync", name: "sync", field: "sync",width:40,formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true, sorter:NumericSorter,cssClass:"sync"},
+        
+        { id:"id", name: "v1.id", field: "ID",sortable:true,width:70,formatter:Slick.Formatters.V1EpicURL, sorter:NumericSorter ,toolTip:"V1 internal OID"},
         { id:"number", name: "v1.number", field: "Number",sortable:true, sorter:NumericSorter},
+        { id:"kanbanId", name: "kanban.id", field: "kanbanId",sortable:true, sorter:NumericSorter},
+        
         { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true, sorter:NumericSorter},
         
-        { id: "name", name: "v1.name", field: "Name", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title",sortable:true, sorter:NumericSorter},
-        { id: "kanbanName", name: "kanban.name", field: "kanbanName",width:500 },
+        { id: "name", name: "v1.name", field: "Name", editor: Slick.Editors.Text ,width:400, cssClass: "cell-title",sortable:true, sorter:NumericSorter},
+        { id: "kanbanName", name: "kanban.name", field: "kanbanName",width:200 },
+        { id:"changeDate", name: "v1.changeDate", field: "ChangeDateUTC",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80,sorter:NumericSorter },
+        { id:"createDate", name: "v1.createDate", field: "CreateDateUTC",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },{ id: "healthComment", name: "health comment", field: "HealthComment", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
+        { id: "kanbanLane", name: "kanban.lane", field: "kanbanLane",sortable:true, sorter:NumericSorter,width:80 },
+        { id: "kanbanSubLane", name: "kanban.sublane", field: "kanbanSubLane",width:80 },
+        { id:"status", name: "v1.status", field: "Status",sortable:true },
+        { id: "kanbanState", name: "kanban.state", field: "kanbanState",width:80 },
         { id:"swag", name: "v1.swag", field: "Swag",sortable:true, sorter:NumericSorter },
         { id:"kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",sortable:true, sorter:NumericSorter },
-        { id:"status", name: "v1.status", field: "Status",sortable:true },
         { id:"categoryName", name: "v1.categoryName", field: "CategoryName",sortable:true ,sorter:NumericSorter},
-        { id:"health", name: "v1.health", field: "Health",sortable:true },
+        { id:"health", name: "v1.health", field: "Health",formatter: Slick.Formatters.RAG,sortable:true },
+		{ id:"kanbanHealth", name: "kanban.health", field: "kanbanHealth",formatter: Slick.Formatters.RAG,sortable:true },
 		{ id:"scope", name: "v1.backlog", field: "Scope",sortable:true },
 		{ id:"createdBy", name: "v1.createdBy", field: "CreatedBy",sortable:true },
       
-        { id:"plannedStart", name: "v1.plannedStart", field: "PlannedStart",sortable:true,width:150 },
-        { id:"plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",sortable:true,width:150 },
-        { id:"launchDate", name: "v1.launchDate", field: "LaunchDate",sortable:true,width:150 },
-        { id:"changeDate", name: "v1.changeDate", field: "ChangeDateUTC",sortable:true,width:150 },
-        { id:"kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",sortable:true,width:150 },
+        { id:"plannedStart", name: "v1.plannedStart", field: "PlannedStart",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id:"plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id:"launchDate", name: "v1.launchDate", field: "LaunchDate",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id:"kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",sortable:true,width:80},
         //{ id:"estimatedDone", name: "estimatedDone", field: "EstimatedDone",sortable:true,width:150 },
-          { id:"createDate", name: "v1.createDate", field: "CreateDateUTC",sortable:true,width:150 },{ id: "healthComment", name: "health comment", field: "HealthComment", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
+          
         { id: "description", name: "v1.description", field: "Description", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
         { id: "patentprotection", name: "v1.patentprotection", field: "Patentprotection", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"}
         
@@ -205,19 +258,24 @@ var columns = [
 
   var options = {
     editable: true,
-    enableAddRow: true,
+    //enableAddRow: true,
     enableCellNavigation: true,
     asyncEditorLoading: false,
     cellHighlightCssClass: "changed",
+    cellHighlightCssClass: "changed",
     autoEdit: true,
+    showHeaderRow:true,
+    explicitInitialization:true,
+	/*
 	dataItemColumnValueExtractor: function(item, columnDef) {
 		if(columnDef.editor == Slick.Editors.SelectOption){
 			return eval(columnDef.options)[item[columnDef.field]];
 		}else{
 			return item[columnDef.field];
 		}    
-	}
+	}*/
 }
+	
 
     
    /* https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-checkbox-row-select.html
@@ -227,12 +285,16 @@ var columns = [
     columns.push(checkboxSelector.getColumnDefinition());
 */
     
+    
+	var dataView = new Slick.Data.DataView();
+	dataView.setItems(compareData,"ID");
 
  
-    v1grid = new Slick.Grid("#v1Grid", epicData, columns, options);
+    v1grid = new Slick.Grid("#v1Grid", dataView, columns, options);
     
-    v1grid.setSelectionModel(new Slick.CellSelectionModel());
-	//v1grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+    //v1grid.setSelectionModel(new Slick.CellSelectionModel());
+	//v1grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: true}));
+	
 
 
     v1grid.onAddNewRow.subscribe(function (e, args) {
@@ -244,30 +306,81 @@ var columns = [
     });
 
 
-/*	
-	v1grid.registerPlugin(checkboxSelector);
-	var columnpicker = new Slick.Controls.ColumnPicker(columns, v1grid, options);
-
-*/
     
     v1grid.onSort.subscribe(function (e, args) {
-		currentSortCol = args.sortCol;
-		isAsc = args.sortAsc;
-		v1grid.invalidateAllRows();
+		//console.log("**** sorting..by: "+args.sortCol.field);
+		 var comparer = function(a, b) {
+			return (a[args.sortCol.field] > b[args.sortCol.field]) ? 1 : -1;
+		}
+
+		  // Delegate the sorting to DataView.
+		  // This will fire the change events and update the grid.
+		  dataView.sort(comparer, args.sortAsc);
+	});
+	
+    
+    dataView.onRowsChanged.subscribe(function(e,args) {
+		v1grid.invalidateRows(args.rows);
 		v1grid.render();
 	});
 	
-	v1grid.onSort.subscribe(function(e, args) {
-		sortdir = args.sortAsc ? 1 : -1;
-		sortcol = args.sortCol.field;
+	
+	v1grid.onCellChange.subscribe(function(e,args){
+		console.log("***** CellChanged: "+args);
+		
+	});
+	
+	// ----------------------- column filter --------------------------------
+	$(v1grid.getHeaderRow()).delegate(":input", "change keyup", function (e) {
+      console.log("~~~~ keyup");
+      
+      var columnId = $(this).data("columnId");
+       console.log("* columnId: "+columnId);
+      if (columnId != null) {
+        columnFilters[columnId] = $.trim($(this).val());
+        dataView.refresh();
+      }
+    });
 
-		epicData.sort(args.sortCol.sorter, sortdir);
-		args.v1grid.invalidateAllRows();
-		args.v1grid.render();
-  });
-    
-    
+	
+	v1grid.onHeaderRowCellRendered.subscribe(function(e, args) {
+        $(args.node).empty();
+        $("<input type='text'>")
+           .data("columnId", args.column.id)
+           .val(columnFilters[args.column.id])
+           .appendTo(args.node);
+    });
+
+	
+	v1grid.init();
+
+    //dataView.beginUpdate();
+    //dataView.setItems(compareData,"ID");
+    dataView.setFilter(filter);
+    //dataView.endUpdate();
+
+	// ------------------------  column filter ----------------------------------
+      
+	
 }
+
+/**
+* for column filter prototype
+*/
+function filter(item) {
+    //console.log("##### filter called:");
+    for (var columnId in columnFilters) {
+      if (columnId !== undefined && columnFilters[columnId] !== "") {
+        var c = v1grid.getColumns()[v1grid.getColumnIndex(columnId)];
+        //console.log("**** filter triggered: c="+item[c.field]);
+        if (item[c.field] != columnFilters[columnId]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
 
 function renderInitiativeGrid(){
 
