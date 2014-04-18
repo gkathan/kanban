@@ -101,7 +101,7 @@
 	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 
 	
-	ITEMDATA_FILTER = {"name":"bm", "operator":"==", "value":"b2c gaming"};
+	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
 	CONTEXT=ITEMDATA_FILTER.value;
 
 
@@ -421,15 +421,16 @@ function submit_download_form(output_format)
 			console.log("element: "+_val+" checked: "+checked);
 			
 			if (_val=="2013-10-31"){
-				_getMetricContextByColumn("right1").forecastDate=[_val];
-				_getMetricContextByColumn("right2").forecastDate=[_val];
+				console.log("______val="+_val);
+				if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=[_val];
+				if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=[_val];
 
 //				_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=[_val];
 //				_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=[_val];
 			}
 			else if(_val=="2014-03-11"){
-				_getMetricContextByColumn("right1").forecastDate=["2013-10-31",_val];
-				_getMetricContextByColumn("right2").forecastDate=["2013-10-31",_val];
+				if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=["2013-10-31",_val];
+				if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=["2013-10-31",_val];
 
 				//_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
 				//_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
@@ -460,6 +461,10 @@ function submit_download_form(output_format)
 	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
 	  <button id="btargetdeps" type="button" class="btn btn-default">Target2Item</button>
 	  <button id="b9" type="button" class="btn btn-default">Swag</button>
+	  <button id="bevents" type="button" class="btn btn-default">Events</button>
+	  <button id="bmetaphors" type="button" class="btn btn-default">Metaphors</button>
+	  
+	  
 	</div>
 	<div class="btn-group-xs">
 	  <button id="b15" type="button" class="btn btn-default">Linechart</button>
@@ -540,6 +545,23 @@ function submit_download_form(output_format)
 		
 	initHandlers();
 		
+
+function hide(group){
+	d3.select(group).style("visibility","hidden");
+}
+
+function show(group){
+	d3.select(group).style("visibility","visible");
+}
+
+function isHidden(group){
+	return (d3.select(group).style("visibility")=="hidden");
+}
+
+function isVisible(group){
+	return (d3.select(group).style("visibility")=="visible");
+}
+
 		
 function switchVisibility(button,ref){
 	d3.select(button).on("click", function(){
@@ -579,6 +601,9 @@ function initHandlers(){
 	switchVisibility("#b4","#axes");
 	switchVisibility("#bguides","#guides");
 	switchVisibility("#bvision","#vision");
+	//switchVisibility("#bmetaphors","#metaphors");
+	switchVisibility("#bevents","#events");
+	
 
 
 	
@@ -587,6 +612,31 @@ function initHandlers(){
 	redirect ("#l3","force.html");
 	redirect ("#l4","org.html");
 	redirect ("#l5","v1sync.html");
+
+	
+	d3.select("#bmetaphors").on("click",function(){
+		if (isHidden("#metaphors")){
+			show("#metaphors");
+			hide("#initiatives");
+			hide("#metrics");
+			hide("#queues");
+			hide("#targets");
+			hide("#events");
+			if (!d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter")) d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter", "url(#blur)");
+	
+		}
+		
+		else {
+			hide("#metaphors");
+			show("#initiatives");
+			show("#metrics");
+			show("#queues");
+			show("#targets");
+			show("#events");
+			d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter", "");
+		}
+	});
+	
 
 
 	d3.select("#b5").on("click", function(){
@@ -727,8 +777,8 @@ function initHandlers(){
 
 	d3.select("#b10").on("click", function(){
 	// do blur
-	if (!d3.selectAll("#metrics,#queues,#lanes").attr("filter")) d3.selectAll("#metrics,#queues,#lanes").attr("filter", "url(#blur)");
-	else d3.selectAll("#metrics,#queues,#lanes").attr("filter", "");
+	if (!d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter")) d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter", "url(#blur)");
+	else d3.selectAll("#metrics,#queues,#lanes,#vision,#axes").attr("filter", "");
 
 	});
 
