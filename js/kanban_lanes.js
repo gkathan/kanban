@@ -112,18 +112,10 @@ function drawLanes(){
 				_drawLine(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_y,"sublaneLine");
 				}
 			}
-		//check for demarcation between topline and enabling
-		// => this needs first refactoring of in-memory datastructure !!!
-		// HAHAAAA :-)) [20140104] did it !!!!
-		for (t in getThemesNEW()){
-			var _t = y(getThemesNEW()[t].yt2);
-			
-			// no demarcation line in the end ;-)
-			if (t<getThemesNEW().length-1){
-				_drawLine(d3.select(this),x(KANBAN_START)-margin.left,_t,x(KANBAN_END)+margin.right+margin.left,_t,"themeLine");
-				//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_LEFT_WIDTH-10,_t,"5px","middle");
-			}
-		}
+		
+		_drawThemeDemarcation(d3.select(this),"themeLine");
+		
+		
 		i++;
 	});
 	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
@@ -138,6 +130,26 @@ function drawLanes(){
 		  _drawHowPillars(lanesRight,pillarData,_xBase,_yBase,_width);							
 	}
 }	
+
+function _drawThemeDemarcation(svg,css){
+	//check for demarcation between topline and enabling
+	// => this needs first refactoring of in-memory datastructure !!!
+	// HAHAAAA :-)) [20140104] did it !!!!
+	var _y;
+	for (t in getThemesNEW()){
+		var _t = y(getThemesNEW()[t].yt2);
+		
+		// no demarcation line in the end ;-)
+		if (t<getThemesNEW().length-1){
+			_drawLine(svg,x(KANBAN_START)-margin.left,_t,x(KANBAN_END)+margin.right+margin.left,_t,css);
+			//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_LEFT_WIDTH-10,_t,"5px","middle");
+			_y=_t
+		}
+	}
+	
+	return _y;
+}
+
 
 /** helper method to render the strategical driver columns
  */	
@@ -206,13 +218,12 @@ function _drawLaneText(svg,lane,side,logoHeight){
 	var _anchor ="start";
 	if (side=="target") _anchor ="end";
 	var _color = "black";
-	if (lane.indexOf("bwin") !=-1 || lane.indexOf("premium") !=-1) _color="white";
-
 	var _yBase = y((getLaneByNameNEW(lane).yt1))+logoHeight+5;
 	
 	// just get the last element in a FQN
 	lane = _.last(lane.split("."))
-	
+	if (lane=="bwin" || lane=="premium") _color="white";
+
 	var _xBase;
 	if (side=="baseline") _xBase= -LANE_LABELBOX_LEFT_WIDTH+10
 	else if (side=="target") _xBase= x(KANBAN_END)+TARGETS_COL_WIDTH+LANE_LABELBOX_RIGHT_WIDTH-10;
