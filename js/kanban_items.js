@@ -98,7 +98,7 @@ function drawTargets(){
 
 
 	//target block
-	_drawText(svg,"TARGET",x(KANBAN_END)+(TARGETS_COL_WIDTH/2),(-5),{"size":"14px","color":COLOR_BPTY,"opacity":0.3,"anchor":"middle","weight":"bold"});
+	_drawText(gTargets,"TARGET",x(KANBAN_END)+(TARGETS_COL_WIDTH/2),(-5),{"size":"14px","color":COLOR_BPTY,"opacity":0.3,"anchor":"middle","weight":"bold"});
 	
 	gTargets.append("rect")
 		.attr("x",x(KANBAN_END))
@@ -126,75 +126,82 @@ function drawTargets(){
 		
 		var _yOffset = getSublaneCenterOffset(getFQName(d));
 		var _sublane = getSublaneByNameNEW(getFQName(d));
-		var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
-		var _itemY = y(_sublane.yt1-_yOffset)+getInt(d.sublaneOffset);
 		
-		d3.select(this)
-			.style("opacity",d.accuracy/10);
-		
-		
-		// ------------  targeticon & names & postits --------------
-		// if isCorporate flag is not set use "tactic" icon 
-		var _iconRef=d.Type;
-		
-		_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
-
-		//prio
-		_drawText(d3.select(this),d.ranking,_itemXTarget,(_itemY+1.3),{"anchor":"middle","size":"4px","color":"white","weight":"normal"});
-		
-		_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
-		
-		//_drawPostit(d3.select(this),d);
-
-		// transparent circle on top for the event listener
-		d3.select(this)
-			.append("circle")
-				.attr("id","event_circle_"+d.id)
-				.attr("cx",_itemXTarget)
-				.attr("cy",_itemY)
-				.attr("r",_size)
-				.style("opacity",0)
-				.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
-					
-				.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
-				.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
-				.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
-
-		// ------------  dependencies --------------
-		// this can maybe be extracted into function...
-
-		if (!isNaN(parseInt(d.initiatives))){
-			//console.log("============================== "+d.id+" depends on: "+d.dependsOn); 
+		if (_sublane) {
+			var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
+			var _itemY = y(_sublane.yt1-_yOffset)+getInt(d.sublaneOffset);
 			
-			var _dependingItems = d.initiatives.split(",");
-			//console.log("target depending items: "+_dependingItems);
-
-			// by default visibility is hidden
-			var dep = d3.select("#targetDependencies")
-					.append("g")
-					.attr("id","depID_"+d.id)
-					.style("visibility","hidden");
+			d3.select(this)
+				.style("opacity",d.accuracy/10);
 			
-			for (var j=0;j<_dependingItems.length;j++) {	
-				var _d=_dependingItems[j];
-				//lookup the concrete item 
-				var _dependingItem = getItemByID(initiativeData,_d);
-				// do not draw line to items out of KANBAN range 
-				if (_dependingItem && new Date(_dependingItem.actualDate) >= KANBAN_START){
-					var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
-					//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
-					var _fromX = x(new Date(_dependingItem.actualDate))	
-					var _fromY = y(getSublaneByNameNEW(getFQName(_dependingItem)).yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
-					
-					// put lines in one layer to turn on off globally
-					_drawLine(dep,_fromX,_fromY,_itemXTarget-_size-2,_itemY,"targetDependLine",[{"end":"arrow_blue"}]);
-				}
-			} // end for loop
-			//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
-		} // end if dependcies
-		
-		// drag test	
-		d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
+			
+			// ------------  targeticon & names & postits --------------
+			// if isCorporate flag is not set use "tactic" icon 
+			var _iconRef=d.Type;
+			
+			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
+
+			//prio
+			_drawText(d3.select(this),d.ranking,_itemXTarget,(_itemY+1.3),{"anchor":"middle","size":"4px","color":"white","weight":"normal"});
+			
+			_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
+			
+			//_drawPostit(d3.select(this),d);
+
+			// transparent circle on top for the event listener
+			d3.select(this)
+				.append("circle")
+					.attr("id","event_circle_"+d.id)
+					.attr("cx",_itemXTarget)
+					.attr("cy",_itemY)
+					.attr("r",_size)
+					.style("opacity",0)
+					.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
+						
+					.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+					.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
+					.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
+
+			// ------------  dependencies --------------
+			// this should be extracted into function...
+
+			//if (!isNaN(parseInt(d.initiatives))){
+			if (d.initiatives){
+				//console.log("============================== "+d.id+" depends on: "+d.dependsOn); 
+				
+				var _dependingItems = d.initiatives.split(",");
+				//console.log("target depending items: "+_dependingItems);
+
+				// by default visibility is hidden
+				var dep = d3.select("#targetDependencies")
+						.append("g")
+						.attr("id","depID_"+d.id)
+						.style("visibility","hidden");
+				
+				for (var j=0;j<_dependingItems.length;j++) {	
+					var _d=_dependingItems[j];
+					//lookup the concrete item 
+					var _dependingItem = getItemByID(initiativeData,_d);
+					// do not draw line to items out of KANBAN range 
+					if (_dependingItem && new Date(_dependingItem.actualDate) >= KANBAN_START){
+						var _depYOffset = getSublaneCenterOffset(getFQName(_dependingItem));
+						//console.log("found depending item id: "+_dependingItem.id+ " "+_dependingItem.name);
+						var _fromX = x(new Date(_dependingItem.actualDate))	
+						var _depsublane = getSublaneByNameNEW(getFQName(_dependingItem));
+						if (_depsublane){
+							var _fromY = y(_depsublane.yt1-_depYOffset)+getInt(_dependingItem.sublaneOffset);
+							// put lines in one layer to turn on off globally
+							_drawLine(dep,_fromX,_fromY,_itemXTarget-_size-2,_itemY,"targetDependLine",[{"end":"arrow_blue"}]);
+						}
+					}
+				} // end for loop
+				//console.log ("check depending element: "+d3.select("#item_block_"+d.dependsOn).getBBox());
+			} // end if dependcies
+			
+			// drag test	
+			d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
+		} // end if null check
+
 	}) //end each()
 } //end drawTargets
 
@@ -269,11 +276,11 @@ function drawItems(){
 	filteredInitiativeData = initiativeData.filter(function(d){
 		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
 		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
-		var _filterTargets = (d.Type !="target");
+		//var _filterTargets = (d.Type !="target");
 		var _filterOnKanban = (d.onKanban ==1);
 		
 		if (ITEMDATA_FILTER){
-			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+			return _filterStart && _filterEnd &&  _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
 		}
 		return _filterStart && _filterEnd;
 	});
@@ -657,6 +664,8 @@ function onTooltipOverHandler(d,tooltip){
 	//d3.selectAll("[id*=metric_253]").transition().delay(100).duration(500).style("opacity",1);
 	
 	//highlight the selected mouseover element
+	
+	
 	d3.select(highlight+d.id)
 		.transition()            
 		.delay(100)            
@@ -674,12 +683,19 @@ function onTooltipOverHandler(d,tooltip){
 	tooltip.style("visibility", "visible");
 	tooltip.style("top", (d3.event.pageY-40)+"px").style("left",(d3.event.pageX+25)+"px");
 
-	d3.select("#depID_"+d.id)
-		.transition()            
-		.delay(200)            
-		.duration(500)
-		.style("visibility","visible")
-		.style("opacity",1);
+	
+	// uuuuuaaaah - that caused me 1 hour to find 
+	// this tooltip shit handler is still handling for 2 different types (items AND targets)
+	// need to differentiate type here ....
+		if (d.Type=="target"){
+		d3.select("#depID_"+d.id)
+			.transition()            
+			.delay(200)            
+			.duration(500)
+			.style("visibility","visible")
+			.style("opacity",1);
+	}	
+	
 	
 	var _dependingItems;
 	if (d.dependsOn){
