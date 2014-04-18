@@ -222,7 +222,8 @@ function calculateQueueMetrics(){
 		var _filterOnKanban = (d.onKanban ==1);
 		
 		if (ITEMDATA_FILTER){
-			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+			//return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
 		}
 		return _filterStart && _filterEnd;
 	});
@@ -237,8 +238,8 @@ function calculateQueueMetrics(){
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_date)<WIP_START && new Date(_date)>KANBAN_START){
-			if (_item.state!="done") ITEMS_PLANNED_TOBEDONE++;
+		if (new Date(_planDate)<WIP_START && new Date(_planDate)>KANBAN_START){
+			ITEMS_PLANNED_TOBEDONE++;
 			if (_item.state=="done" ){
 				ITEMS_DONE++;
 				if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
