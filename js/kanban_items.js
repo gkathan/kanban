@@ -379,6 +379,10 @@ function drawItems(){
 			if (d.state=="killed") _iconRef+="_killed";
 			if (!d.ExtId) _iconRef="item_notsynced";
 			
+			var _diff = new Date()-new Date(d.createDate);
+			// 24 hours are NEW ...
+			if ( Math.floor(_diff/(60*60*1000))< 24) _iconRef="item_new";
+			
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXPlanned-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 			
 			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
@@ -848,14 +852,44 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 
 		d3.select("#flip").on("click", function(){
 				var front = document.getElementById('tooltip');
-				var back_content = "backside of the target...<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
-				console.log("...flip...");
-				// when the correct action happens, call flip!
-				back = flippant.flip(front, back_content);
 				
-				d3.select("#flip_close").on("click", function(){
-					back.close();
-				});
+				// -- experiment with diff_trail from initiatives
+				var _diff_trail;
+				$.when($.getJSON(dataSourceFor("initiatives_diff_trail")+"/"+d._id)
+					.done(function(initiatives_diff_trail){
+						
+						_diff_trail=initiatives_diff_trail;
+						//else throw new Exception("error loading diff_trail")
+						
+						
+						var back_content="change trail:";
+						var _diff="";
+						for (var d in _diff_trail){
+							//_diff+="<div style=\"font-size:6px\">"+JSON.stringify(_diff_trail[d].diff)+"</div>";
+							// do not look at _id and changeDate
+							for (var c in _diff_trail[d].diff){
+								if (c!="_id" &&c!="changeDate"&&c!="createDate")
+									_diff+="<div style=\"font-size:6px\">"+_diff_trail[d].timestamp+"<br><b>* "+c+": "+JSON.stringify(_diff_trail[d].diff[c])+"</b></div>";
+							}
+						}
+						
+						back_content += _diff+"<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
+						console.log("...flip...");
+						// when the correct action happens, call flip!
+						back = flippant.flip(front, back_content);
+						
+						d3.select("#flip_close").on("click", function(){
+							back.close();
+						});
+								
+						
+						
+					}));
+
+				// -- experiment with diff_trail from initiatives
+				
+				
+				
 			});
 	}
 	else {
