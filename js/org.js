@@ -12,11 +12,9 @@ var orgTree;
 
 // raster px configuration
 
-var WIDTH =1200;
-var HEIGHT = 1200;
+var WIDTH =1600;
+var HEIGHT = 1000;
 
-var WHITEBOARD_WIDTH =1400;
-var WHITEBOARD_HEIGHT = 900;
 
 var margin;
 var width,height;
@@ -99,28 +97,21 @@ function init(){
   
   svg.append("g")
     .attr("transform", "translate(" + margin + "," + margin + ")");
-    
-
 
 }
-
-
-
-	 
-
-	 
 
 
 function render(svgFile,orgTable){
 //	d3.json("data/org.json", function(error, root) {
  
-d3.xml("data/external_org.svg", function(xml) {
+		d3.xml("data/external_org.svg", function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
- 
- //v1_Business_Backlogs_20140320_1740.csv
- //d3.csv("data/businessbacklogs.csv",function(data){
- d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
 
+	//v1_Business_Backlogs_20140320_1740.csv
+	
+	
+	//d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
+	d3.json("data/bpty_org.json",function(data){
 	orgData = data;
 
 
@@ -135,12 +126,13 @@ d3.xml("data/external_org.svg", function(xml) {
 			}
 		}
 	}
+
+
+	//root = _.nest(orgData,["l0","l1","l2","l3","l4","l5","l6"]);
 	
 	
-
-
-
-	root = _.nest(orgData,["l0","l1","l2","l3","l4","l5","l6"]);
+	//root = _.nest(orgData,["Vertical","Function","Location","Supervisor Full Name"]);
+	root = _.nest(orgData,["Cost Centre","Function","Location","Supervisor Full Name"]);
 
  init();
  
