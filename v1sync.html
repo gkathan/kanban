@@ -2,10 +2,41 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>SlickGrid example 3: Editing</title>
+  <title>corpkanban - v1 sync admin</title>
+ 
+ <script src="js/d3.v3.min.js"></script>
+<script src="js/SlickGrid-master/lib/jquery-1.7.min.js"></script>
+<script src="js/SlickGrid-master/lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
+
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script src="js/kanban_config.js"></script>
+
+
+<script src="js/SlickGrid-master/slick.dataview.js"></script>
+<script src="js/SlickGrid-master/slick.core.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.checkboxselectcolumn.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.autotooltips.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellrangedecorator.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellrangeselector.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellcopymanager.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.cellselectionmodel.js"></script>
+<script src="js/SlickGrid-master/plugins/slick.rowselectionmodel.js"></script>
+<script src="js/SlickGrid-master/controls/slick.columnpicker.js"></script>
+<script src="js/SlickGrid-master/slick.formatters.js"></script>
+<script src="js/SlickGrid-master/slick.editors.js"></script>
+<script src="js/SlickGrid-master/slick.grid.js"></script>
+
+ 
+ 
+  <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+  
   <link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="js/SlickGrid-master/examples.css" type="text/css"/>
+  <link rel="stylesheet" href="js/SlickGrid-master/controls/slick.columnpicker.css" type="text/css"/>
+
   <style>
     .cell-title {
       font-weight: bold;
@@ -21,17 +52,33 @@
     
     
     .sync {
-      background: #FFE6E6;
+      background: #eeeeee;
+      
     }
     
-    
+    .onKanban{
+	background-color: #EAF4FC;
+	color: black;
+	font-style:italic;
+		
+	}
+	
+	.onV1{
+	background-color: #F4E9ED;
+	color: black;
+	font-weight:bold;
+		
+		
+	}
+	
+	
     .highlight {
       background: #F9F9B4;
 	}
 	
 	
 	.slick-headerrow-column {
-      background: #87ceeb;
+      background: #6896ba;
       text-overflow: clip;
       -moz-box-sizing: border-box;
       box-sizing: border-box;
@@ -45,6 +92,11 @@
       -moz-box-sizing: border-box;
       box-sizing: border-box;
     }
+    
+    .slick-header *, *:before, *.after {
+-moz-box-sizing: content-box;
+box-sizing: content-box;
+}
 
 
     
@@ -52,11 +104,24 @@
   </style>
 </head>
 <body>
+
+
+	
 <div style="position:relative">
-  <div style="width:3000px;">
-     <b>v1 epics | corporateInterest==true</b>
-    <br>
-    <div id="v1Grid" style="width:100%;height:800px;"></div>
+  <div style="width:5000px;">
+	
+   
+  
+  
+  <div class="btn-group-xs">
+	  <img src="img/external_elements_v1_synch.png" height="70px"/>	
+	  <br>
+	  <button id="bsync" type="button" class="btn btn-primary">Sync Selected</button>
+	  <button id="bremove" type="button" class="btn btn-danger">Remove Selected</button>
+  </div>
+  
+   
+    <div id="v1Grid" style="position:absolutewidth:100%;height:1000px;"></div>
     
     <!--
     <b>onKanban initiatives</b>
@@ -69,24 +134,17 @@
    --> 
 
   </div>
+ <script>
+	 document.write("v1.data.link: <a href=\""+V1_DATA_URL+"\"target=\"_new\"> "+V1_DATA_URL+"</a>");
+	 document.write("<br>kanban.initiatives.link: <a href=\""+dataSourceFor("initiatives")+"\"target=\"_new\"> "+dataSourceFor("initiatives")+"</a>");
+	 document.write("<br>kanban.targets.link: <a href=\""+dataSourceFor("targets")+"\"target=\"_new\"> "+dataSourceFor("targets")+"</a>");
 
+ </script>
 
  </div>
 
-<script src="js/d3.v3.min.js"></script>
-<script src="js/SlickGrid-master/lib/jquery-1.7.min.js"></script>
-<script src="js/SlickGrid-master/lib/jquery-ui-1.8.16.custom.min.js"></script>
-<script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
 
-<script src="js/SlickGrid-master/slick.core.js"></script>
-<script src="js/SlickGrid-master/slick.dataview.js"></script>
 
-<script src="js/SlickGrid-master/plugins/slick.cellrangedecorator.js"></script>
-<script src="js/SlickGrid-master/plugins/slick.cellrangeselector.js"></script>
-<script src="js/SlickGrid-master/plugins/slick.cellselectionmodel.js"></script>
-<script src="js/SlickGrid-master/slick.formatters.js"></script>
-<script src="js/SlickGrid-master/slick.editors.js"></script>
-<script src="js/SlickGrid-master/slick.grid.js"></script>
 
 <script>
   function requiredFieldValidator(value) {
@@ -101,13 +159,44 @@ var initiativeData;
 var targetData;
 var epicData;
 
+
 // compare epic with initiative data 
 var comparedData;
 
-	$.when($.getJSON("/data/data.php?type=initiatives"),
-				$.getJSON("/data/data.php?type=targets"),
-				$.getJSON("http://knbnprxy.ea.bwinparty.corp/rest/epics"))
-				//$.getJSON("/data/epics.json"))
+
+
+/*				
+  var grid;
+*/
+  
+  var columnFilters={};
+
+
+/*
+var url = "http://v1.bwinparty.corp/V1-Production/rest-1.v1/Data/Epic/3387482";
+var headers = { Authorization: "Basic " + btoa("s.a.V1-Strategy:baw1234"), Accept: "haljson" };
+var settings = { url: url, headers: headers, dataType: "json" };
+$.ajax(settings).done(function(data) {
+    beautifulJson = JSON.stringify(data, null, 4);
+    $("body").html("<pre>" + beautifulJson + "</pre>");
+}).fail(function(jqXHR) {
+    $("body").html(jqXHR.responseText);
+});	
+*/
+
+refresh();
+
+function refresh(){
+	$.when(//$.getJSON("/data/data.php?type=initiatives"),
+				//$.getJSON("http://localhost:9999/initiatives"),
+				//$.getJSON("http://localhost:9999/targets"),
+				$.getJSON(dataSourceFor("initiatives")),
+				$.getJSON(dataSourceFor("targets")),
+
+				//$.getJSON("/data/data.php?type=targets"),
+				
+				$.getJSON(V1_DATA_URL))
+
 				
 			.done(function(initiatives,targets,epics){
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -121,34 +210,18 @@ var comparedData;
 					else throw new Exception("error loading epics");
 					
 					cleanupEpicData();
-					compareData  = compareData(initiativeData,epicData);
+					comparedData  = compareData(initiativeData,epicData);
 					
 					//epicData = filterByNameValue(epicData,"CategoryName","FeatureGroup");
-					compareData = filterByNameValue(compareData,"CategoryName","Initiative");
+					comparedData = filterByNameValue(comparedData,"CategoryName","Initiative");
 					
 					renderV1EpicGrid();
 					//renderInitiativeGrid();
 					//renderTargetGrid();
 					
-					
 				});
+}
 
-				
-  var grid;
-  
-  var columnFilters={};
-
-/*
-var url = "http://v1.bwinparty.corp/V1-Production/rest-1.v1/Data/Epic/3387482";
-var headers = { Authorization: "Basic " + btoa("s.a.V1-Strategy:baw1234"), Accept: "haljson" };
-var settings = { url: url, headers: headers, dataType: "json" };
-$.ajax(settings).done(function(data) {
-    beautifulJson = JSON.stringify(data, null, 4);
-    $("body").html("<pre>" + beautifulJson + "</pre>");
-}).fail(function(jqXHR) {
-    $("body").html(jqXHR.responseText);
-});	
-*/
 
 
 // ======================== helper & comapre stuff ========================
@@ -171,13 +244,29 @@ function compareData(initiatives,epics){
 				// so lets mark it 
 				epics[e]["isOnKanban"]=true;
 				epics[e]["kanbanName"]=_initiative.name;
+				epics[e]["kanbanName2"]=_initiative.name2;
+				
 				epics[e]["kanbanSwag"]=_initiative.Swag;
 				epics[e]["kanbanActualDate"]=_initiative.actualDate;
+				epics[e]["kanbanPlanDate"]=_initiative.planDate;
+				
 				epics[e]["kanbanLane"]=_initiative.lane;
 				epics[e]["kanbanSubLane"]=_initiative.sublane;
+				epics[e]["kanbanTheme"]=_initiative.theme;
+				epics[e]["kanbanBM"]=_initiative.bm;
 				epics[e]["kanbanHealth"]=_initiative.health;
+				
 				epics[e]["kanbanId"]=_initiative.id;
+				epics[e]["kanbanMongoId"]=_initiative._id;
+				epics[e]["kanbanExtId"]=_initiative.ExtId;
+				
 				epics[e]["kanbanState"]=_initiative.state;
+				epics[e]["kanbanCreateDate"]=_initiative.createDate;
+				epics[e]["kanbanChangeDate"]=_initiative.changeDate;
+				epics[e]["kanbanSublaneOffset"]=_initiative.sublaneOffset;
+				epics[e]["kanbanDescription"]=_initiative.DoD;
+				
+				epics[e]["kanbanSize"]=_initiative.size;
 				
 			}
 			else epics[e]["isOnKanban"]=false;
@@ -212,49 +301,79 @@ function lookupByField(list,field,value){
 // ======================== helper & comapre stuff ========================
 
 
+/*
+
+
+bm:
+b2c gaming,new biz
+
+themes:
+topline,enabling
+
+lanes:
+bwin,pp,foxy,premium,casino,techdebtshared,kalixa,conspo,wincom
+
+sublanes:
+"touch":"touch","click":"click","product":"product","market":"market","enabling":"enabling","CS":"CS","architecture":"architecture","agile":"agile","leanops":"leanops","devops":"devops","people":"people","entIT":"entIT","marketing":"marketing"
+
+
+*/
+
+
 
 
 function renderV1EpicGrid(){
 
+var columns = [];
 
-var columns = [
+  var checkboxSelector = new Slick.CheckboxSelectColumn({
+      cssClass: "slick-cell-checkboxsel"
+    });
+	columns.push(checkboxSelector.getColumnDefinition());
 
-        { id:"sync", name: "sync", field: "sync",width:40,formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true, sorter:NumericSorter,cssClass:"sync"},
+columns.push(
         
-        { id:"id", name: "v1.id", field: "ID",sortable:true,width:70,formatter:Slick.Formatters.V1EpicURL, sorter:NumericSorter ,toolTip:"V1 internal OID"},
-        { id:"number", name: "v1.number", field: "Number",sortable:true, sorter:NumericSorter},
-        { id:"kanbanId", name: "kanban.id", field: "kanbanId",sortable:true, sorter:NumericSorter},
+        { id:"id", name: "v1.id", field: "ID",sortable:true,width:70,formatter:Slick.Formatters.V1EpicURL,cssClass:"onV1", sorter:NumericSorter ,toolTip:"V1 internal OID"},
+        { id:"number", name: "v1.number", field: "Number",sortable:true,cssClass:"onV1", sorter:NumericSorter},
+        { id:"kanbanExtId", name: "kanban.ExtId", field: "kanbanExtId",sortable:true,cssClass:"onKanban", sorter:NumericSorter},
+        { id:"kanbanId", name: "kanban.id", field: "kanbanId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},
+        { id:"kanbanMongoId", name: "kanban._id", field: "kanbanMongoId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},        
+        { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark,sortable:true, sorter:NumericSorter,width:30},
         
-        { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox ,sortable:true, sorter:NumericSorter},
-        
-        { id: "name", name: "v1.name", field: "Name", editor: Slick.Editors.Text ,width:400, cssClass: "cell-title",sortable:true, sorter:NumericSorter},
-        { id: "kanbanName", name: "kanban.name", field: "kanbanName",width:200 },
-        { id:"changeDate", name: "v1.changeDate", field: "ChangeDateUTC",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80,sorter:NumericSorter },
-        { id:"createDate", name: "v1.createDate", field: "CreateDateUTC",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },{ id: "healthComment", name: "health comment", field: "HealthComment", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
-        { id: "kanbanLane", name: "kanban.lane", field: "kanbanLane",sortable:true, sorter:NumericSorter,width:80 },
-        { id: "kanbanSubLane", name: "kanban.sublane", field: "kanbanSubLane",width:80 },
-        { id:"status", name: "v1.status", field: "Status",sortable:true },
-        { id: "kanbanState", name: "kanban.state", field: "kanbanState",width:80 },
-        { id:"swag", name: "v1.swag", field: "Swag",sortable:true, sorter:NumericSorter },
-        { id:"kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",sortable:true, sorter:NumericSorter },
-        { id:"categoryName", name: "v1.categoryName", field: "CategoryName",sortable:true ,sorter:NumericSorter},
-        { id:"health", name: "v1.health", field: "Health",formatter: Slick.Formatters.RAG,sortable:true },
-		{ id:"kanbanHealth", name: "kanban.health", field: "kanbanHealth",formatter: Slick.Formatters.RAG,sortable:true },
-		{ id:"scope", name: "v1.backlog", field: "Scope",sortable:true },
-		{ id:"createdBy", name: "v1.createdBy", field: "CreatedBy",sortable:true },
+        { id: "name", name: "v1.name", field: "Name",width:400, cssClass: "cell-title",cssClass:"onV1",sortable:true, sorter:NumericSorter},
+        { id: "kanbanName", name: "kanban.name", field: "kanbanName",editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
+        { id: "kanbanName2", name: "kanban.name2", field: "kanbanName2", editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
+        { id: "kanbanCreateDate", name: "kanban.createDate", field: "kanbanCreateDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
+        { id: "kanbanChangeDate", name: "kanban.changeDate", field: "kanbanChangeDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
+        { id: "changeDate", name: "v1.changeDate", field: "ChangeDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80,sorter:NumericSorter },
+        { id: "createDate", name: "v1.createDate", field: "CreateDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "status", name: "v1.status", field: "Status",cssClass:"onV1",sortable:true },
+        { id: "kanbanBM", name: "kanban.bm",cssClass:"onKanban", field: "kanbanBM",editor: Slick.Editors.SelectCell,options:{"b2c gaming":"b2c gaming","kalixa":"kalixa","win":"win"},sortable:true, sorter:NumericSorter,width:80 },
+        { id: "kanbanTheme", name: "kanban.theme",cssClass:"onKanban", field: "kanbanTheme",editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},width:80 },
+        { id: "kanbanLane", name: "kanban.lane",field: "kanbanLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
+        { id: "kanbanSubLane", name: "kanban.sublane", field: "kanbanSubLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"touch":"touch","click":"click","product":"product","market":"market","enabling":"enabling","CS":"CS","architecture":"architecture","agile":"agile","leanops":"leanops","devops":"devops","people":"people","entIT":"entIT","marketing":"marketing"},width:80 },
+        { id: "kanbanState", name: "kanban.state", field: "kanbanState",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done"},width:80 },
+        { id: "swag", name: "v1.swag", field: "Swag",cssClass:"onV1",sortable:true, sorter:NumericSorter,width:50 },
+        { id: "kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50 },
+        { id: "categoryName", name: "v1.categoryName", field: "CategoryName",cssClass:"onV1",sortable:true ,sorter:NumericSorter},
+        { id: "health", name: "v1.health", field: "Health",formatter: Slick.Formatters.RAG,sortable:true },
+		{ id: "healthComment", name: "v1.health comment", field: "HealthComment", editor: Slick.Editors.LongText ,width:500 ,cssClass:"onV1"},
+        { id: "kanbanHealth", name: "kanban.health", field: "kanbanHealth",cssClass:"onKanban",formatter: Slick.Formatters.RAG,sortable:true },
+		{ id: "scope", name: "v1.backlog", field: "Scope",cssClass:"onV1",sortable:true },
+		{ id: "createdBy", name: "v1.createdBy", field: "CreatedBy",cssClass:"onV1",sortable:true },
       
-        { id:"plannedStart", name: "v1.plannedStart", field: "PlannedStart",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id:"plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id:"launchDate", name: "v1.launchDate", field: "LaunchDate",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id:"kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",sortable:true,width:80},
+        { id: "plannedStart", name: "v1.plannedStart", field: "PlannedStart",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "launchDate", name: "v1.launchDate", field: "LaunchDate",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "kanbanPlanDate", name: "kanban.planDate", field: "kanbanPlanDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
+        { id: "kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
+        { id: "kanbanSize", name: "kanban.size", field: "kanbanSize",cssClass:"onKanban",editor:Slick.Editors.Integer,sortable:true,width:50},
+        { id: "kanbanSublaneOffset", name: "kanban.offset", field: "kanbanSublaneOffset",cssClass:"onKanban",editor:Slick.Editors.Integer,sortable:true,width:50},
         //{ id:"estimatedDone", name: "estimatedDone", field: "EstimatedDone",sortable:true,width:150 },
-          
-        { id: "description", name: "v1.description", field: "Description", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"},
-        { id: "patentprotection", name: "v1.patentprotection", field: "Patentprotection", editor: Slick.Editors.Text ,width:500, cssClass: "cell-title"}
-        
-
-
-  ];
+        { id: "description", name: "v1.description", field: "Description",cssClass:"onV1", editor: Slick.Editors.LongText ,width:500,cssClass:"onV1"},
+        { id: "kanbanDescription", name: "kanban.DoD", field: "kanbanDescription",cssClass:"onKanban", editor: Slick.Editors.LongText ,width:500},
+        { id: "patentprotection", name: "v1.patentprotection", field: "Patentprotection",cssClass:"onV1", editor: Slick.Editors.Text ,width:50, }
+  );
 
   var options = {
     editable: true,
@@ -263,38 +382,25 @@ var columns = [
     asyncEditorLoading: false,
     cellHighlightCssClass: "changed",
     cellHighlightCssClass: "changed",
-    autoEdit: true,
+     //multiColumnSort: true,
+     autoEdit: true,
     showHeaderRow:true,
     explicitInitialization:true,
-	/*
-	dataItemColumnValueExtractor: function(item, columnDef) {
-		if(columnDef.editor == Slick.Editors.SelectOption){
-			return eval(columnDef.options)[item[columnDef.field]];
-		}else{
-			return item[columnDef.field];
-		}    
-	}*/
+	
 }
 	
 
     
-   /* https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-checkbox-row-select.html
-   	var checkboxSelector = new Slick.CheckboxSelectColumn({
-      cssClass: "slick-cell-checkboxsel"
-    });
-    columns.push(checkboxSelector.getColumnDefinition());
-*/
-    
+  
+	
     
 	var dataView = new Slick.Data.DataView();
-	dataView.setItems(compareData,"ID");
+	dataView.setItems(comparedData,"ID");
 
  
     v1grid = new Slick.Grid("#v1Grid", dataView, columns, options);
     
-    //v1grid.setSelectionModel(new Slick.CellSelectionModel());
-	//v1grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: true}));
-	
+   
 
 
     v1grid.onAddNewRow.subscribe(function (e, args) {
@@ -318,6 +424,8 @@ var columns = [
 		  dataView.sort(comparer, args.sortAsc);
 	});
 	
+
+	  
     
     dataView.onRowsChanged.subscribe(function(e,args) {
 		v1grid.invalidateRows(args.rows);
@@ -352,8 +460,24 @@ var columns = [
     });
 
 	
+	v1grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+    v1grid.registerPlugin(checkboxSelector);
+    
+  
+    
+    
+    var columnpicker = new Slick.Controls.ColumnPicker(columns, v1grid, options);
 	v1grid.init();
 
+
+
+	// default sort column
+    dataView.sort(function(a, b) {
+		return (new Date(a["ChangeDateUTC"]) > new Date(b["ChangeDateUTC"])) ? 1 : -1;
+	},false);
+     
+     
+     
     //dataView.beginUpdate();
     //dataView.setItems(compareData,"ID");
     dataView.setFilter(filter);
@@ -380,6 +504,149 @@ function filter(item) {
     }
     return true;
   }
+
+
+// Define some sorting functions
+function NumericSorter(a, b) {
+  var x = a[sortcol], y = b[sortcol];
+  return sortdir * (x == y ? 0 : (x > y ? 1 : -1));
+}
+
+
+var syncList; 
+
+var itemInsertList; 
+
+
+d3.select("#bremove").on("click", function(){
+		console.log("REMOVE selected rows: "+v1grid.getSelectedRows());
+		
+		syncList = new Array();
+		itemInsertList = new Array();
+		
+		var _sel = v1grid.getSelectedRows();
+		for (var s in _sel){
+				syncList.push(v1grid.getData().getItem(_sel[s]));
+		}
+	
+		var _json = JSON.stringify(syncList);
+		//console.log("JSON.stringify tha shit..."+_json);
+		
+		// and send to backend ! :-)
+		$.ajax({
+		type: "DELETE",
+		url: dataSourceFor("initiatives"),
+		
+		//type: "POST",
+		//url: "data/pdo.php",
+		//data: { 'itemJson': _json, 'action':'remove' },
+		
+		data: { 'itemJson': _json, 'action':'remove' },
+		dataType:"json",
+		cache: false,
+		success: function(msg)
+			{
+				refresh();
+				alert(":  ajax REMOVE success: ");
+			}
+		});
+	
+	});
+	
+	
+
+d3.select("#bsync").on("click", function(){
+		console.log("SYNC selected rows: "+v1grid.getSelectedRows());
+		
+		syncList = new Array();
+		itemInsertList = new Array();
+		
+		var _sel = v1grid.getSelectedRows();
+		
+		for (var s in _sel){
+				syncList.push(v1grid.getData().getItem(_sel[s]));
+		}
+		
+		for (var i in syncList){
+				
+				var _sync = syncList[i];
+				var _item = {};
+				//_item["_id"]=_sync["kanbanId"] ? _sync["kanbanId"] : null ;
+				_item["id"]=_sync["kanbanId"] ? _sync["kanbanId"] : null ;
+				_item["name"]=_sync["Name"];
+				_item["ExtId"]=_sync["ID"];
+				_item["name2"]=_sync["kanbanName2"] ? _sync["kanbanName2"] : null;
+				_item["isCorporate"]="x";
+				_item["onKanban"]=true;
+				_item["backlog"]=_sync["Scope"]
+				_item["bm"]=_sync["kanbanBM"];;
+				_item["theme"]=_sync["kanbanTheme"];
+				_item["themesl"]="";
+				_item["lane"]=_sync["kanbanLane"];
+				_item["sublane"]=_sync["kanbanSubLane"];
+				_item["sublaneOffset"]=_sync["kanbanSublaneOffset"] ? _sync["kanbanSublaneOffset"] : "";
+				_item["startDate"]="";
+				_item["planDate"]=d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanPlanDate"])) ;
+				_item["actualDate"]=d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanActualDate"]));
+				_item["progress"]=0;
+				_item["health"]=_sync["Health"] ? _sync["Health"].toLowerCase() :"";
+				
+				//strip out all HTML tags - http://stackoverflow.com/questions/822452/strip-html-from-text-javascript
+				_item["healthComment"]=_sync["HealthComment"] ? $("<p>"+_sync["HealthComment"]+"</p>").text() :"";
+				_item["status"]=_sync["Status"];
+				_item["state"]=_sync["kanbanState"];
+				_item["size"]=_sync["kanbanSize"];
+				_item["Type"]="item";
+				_item["cost"]=0;
+				_item["Swag"]=_sync["Swag"];
+				_item["benefit"]=0;
+				_item["dependsOn"]="";
+				_item["accuracy"]=10;
+				_item["productOwner"]="";
+				_item["businessOwner"]="";
+				_item["programLead"]="";
+				
+				//strip out all HTML tags - http://stackoverflow.com/questions/822452/strip-html-from-text-javascript
+				_item["DoD"]=_sync["Description"] ? $("<p>"+_sync["Description"]+"</p>").text() : "";
+				_item["DoR"]="";
+				_item["createDate"]=_sync["kanbanCreateDate"];
+				
+				
+				itemInsertList.push(_item);
+		}
+		
+		
+		
+		var _json = JSON.stringify(itemInsertList);
+		console.log("JSON.stringify tha shit..."+_json);
+		
+		// and send to backend ! :-)
+		$.ajax({
+		type: "POST",
+		//url: "data/pdo.php",
+		url: dataSourceFor("initiatives"),
+		data: { 'itemJson': _json, 'action':'sync' },
+		cache: false,
+		//async:false,
+		//contentType:"application/json",
+		dataType:"json",
+		success: function(msg)
+			{
+				refresh();
+				alert(":  ajax SYNC success: ");
+			}
+		});
+		
+	});	
+
+
+
+
+
+
+
+
+/*
 
 
 function renderInitiativeGrid(){
@@ -434,6 +701,11 @@ var columns = [
       itemgrid.render();
     });
 }
+
+
+
+
+
 
 
 function renderTargetGrid(){
@@ -499,13 +771,8 @@ var columns = [
 
 
 
-// Define some sorting functions
-function NumericSorter(a, b) {
-  var x = a[sortcol], y = b[sortcol];
-  return sortdir * (x == y ? 0 : (x > y ? 1 : -1));
-}
 
-
+*/
 
 
  </script>
