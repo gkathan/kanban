@@ -157,9 +157,21 @@ h1{
 	stroke-opacity:1;
 }
 
+.metaphorDemarcationLineThin {
+	stroke: #999999;
+	stroke-width:1;
+	stroke-dasharray: 10,10;
+	stroke-opacity:1;
+}
+
 .metaphorEnablingBlock {
 	fill: #aaaaaa;
-	opacity:0.3;
+	opacity:0.2;
+}
+
+.metaphorCultureBlock {
+	fill: #aaaaaa;
+	opacity:0.8;
 }
 
 
@@ -399,3 +411,6 @@ pre.prettyprint{padding:2px;border:1px solid #888}
     stroke-width: 0;
     opacity:0.5;
 }
+
+
+
