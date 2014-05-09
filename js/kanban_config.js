@@ -1,19 +1,32 @@
-/*
-var JSON_CONFIG =
-				[{type:"MONGO",collections:{lanetext:"http://localhost:9999/lanetext",initiatives:"http://localhost:9999/initiatives",metrics:"http://localhost:9999/metrics",targets:"http://localhost:9999/targets",releases:"http://localhost:9999/releases",postits:"http://localhost:9999/postits"}},
-				  {type:"MYSQL",collections:{lanetext:"/data/data.php?type=lanetext",initiatives:"/data/data.php?type=initiatives",metrics:"/data/data.php?type=metrics",targets:"/data/data.php?type=targets",releases:"/data/data.php?type=releases",postits:"/data/data.php?type=postits"}},
-				];
-*/
+
+var host = window.location.host;
+
+var TRANSCODE_URL;
+var MONGO_GATEWAY_URL;
+var V1_DATA_URL = "http://knbnprxy.ea.bwinparty.corp/rest/epics";
+
+var DS ="MONGO";
+//var DS ="MYSQL";
+
+
+
+if (host=="portfolio.ea.bwinparty.corp") {
+	MONGO_GATEWAY_URL = "http://portfolio.ea.bwinparty.corp/nodejs/";
+	TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
+}
+else if (host=="localhost"){
+	MONGO_GATEWAY_URL = "http://localhost:9999/";
+	TRANSCODE_URL = "http://localhost:8080/transcode/";
+}
+
+
 var JSON_CONFIG =
 				[
-					{type:"MONGO",url:"http://localhost:9999/"},
-					//{type:"MONGO",url:"http://localhost:9999/"},
+					{type:"MONGO",url:MONGO_GATEWAY_URL},
 					{type:"MYSQL",url:"/data/data.php?type="},
 				];
 
 
-var DS ="MONGO";
-//var DS ="MYSQL";
 
 function dataSourceFor(collection){
 	for (var p in JSON_CONFIG){
@@ -21,6 +34,4 @@ function dataSourceFor(collection){
 	}
 }
 
-//var V1_DATA_URL = "/data/json/epics.json";
-var V1_DATA_URL = "http://knbnprxy.ea.bwinparty.corp/rest/epics";
 
