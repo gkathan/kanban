@@ -377,7 +377,7 @@ function drawItems(){
 			}
 			
 			if (d.state=="killed") _iconRef+="_killed";
-			if (!d.ExtId) _iconRef="item_notsynced";
+			if (!d.ExtId || d.status=="Understanding" || d.status=="New") _iconRef="item_notsynced";
 			
 			var _diff = new Date()-new Date(d.createDate);
 			// 24 hours are NEW ...
@@ -541,6 +541,8 @@ function _drawItemName(svg,d,x,y,scale,color){
 	var _textDecoration="";
 	//if (d.ExtId!="") _textDecoration="underline";
 
+	var _name = d.name.replace(/\s*\[.*?\]\s*/g, '');
+
 	var _text =svg.append("text")
 	   .style("font-size",_textSize+"px")
 	   .style("text-anchor","middle")
@@ -561,7 +563,7 @@ function _drawItemName(svg,d,x,y,scale,color){
 	   .attr("x",x)
 	   .attr("y",y)
 	   //.text(d.name);
-		textarea(_text,d.name,x,y,ITEM_TEXT_MAX_CHARS,_textSize-1);
+		textarea(_text,_name,x,y,ITEM_TEXT_MAX_CHARS,_textSize-1);
 }
 
 
@@ -760,9 +762,10 @@ function _itemTooltipHTML(d){
 	else if (d.health=="red") _health ="red";
 	
 	var _v1Link = "http://v1.bwinparty.corp/V1-Production/Epic.mvc/Summary?oidToken=Epic%3A";
+	var _v1SyncLink= "v1sync.php?kanbanMongoId="+d._id;
+						
 	
-	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\">[id: "+d.id+"]</td><td style=\"font-size:4px;text-align:right\">";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\"><a href=\""+_v1SyncLink+"\" target=\"new\">[v1synch admin]</a></td><td style=\"font-size:4px;text-align:right\">";
 	if (d.ExtId)
 		_htmlBase+=" <a href=\""+_v1Link+d.ExtId+"\" target=\"new\">[v1: "+d.ExtId+"]</a>";
 	_htmlBase+="</td></tr>";
@@ -772,7 +775,8 @@ function _itemTooltipHTML(d){
 	_htmlBase+="<tr><td class=\"tiny\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">started:</td><td><b>"+d.startDate+"</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">planned:</td><td><b>"+d.planDate+"</b></td></tr>";
-	_htmlBase+="<tr><td class=\"tiny\">state:</td><td class=\"bold\">"+d.state+"</td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">v1.status:</td><td class=\"bold\">"+d.status+"</td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\">k.state:</td><td class=\"bold\">"+d.state+"</td></tr>";
 
 	if (d.actualDate>d.planDate &&d.state!="done"){ 
 		_htmlBase=_htmlBase+"<tr><td class=\"tiny\">delayed:</td><td><b>"+diffDays(d.planDate,d.actualDate)+" days</b></td></tr>";
@@ -863,6 +867,7 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 						
 						
 						var back_content="change trail:";
+						
 						var _diff="";
 						for (var d in _diff_trail){
 							//_diff+="<div style=\"font-size:6px\">"+JSON.stringify(_diff_trail[d].diff)+"</div>";
@@ -872,6 +877,7 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 									_diff+="<div style=\"font-size:6px\">"+_diff_trail[d].timestamp+"<br><b>* "+c+": "+JSON.stringify(_diff_trail[d].diff[c])+"</b></div>";
 							}
 						}
+						
 						
 						back_content += _diff+"<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
 						console.log("...flip...");
