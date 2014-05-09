@@ -96,6 +96,7 @@ var CONTEXT="CONTEXT";
 
 
 
+
 var releaseData;
 
 
@@ -164,7 +165,7 @@ var COLOR_BPTY="#174D75";
 var COLOR_TARGET = COLOR_BPTY;
 
 
-
+var laneData;
 
 // additional buttons state
 var SHOW_ONLY_VERSION1=false;
@@ -261,19 +262,33 @@ function redraw() {
 /** main etry point
  * 
  */
-function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,postitTable,targetTable){
+function render(svgFile){
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
+	/*
 		$.when($.getJSON("/data/data.php?type="+laneTextTable),
-				$.getJSON("/data/data.php?type="+initiativeTable),
-				$.getJSON("/data/data.php?type="+metricsTable),
+				//$.getJSON("/data/data.php?type="+initiativeTable),
+				$.getJSON("http://localhost:9999/initiatives"),
+				//$.getJSON("/data/data.php?type="+metricsTable),
+				$.getJSON("http://localhost:9999/metrics"),
 				$.getJSON("/data/data.php?type="+releaseTable),
-				$.getJSON("/data/data.php?type="+postitTable),
+				//$.getJSON("/data/data.php?type="+postitTable),
+				$.getJSON("http://localhost:9999/targets"),
 				$.getJSON("/data/data.php?type="+targetTable),
 				$.getJSON("/data/laneTextTargetPillars.json"))
-				
-			.done(function(lanetext,initiatives,metrics,releases,postits,targets,pillars){
+	*/			
+		$.when($.getJSON(dataSourceFor("lanetext")),
+				$.getJSON(dataSourceFor("initiatives")),
+				$.getJSON(dataSourceFor("metrics")),
+				$.getJSON(dataSourceFor("releases")),
+				$.getJSON(dataSourceFor("postits")),
+				$.getJSON(dataSourceFor("targets")),
+				$.getJSON(dataSourceFor("lanes")),
+				$.getJSON("/data/laneTextTargetPillars.json"))
+
+
+			.done(function(lanetext,initiatives,metrics,releases,postits,targets,lanes,pillars){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -286,6 +301,8 @@ function render(svgFile,laneTextTable,initiativeTable,metricsTable,releaseTable,
 					else throw new Exception("error loading postits");
 					if (targets[1]=="success") targetData=targets[0];
 					else throw new Exception("error loading targets");
+					if (lanes[1]=="success") laneData=lanes[0];
+					else throw new Exception("error loading lanes");
 					if (pillars[1]=="success") pillarData=pillars[0];
 					else throw new Exception("error loading pillars");
 					
@@ -303,7 +320,8 @@ function setKanbanDefaultDates(){
 }
 
 
-//var $grid;
+
+
 
 function renderB2CGaming() {
 	hideWhiteboard();
@@ -324,11 +342,15 @@ function renderB2CGaming() {
 	CONTEXT=ITEMDATA_FILTER[0].value;
     loadPostits();
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(	//$.getJSON("http://localhost:9999/initiatives"))
+			//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+	
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					// do not show sensitive data
 					//safeMetrics();
+					
 					
 					// default view for Q1 review exercise
 					q1_2014_reviewMetrics();
@@ -360,7 +382,9 @@ function renderHistory() {
 	CONTEXT=ITEMDATA_FILTER.value;
     loadPostits();
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+	
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -384,7 +408,9 @@ function renderWhiteboard() {
 		.attr("transform", "translate( 20,20)");
 		
 		
- 	$.when($.getJSON("/data/data.php?type=initiatives"))
+ 	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+			
 			.done(function(initiatives){
 					initiativeData=initiatives.filter(function(d){return d.state=="todo";});
 					d3.select("#kanban").style("visibility","hidden");
@@ -422,13 +448,16 @@ function renderBwin(){
 	setKanbanDefaultDates();
 	
 	ITEM_SCALE=0.9;
-	ITEMDATA_NEST= ["lane","sublane"];
+	ITEMDATA_NEST= ["themesl","sublane"];
 	//ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"bwin"},{"name":"lane", "operator":"==", "value":"shared"}];
 	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"bwin"}];
 	
 	CONTEXT=ITEMDATA_FILTER[0].value;
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("http://localhost:9999/initiatives"))
+			//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+	
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -514,7 +543,9 @@ function renderHolding(){
 	ITEMDATA_FILTER = null;
 	CONTEXT="holding";
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -536,7 +567,9 @@ function renderShared(){
 	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"shared"}];
 	CONTEXT=ITEMDATA_FILTER[0].value;
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -560,7 +593,9 @@ function renderNewBiz(){
 	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"new biz"}];
 	CONTEXT=ITEMDATA_FILTER[0].value;
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -582,7 +617,9 @@ function renderTechdebt(){
 	ITEMDATA_FILTER = [{"name":"lane", "operator":"==", "value":"techdebt"}];
 	CONTEXT=ITEMDATA_FILTER[0].value;
 
-	$.when($.getJSON("/data/data.php?type=initiatives"))
+	$.when(//$.getJSON("/data/data.php?type=initiatives"))
+	  		  $.getJSON(dataSourceFor("initiatives")))
+			
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					drawAll();
@@ -616,16 +653,54 @@ function drawInitiatives(){
 }
 
 
+/* ------------------------ LANE sort EXPERIMENT -----------------------*/
+/**
+ * joins laneData with initiativeData
+ * to get sorting information into each initiative item
+ */
+function joinInitiatives2LanesSort(){
+	for (var i in initiativeData){
+			var _lane = getItemByKey(laneData,"name",initiativeData[i].lane);
+			if (_lane){
+				 initiativeData[i]["laneSort"]=_lane.sort;
+				if (_lane.sublanes){
+					var _sublane = getItemByKey(_lane.sublanes,"name",initiativeData[i].sublane);
+					if (_sublane) initiativeData[i]["sublaneSort"]=_sublane.sort;
+				}
+			}
+	}
+}
+/* ------------------------ EXPERIMENT -----------------------*/
 
 
 function drawAll(){
 	init();
-	
 
+	
+	/** multi column sort
+	 * https://github.com/Teun/thenBy.js
+	 */
+	var firstBy=(function(){function e(f){f.thenBy=t;return f}function t(y,x){x=this;return e(function(a,b){return x(a,b)||y(a,b)})}return e})();
+
+
+	joinInitiatives2LanesSort();
+	
+	//sorting hook
+	//var s = firstBy(function (v1, v2) { return v1.lane < v2.lane ? -1 : (v1.lane > v2.lane ? 1 : 0); }).thenBy(function (v1, v2) { return v1.sublane < v2.sublane ? -1 : (v1.sublane > v2.sublane ? 1 : 0); });
+	var s = firstBy(function (v1, v2) { return v1.laneSort - v2.laneSort})
+			.thenBy(function (v1, v2) { return v1.sublaneSort - v2.sublaneSort });
+	
+	//initiativeData.sort(function(a,b){return (b.lane>a.lane) ?1 :-1});
+	
+	initiativeData.sort(s);
+	initiativeData.sort(s);
+  
+	//????????????strange => does only work when called twice ????????????????????				
+	
+	
 	var _context = {"yMin":Y_MIN,"yMax":Y_MAX,"name":CONTEXT};
 	itemTree = createLaneHierarchy(initiativeData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	targetTree = createLaneHierarchy(targetData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
-	
 	
 	
 	
@@ -644,6 +719,8 @@ function drawAll(){
 	d3.select("#whiteboard").style("visibility","hidden");
 	
 	dcount++;
+	
+  
 }
 
 
@@ -690,16 +767,21 @@ function drawOverviewMetaphors(svg){
 	var gMetaphors = svg.append("g").attr("id","metaphors").style("visibility","hidden");
 	
 	// demarcation line between themes
-	var _y = _drawThemeDemarcation(gMetaphors,"metaphorDemarcationLine");
+	var _y2 = y(getSublaneByNameNEW("shared").yt1);
+	_drawLine(gMetaphors,0,_y2,x(KANBAN_END)-80,_y2,"metaphorDemarcationLine");
+	
+	
+	
+	var _y = _drawThemeDemarcation(gMetaphors,"metaphorDemarcationLineThin");
 	
 	// and a shaded "enabling rect"
-	_drawRect(gMetaphors,x(KANBAN_START)-margin.left,_y,x(KANBAN_END)+margin.right+margin.left,(height-_y),"metaphorEnablingBlock");
+	_drawRect(gMetaphors,x(KANBAN_START)-margin.left,_y2,x(KANBAN_END)+margin.right+margin.left,(height-_y2),"metaphorEnablingBlock");
 	
 	
 	// same as the grid.drawVision trangle
 	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-130;
 	//tree.height is 1000px 
-	_drawXlink(gMetaphors,"#tree",_x,0,{"scale":(height/1000),"opacity":0.7});
+	_drawXlink(gMetaphors,"#tree",_x,0,{"scale":(height/800),"opacity":0.7});
 	
 	_drawXlink(gMetaphors,"#timeline",0,-85,{"scale":(1,(x(KANBAN_END)-x(KANBAN_START))/1000),"opacity":0.3});
 	_drawText(gMetaphors,"timeline",x(KANBAN_END)-55,-45,{"size":"20px","color":"#aaaaaa","weight":"bold","anchor":"end"});
@@ -710,7 +792,12 @@ function drawOverviewMetaphors(svg){
 	_drawText(gMetaphors,"REVENUE STREAMS",x(KANBAN_END)-10,_y/2,{"size":(height-_y)/12,"opacity":0.7,"color":"#999999","weight":"bold","mode":"tb","anchor":"middle"});
 	_drawText(gMetaphors,"ENABLING STREAMS",x(KANBAN_END)-10,_y+20,{"size":_y/18,"opacity":0.7,"color":"#999999","weight":"bold","mode":"tb"});
 	
+	_drawRect(gMetaphors,x(KANBAN_START)-margin.left,height,x(KANBAN_END)+margin.right+margin.left,(height+200),"metaphorCultureBlock");
 	
+	_drawLine(gMetaphors,-300,height,x(KANBAN_END)+500,height,"metaphorDemarcationLineThin");
+	
+	_drawText(gMetaphors,"PEOPLE & CULTURE",20,height+60,{"size":_y/15,"opacity":0.7,"color":"#ffffff","weight":"bold"});
+	_drawText(gMetaphors,"LEADERSHIP",x(KANBAN_END)-20,height+60,{"size":_y/15,"opacity":0.7,"color":"#ffffff","weight":"bold","anchor":"end"});
 	
 }
 
@@ -898,4 +985,16 @@ var PACKAGE_VERSION="20140418_1434";
 	var PACKAGE_VERSION="20140418_1444";
 	var PACKAGE_VERSION="20140418_1529";
 	var PACKAGE_VERSION="20140418_1803";
+	
+var PACKAGE_VERSION="20140422_0942";
+	var PACKAGE_VERSION="20140422_1010";
+	
+var PACKAGE_VERSION="20140429_1844";
+	var PACKAGE_VERSION="20140430_1457";
+	var PACKAGE_VERSION="20140430_1627";
+	
+var PACKAGE_VERSION="20140508_0944";
+	var PACKAGE_VERSION="20140508_1925";
+	var PACKAGE_VERSION="20140508_1927";
+	var PACKAGE_VERSION="20140508_2128";
 	
