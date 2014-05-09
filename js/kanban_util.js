@@ -59,10 +59,23 @@ function getSublaneCenterOffset(sublane){
 	}
 }
 
+
+
+function getItemByKey(data,key,value){
+	if (!data) return;
+	for (var _item=0; _item< data.length;_item++){
+			if (data[_item][key] == value){
+				return data[_item];
+				break;
+			}
+	}
+}
+
 /**
 * helper method to get item from object array by ID
 */
 function getItemByID(data,id){
+	if (!data) return;
 	for (var _item=0; _item< data.length;_item++){
 			if (data[_item].id == id){
 				return _dependingItem=data[_item];
@@ -498,5 +511,4 @@ function _registerDragDrop(){
 	return drag_item;	
 	//test end
 }
-
 
