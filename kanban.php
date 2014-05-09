@@ -109,8 +109,7 @@ else{
 <!-- ---------------------------------------------- KANBAN  ------------------------------------------------------------->
 <script>
 	
-	TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
-	//TRANSCODE_URL = "http://localhost:8080/transcode/";
+	
 	
 	
 	WIDTH=1500;
@@ -298,248 +297,225 @@ function submit_download_form(output_format)
 <?php 
 	echo "<div style=\"font-size:6px\">logged in as <b> $auth</b> <a href=\"login.php?action=logout\">logout</a></div>";
 	if ($auth =="admin" || $auth=="exec"){ ?>
-	
-	
 
-<div  class="row" style="margin-left:10px;margin-bottom:10px">
-		<!--date range -->
-		<div id="kanbanrange"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
-			<span style="font-size:12px;font-weight:bold;margin-left:20px">KANBAN RANGE</span><br><i class="fa fa-calendar fa-lg"></i>
-			<span style="font-size:10px"><script type="text/javascript"> document.write(KANBAN_START.toString("MMMM d, yyyy")+" - "+KANBAN_END.toString("dd.MMMM yyyy"));</script></span> <b class="caret"></b>
+		<div  class="row" style="margin-left:10px;margin-bottom:10px">
+				<!--date range -->
+				<div id="kanbanrange"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
+					<span style="font-size:12px;font-weight:bold;margin-left:20px">KANBAN RANGE</span><br><i class="fa fa-calendar fa-lg"></i>
+					<span style="font-size:10px"><script type="text/javascript"> document.write(KANBAN_START.toString("MMMM d, yyyy")+" - "+KANBAN_END.toString("dd.MMMM yyyy"));</script></span> <b class="caret"></b>
+				</div>
+				 
+				<script type="text/javascript">
+				$('#kanbanrange').daterangepicker(
+					{
+					  ranges: {
+						 'ALL': [KANBAN_START, KANBAN_END],
+						 'WIP': [moment().subtract('days', 10), moment().add('days', WIP_WINDOW_DAYS+10)],
+						 'History': [moment("2012-01-01"), moment().add("days",10)],
+						 'Last 30 Days': [moment().subtract('days', 29), moment()],
+						 'This Month': [moment().startOf('month'), moment().endOf('month')],
+						 'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
+					  },
+					  startDate: KANBAN_START,
+					  endDate: KANBAN_END
+					},
+					function(start, end) {
+						$('#kanbanrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+						KANBAN_START = new Date(start);
+						KANBAN_END=new Date(end);
+						console.log("..in daterange function");
+						drawAll();
+					}
+				);
+				</script>
+				<!-- date range -->
 		</div>
-		 
-		<script type="text/javascript">
-		$('#kanbanrange').daterangepicker(
-			{
-			  ranges: {
-				 'ALL': [KANBAN_START, KANBAN_END],
-				 'WIP': [moment().subtract('days', 10), moment().add('days', WIP_WINDOW_DAYS+10)],
-				 'History': [moment("2012-01-01"), moment().add("days",10)],
-				 'Last 30 Days': [moment().subtract('days', 29), moment()],
-				 'This Month': [moment().startOf('month'), moment().endOf('month')],
-				 'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
-			  },
-			  startDate: KANBAN_START,
-			  endDate: KANBAN_END
-			},
-			function(start, end) {
-				$('#kanbanrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-				KANBAN_START = new Date(start);
-				KANBAN_END=new Date(end);
-				console.log("..in daterange function");
-				drawAll();
-			}
-		);
-		</script>
-		<!-- date range -->
-</div>
-<div  class="row" style="margin-left:10px;margin-bottom:10px">
+		<div  class="row" style="margin-left:10px;margin-bottom:10px">
 
-		<!--time machine -->
-		<div id="timemachine"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
-			<span style="font-size:12px;font-weight:bold;margin-left:20px">TIME MACHINE</span><br/><i class="fa fa-calendar fa-lg"></i>
-			<span style="font-size:10px"><script type="text/javascript"> document.write(TODAY.toString("MMMM d, yyyy"));</script></span> <b class="caret"></b>
+				<!--time machine -->
+				<div id="timemachine"  class="pull-left" style="margin-left:10px;margin-bottom:10px">
+					<span style="font-size:12px;font-weight:bold;margin-left:20px">TIME MACHINE</span><br/><i class="fa fa-calendar fa-lg"></i>
+					<span style="font-size:10px"><script type="text/javascript"> document.write(TODAY.toString("MMMM d, yyyy"));</script></span> <b class="caret"></b>
+				</div>
+				 
+				<script type="text/javascript">
+				$('#timemachine').daterangepicker(
+					{ startDate: moment(),
+					  endDate: moment(),
+					  singleDatePicker: true
+
+					  },
+					function(start, end) {
+						if (start<KANBAN_END & start>KANBAN_START){
+							timeMachine(start);
+						}
+						else {
+							alert("TIMEMACHINE date should not be earlier than KANBAN_START and/or later than KANBAN_END date, sir !! ");
+							start=TODAY.toString('yyyy-MM-dd');
+						}
+						$('#timemachine span').html(start.format('MMMM D, YYYY'));
+					}
+				);
+				</script>
+				<!-- time machine -->
 		</div>
-		 
+
+			<div class="btn-group-xs">
+			  <button id="b70" type="button" class="btn btn-success">Holding</button>
+			  <button id="b71" type="button" class="btn btn-success">B2C Gaming</button>
+			  <button id="b72" type="button" class="btn btn-success">New Biz</button>
+			  <button id="b73" type="button" class="btn btn-success">Bwin</button>
+			  <button id="b77" type="button" class="btn btn-success">Techdebt</button>
+			  <button id="b78" type="button" class="btn btn-success">Shared</button>
+			  <button id="b74" type="button" class="btn btn-success">Bwin Drill-in</button>
+			  <button id="b75" type="button" class="btn btn-success">EntIT Drill-in</button>
+			  <button id="bwhiteboard" type="button" class="btn btn-success">Whiteboard</button>
+			</div>
+
+
+		<div class="btn-group-xs">
+			<span style="font-size:8px">metric filter:</span>	<select id="metricfilter" class="multiselect" multiple="multiple">
+			  <option value="baseline">baseline</option>
+			  <option value="forecast1">forecast-1</option>
+			  <option value="forecast2" selected>forecast-2</option>
+			  <option value="goal" selected>goal</option>
+			  <option value="potentials" selected>potentials</option>
+			</select>
+		</div>	
+
+		<div class="btn-group-xs">
+			<span style="font-size:8px">metric view:</span>	<select id="metricview" class="multiselect" >
+			  <option value="REVIEW_Q1_2014" selected>REVIEW_Q1_2014</option>
+			  <option value="FORECAST_2015" >FORECAST_2015</option>
+			</select>
+		</div>	
+
+
+		<div class="btn-group-xs">
+			<span style="font-size:8px">(re)forecast date:</span><select id="basedate" class="multiselect">
+			  <option value="2013-10-31">2013-10-31</option>
+			  <option value="2014-03-11" selected>2014-03-11</option>
+			</select>
+		</div>	
+
+		<!-- Initialize the multi-select plugin: -->
 		<script type="text/javascript">
-		$('#timemachine').daterangepicker(
-			{ startDate: moment(),
-			  endDate: moment(),
-			  singleDatePicker: true
+		  $(document).ready(function() {
+			  $('#metricfilter').multiselect({
+				buttonClass: 'btn-primary btn-sm',
+				onChange: function(element,checked){
+					
+					var _val = $(element).val()
+					if (checked)
+						hideMetrics([{"name":_val,"hide":true}])
+					else
+						hideMetrics([{"name":_val,"hide":false}])
+					
+					drawAll();
+					console.log("element: "+_val+" checked: "+checked);
+				}
+			});
+		  });
+		 
+		 
+		  $(document).ready(function() {
+			  $('#metricview').multiselect({
+				buttonClass: 'btn-primary btn-sm',
+				onChange: function(element,checked){
+					
+					var _val = $(element).val()
+					_setMetricContext(_val);
+					drawAll();
+		//			console.log("element: "+_val+" checked: "+checked);
+				}
+			});
+		  });
+		 
+		 
+		  
+		  //change the configured forecast calculation basedate
+		  $(document).ready(function() {
+			  $('#basedate').multiselect({
+				buttonClass: 'btn-primary btn-sm',
+				onChange: function(element,checked){
+					var _val = $(element).val()
+					console.log("element: "+_val+" checked: "+checked);
+					
+					if (_val=="2013-10-31"){
+						console.log("______val="+_val);
+						if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=[_val];
+						if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=[_val];
+					}
+					else if(_val=="2014-03-11"){
+						if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=["2013-10-31",_val];
+						if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=["2013-10-31",_val];
 
-			  },
-			function(start, end) {
-				if (start<KANBAN_END & start>KANBAN_START){
-					timeMachine(start);
+						//_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
+						//_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
+					}
+					drawAll();
 				}
-				else {
-					alert("TIMEMACHINE date should not be earlier than KANBAN_START and/or later than KANBAN_END date, sir !! ");
-					start=TODAY.toString('yyyy-MM-dd');
-				}
-				$('#timemachine span').html(start.format('MMMM D, YYYY'));
-			}
-		);
+			});
+		  });
 		</script>
-		<!-- time machine -->
-</div>
-
-
-
-	<div class="btn-group-xs">
-	  <button id="b70" type="button" class="btn btn-success">Holding</button>
-	  <button id="b71" type="button" class="btn btn-success">B2C Gaming</button>
-	  <button id="b72" type="button" class="btn btn-success">New Biz</button>
-	  <button id="b73" type="button" class="btn btn-success">Bwin</button>
-	  <button id="b77" type="button" class="btn btn-success">Techdebt</button>
-	  <button id="b78" type="button" class="btn btn-success">Shared</button>
-	  <button id="b74" type="button" class="btn btn-success">Bwin Drill-in</button>
-	  <button id="b75" type="button" class="btn btn-success">EntIT Drill-in</button>
-	  <button id="bwhiteboard" type="button" class="btn btn-success">Whiteboard</button>
-	</div>
-
-
-<div class="btn-group-xs">
-	<span style="font-size:8px">metric filter:</span>	<select id="metricfilter" class="multiselect" multiple="multiple">
-	  <option value="baseline">baseline</option>
-	  <option value="forecast1">forecast-1</option>
-	  <option value="forecast2" selected>forecast-2</option>
-	  <option value="goal" selected>goal</option>
-	  <option value="potentials" selected>potentials</option>
-	</select>
-</div>	
-
-<div class="btn-group-xs">
-	<span style="font-size:8px">metric view:</span>	<select id="metricview" class="multiselect" >
-	  <option value="REVIEW_Q1_2014" selected>REVIEW_Q1_2014</option>
-	  <option value="FORECAST_2015" >FORECAST_2015</option>
-	</select>
-</div>	
-
-
-<div class="btn-group-xs">
-	<span style="font-size:8px">(re)forecast date:</span><select id="basedate" class="multiselect">
-	  <option value="2013-10-31">2013-10-31</option>
-	  <option value="2014-03-11" selected>2014-03-11</option>
-	</select>
-</div>	
-
-<!-- Initialize the multi-select plugin: -->
-<script type="text/javascript">
-  $(document).ready(function() {
-	  $('#metricfilter').multiselect({
-		buttonClass: 'btn-primary btn-sm',
-		onChange: function(element,checked){
 			
-			var _val = $(element).val()
-			if (checked)
-				hideMetrics([{"name":_val,"hide":true}])
-			else
-				hideMetrics([{"name":_val,"hide":false}])
-			
-			drawAll();
-			console.log("element: "+_val+" checked: "+checked);
-		}
-	});
-  });
- 
- 
-  $(document).ready(function() {
-	  $('#metricview').multiselect({
-		buttonClass: 'btn-primary btn-sm',
-		onChange: function(element,checked){
-			
-			var _val = $(element).val()
-			_setMetricContext(_val);
-			drawAll();
-//			console.log("element: "+_val+" checked: "+checked);
-		}
-	});
-  });
- 
- 
-  
-  //change the configured forecast calculation basedate
-  $(document).ready(function() {
-	  $('#basedate').multiselect({
-		buttonClass: 'btn-primary btn-sm',
-		onChange: function(element,checked){
-			
-			var _val = $(element).val()
-				
-			
-			console.log("element: "+_val+" checked: "+checked);
-			
-			if (_val=="2013-10-31"){
-				console.log("______val="+_val);
-				if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=[_val];
-				if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=[_val];
+			<div class="btn-group-xs">
+			  <button id="b1" type="button" class="btn btn-default">Queues</button>
+			  <button id="b2" type="button" class="btn btn-default">Items</button>
+			  <button id="btargets" type="button" class="btn btn-default">Targets</button>
+			  <button id="b3" type="button" class="btn btn-default">Lanes</button>
+			  <button id="b4" type="button" class="btn btn-default">Grid</button>
+			  <button id="bvision" type="button" class="btn btn-default">Vision</button>
+			  <button id="bhidemetrics" type="button" class="btn btn-default">Metrics</button>
+			  <button id="b5" type="button" class="btn btn-default">No NGR</button>
+			  <button id="bcorporate" type="button" class="btn btn-default">Corporate</button>
+			  <button id="b8" type="button" class="btn btn-default">Releases</button>
+			  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
+			  <button id="btargetdeps" type="button" class="btn btn-default">Target2Item</button>
+			  <button id="b9" type="button" class="btn btn-default">Swag</button>
+			  <button id="bevents" type="button" class="btn btn-default">Events</button>
+			  <button id="bmetaphors" type="button" class="btn btn-default">Metaphors</button>
+			</div>
+			<div class="btn-group-xs">
+			  <button id="b15" type="button" class="btn btn-default">Linechart</button>
+			  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
+			  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
+			  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
+			  <button id="bguides" type="button" class="btn btn-default">Guides</button>
+			  <button id="b100" type="button" class="btn btn-default">Version1 items</button>
+			  <button id="b101" type="button" class="btn btn-default">Other items</button>
+			</div>
 
-//				_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=[_val];
-//				_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=[_val];
-			}
-			else if(_val=="2014-03-11"){
-				if (_getMetricContextByColumn("right1")) _getMetricContextByColumn("right1").forecastDate=["2013-10-31",_val];
-				if (_getMetricContextByColumn("right2")) _getMetricContextByColumn("right2").forecastDate=["2013-10-31",_val];
+			<div style="width:250px" class="input-group input-group-sm">
+			  <input id="input_width" type="text" class="form-control input-sm">
+			  <span class="input-group-btn">
+				<button id="b11" class="btn btn-default input-sm" type="button">WIDTH</button>
+			  </span>
+			  <input id="input_height" type="text" class="form-control input-sm">
+			  <span class="input-group-btn">
+				<button id="b12" class="btn btn-default input-sm" type="button">HEIGHT</button>
+			  </span>
+			</div><!-- /input-group -->
 
-				//_getDataBy("dimension","forecast1",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
-				//_getDataBy("dimension","forecast2",METRIC_CONTEXT).data.baseDate=["2013-10-31",_val];
-			}
-			drawAll();
-			
-		}
-	});
-  });
-  
-  
-</script>
+			<div style="width:250px" class="input-group input-group-sm">
+			  <input id="input_postit" type="text" class="form-control input-sm">
+			  <span class="input-group-btn">
+				<button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
+			  </span>
+		   </div><!-- /input-group -->
 
+			<div class="btn-group-xs">
+			  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
+			  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
+			  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
+			  <button id="l4" type="button" class="btn btn-info">Backlog Orgchart</button>
+			  <button id="l5" type="button" class="btn btn-danger">V1 sync admin</button>
+			</div>
 
-
-	
-	<div class="btn-group-xs">
-	  <button id="b1" type="button" class="btn btn-default">Queues</button>
-	  <button id="b2" type="button" class="btn btn-default">Items</button>
-	  <button id="btargets" type="button" class="btn btn-default">Targets</button>
-	  <button id="b3" type="button" class="btn btn-default">Lanes</button>
-	  <button id="b4" type="button" class="btn btn-default">Grid</button>
-	  <button id="bvision" type="button" class="btn btn-default">Vision</button>
-	  <button id="bhidemetrics" type="button" class="btn btn-default">Metrics</button>
-	 
-	  <button id="b5" type="button" class="btn btn-default">No NGR</button>
- 
-	  <button id="bcorporate" type="button" class="btn btn-default">Corporate</button>
-	  <button id="b8" type="button" class="btn btn-default">Releases</button>
-	  <button id="b0" type="button" class="btn btn-default">Dependencies</button>
-	  <button id="btargetdeps" type="button" class="btn btn-default">Target2Item</button>
-	  <button id="b9" type="button" class="btn btn-default">Swag</button>
-	  <button id="bevents" type="button" class="btn btn-default">Events</button>
-	  <button id="bmetaphors" type="button" class="btn btn-default">Metaphors</button>
-	  
-	  
-	</div>
-	<div class="btn-group-xs">
-	  <button id="b15" type="button" class="btn btn-default">Linechart</button>
-	  <button id="b6" type="button" class="btn btn-default">WIP=120</button>
-	  <button id="b7" type="button" class="btn btn-default">WIP=90</button>
-	  <button id="b10" type="button" class="btn btn-default">Blur Back</button>
-	  <button id="bguides" type="button" class="btn btn-default">Guides</button>
-	  <button id="b100" type="button" class="btn btn-default">Version1 items</button>
-	  <button id="b101" type="button" class="btn btn-default">Other items</button>
-	</div>
-
-	<div style="width:250px" class="input-group input-group-sm">
-      <input id="input_width" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b11" class="btn btn-default input-sm" type="button">WIDTH</button>
-      </span>
-      <input id="input_height" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b12" class="btn btn-default input-sm" type="button">HEIGHT</button>
-      </span>
-    </div><!-- /input-group -->
-
-
-
-	<div style="width:250px" class="input-group input-group-sm">
-      <input id="input_postit" type="text" class="form-control input-sm">
-      <span class="input-group-btn">
-        <button id="b30" class="btn btn-default input-sm" type="button">create postit</button>
-      </span>
-   </div><!-- /input-group -->
-
-	<div class="btn-group-xs">
-	  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
-	  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
-	  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
-	  <button id="l4" type="button" class="btn btn-info">Backlog Orgchart</button>
-	  <button id="l5" type="button" class="btn btn-danger">V1 sync admin</button>
-	  
-	</div>
-
-	  <div class="control-zoom">
-			  <a class="control-zoom-in" href="#" title="Zoom in"></a>
-			  <a class="control-zoom-out" href="#" title="Zoom out"></a>
-	  </div>
+			  <div class="control-zoom">
+					  <a class="control-zoom-in" href="#" title="Zoom in"></a>
+					  <a class="control-zoom-out" href="#" title="Zoom out"></a>
+			  </div>
 
 
 <?php } ?>
@@ -673,7 +649,7 @@ function initHandlers(){
 	redirect ("#l2","tree.html");
 	redirect ("#l3","force.html");
 	redirect ("#l4","org.html");
-	redirect ("#l5","v1sync.html");
+	redirect ("#l5","v1sync.php");
 
 	
 	d3.select("#bmetaphors").on("click",function(){
