@@ -53,6 +53,7 @@ else{
  
  
   <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
+<script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
   
   <link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
@@ -212,16 +213,6 @@ box-sizing: content-box;
   
    
     <div id="v1Grid" style="position:absolutewidth:100%;height:1000px;"></div>
-    
-    <!--
-    <b>onKanban initiatives</b>
-    <br>
-    <div id="itemGrid" style="width:100%;height:300px;"></div>
-
-    <b>targets</b>
-    <br>
-    <div id="targetGrid" style="width:100%;height:500px;"></div>
-   --> 
 
   </div>
  <script>
@@ -246,60 +237,37 @@ box-sizing: content-box;
   }
 
 var initiativeData;
-var targetData;
 var epicData;
-
 
 // compare epic with initiative data 
 var comparedData;
 
-
 var v1grid;
   
-  var columnFilters={};
-  
-  var url_query = window.location.search;
-  var _filterName;
-  var _filterValue;
-  url_query = url_query.replace("?", ''); // remove the ?
-  
-  _filterName=url_query.split("=")[0];
-  _filterValue=url_query.split("=")[1];
-  
-  
-  
+var columnFilters={};
 
-/*
-var url = "http://v1.bwinparty.corp/V1-Production/rest-1.v1/Data/Epic/3387482";
-var headers = { Authorization: "Basic " + btoa("s.a.V1-Strategy:baw1234"), Accept: "haljson" };
-var settings = { url: url, headers: headers, dataType: "json" };
-$.ajax(settings).done(function(data) {
-    beautifulJson = JSON.stringify(data, null, 4);
-    $("body").html("<pre>" + beautifulJson + "</pre>");
-}).fail(function(jqXHR) {
-    $("body").html(jqXHR.responseText);
-});	
-*/
+var url_query = window.location.search;
+var _filterName;
+var _filterValue;
+url_query = url_query.replace("?", ''); // remove the ?
+
+_filterName=url_query.split("=")[0];
+_filterValue=url_query.split("=")[1];
+  
 
 refresh();
 
-function refresh(){
-	$.when(//$.getJSON("/data/data.php?type=initiatives"),
-				//$.getJSON("http://localhost:9999/initiatives"),
-				//$.getJSON("http://localhost:9999/targets"),
-				$.getJSON(dataSourceFor("initiatives")),
-				$.getJSON(dataSourceFor("targets")),
 
-				//$.getJSON("/data/data.php?type=targets"),
-				
+/** main method
+*/
+function refresh(){
+	$.when(	$.getJSON(dataSourceFor("initiatives")),
 				$.getJSON(V1_DATA_URL))
 
 				
-			.done(function(initiatives,targets,epics){
+			.done(function(initiatives,epics){
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
 					else throw new Exception("error loading initiatives");
-					if (targets[1]=="success") targetData=targets[0];
-					else throw new Exception("error loading targets");
 					if (epics[1]=="success") {
 						epicData=epics[0];
 					}
@@ -313,9 +281,6 @@ function refresh(){
 					comparedData = filterByNameValue(comparedData,"CategoryName","Initiative");
 					
 					renderV1EpicGrid();
-					//renderInitiativeGrid();
-					//renderTargetGrid();
-					
 				});
 }
 
@@ -330,6 +295,8 @@ function cleanupEpicData(){
 	
 }
 
+/** compares and meshes in kanbandata to V1 epic data 
+*/
 function compareData(initiatives,epics){
 	
 	var _compare = new Array();
@@ -364,11 +331,8 @@ function compareData(initiatives,epics){
 				epics[e]["kanbanDescription"]=_initiative.DoD;
 				
 				epics[e]["kanbanSize"]=_initiative.size;
-				
 			}
 			else epics[e]["isOnKanban"]=false;
-			
-			
 			
 			_compare.push(epics[e]);
 	}
@@ -423,6 +387,7 @@ function renderV1EpicGrid(){
 
 var columns = [];
 
+
   var checkboxSelector = new Slick.CheckboxSelectColumn({
       cssClass: "slick-cell-checkboxsel"
     });
@@ -437,14 +402,14 @@ columns.push(
         { id:"kanbanMongoId", name: "kanban._id", field: "kanbanMongoId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},        
         { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark,sortable:true, sorter:NumericSorter,width:30},
         
-        { id: "name", name: "v1.name", field: "Name",width:400, cssClass: "cell-title",cssClass:"onV1",sortable:true, sorter:NumericSorter},
+        { id: "name", name: "v1.name", field: "Name",width:300, cssClass: "cell-title",cssClass:"onV1",sortable:true, sorter:NumericSorter},
         { id: "kanbanName", name: "kanban.name", field: "kanbanName",editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
         { id: "kanbanName2", name: "kanban.name2", field: "kanbanName2", editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
-        { id: "kanbanCreateDate", name: "kanban.createDate", field: "kanbanCreateDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
-        { id: "kanbanChangeDate", name: "kanban.changeDate", field: "kanbanChangeDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
-        { id: "changeDate", name: "v1.changeDate", field: "ChangeDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80,sorter:NumericSorter },
-        { id: "createDate", name: "v1.createDate", field: "CreateDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id: "status", name: "v1.status", field: "Status",cssClass:"onV1",sortable:true },
+        { id: "plannedStart", name: "v1.plannedStart", field: "PlannedStart",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "launchDate", name: "v1.launchDate", field: "LaunchDate",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
+        { id: "kanbanPlanDate", name: "kanban.planDate", field: "kanbanPlanDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
+        { id: "kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
         { id: "kanbanBM", name: "kanban.bm",cssClass:"onKanban", field: "kanbanBM",editor: Slick.Editors.SelectCell,options:{"b2c gaming":"b2c gaming","kalixa":"kalixa","win":"win"},sortable:true, sorter:NumericSorter,width:80 },
         { id: "kanbanTheme", name: "kanban.theme",cssClass:"onKanban", field: "kanbanTheme",editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},width:80 },
         { id: "kanbanLane", name: "kanban.lane",field: "kanbanLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
@@ -453,17 +418,17 @@ columns.push(
         { id: "swag", name: "v1.swag", field: "Swag",cssClass:"onV1",sortable:true, sorter:NumericSorter,width:50 },
         { id: "kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50 },
         { id: "categoryName", name: "v1.categoryName", field: "CategoryName",cssClass:"onV1",sortable:true ,sorter:NumericSorter},
-        { id: "health", name: "v1.health", field: "Health",formatter: Slick.Formatters.RAG,sortable:true },
+        { id: "status", name: "v1.status", field: "Status",cssClass:"onV1",sortable:true },
+		{ id: "health", name: "v1.health", field: "Health",formatter: Slick.Formatters.RAG,sortable:true },
 		{ id: "healthComment", name: "v1.health comment", field: "HealthComment", editor: Slick.Editors.LongText ,width:500 ,cssClass:"onV1"},
         { id: "kanbanHealth", name: "kanban.health", field: "kanbanHealth",cssClass:"onKanban",formatter: Slick.Formatters.RAG,sortable:true },
-		{ id: "scope", name: "v1.backlog", field: "Scope",cssClass:"onV1",sortable:true },
+		{ id: "scope", name: "v1.backlog", field: "Scope",cssClass:"onV1",sortable:true,width:150 },
 		{ id: "createdBy", name: "v1.createdBy", field: "CreatedBy",cssClass:"onV1",sortable:true },
+        { id: "kanbanCreateDate", name: "kanban.createDate", field: "kanbanCreateDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
+        { id: "kanbanChangeDate", name: "kanban.changeDate", field: "kanbanChangeDate",cssClass:"onKanban",sortable:true, sorter:NumericSorter},
+        { id: "changeDate", name: "v1.changeDate", field: "ChangeDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80,sorter:NumericSorter },
+        { id: "createDate", name: "v1.createDate", field: "CreateDateUTC",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
       
-        { id: "plannedStart", name: "v1.plannedStart", field: "PlannedStart",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id: "plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id: "launchDate", name: "v1.launchDate", field: "LaunchDate",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
-        { id: "kanbanPlanDate", name: "kanban.planDate", field: "kanbanPlanDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
-        { id: "kanbanActualDate", name: "kanban.actualDate", field: "kanbanActualDate",formatter: Slick.Formatters.SimpleDate,cssClass:"onKanban",editor:Slick.Editors.Date,sortable:true,width:100},
         { id: "kanbanSize", name: "kanban.size", field: "kanbanSize",cssClass:"onKanban",editor:Slick.Editors.Integer,sortable:true,width:50},
         { id: "kanbanSublaneOffset", name: "kanban.offset", field: "kanbanSublaneOffset",cssClass:"onKanban",editor:Slick.Editors.Integer,sortable:true,width:50},
         //{ id:"estimatedDone", name: "estimatedDone", field: "EstimatedDone",sortable:true,width:150 },
@@ -493,7 +458,7 @@ columns.push(
     
     v1grid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
-      targetgrid.invalidateRow(data.length);
+      v1grid.invalidateRow(data.length);
       data.push(item);
       v1grid.updateRowCount();
       v1grid.render();
@@ -739,17 +704,27 @@ d3.select("#bsync").on("click", function(){
 				_item["lane"]=_sync["kanbanLane"];
 				_item["sublane"]=_sync["kanbanSubLane"];
 				_item["sublaneOffset"]=_sync["kanbanSublaneOffset"] ? _sync["kanbanSublaneOffset"] : "";
-				_item["startDate"]="";
-				_item["planDate"]=d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanPlanDate"])) ;
-				_item["actualDate"]=d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanActualDate"]));
+				_item["startDate"]=_sync["kanbanStartDate"] ? _sync["kanbanStartDate"] : "";
+				_item["planDate"]=_sync["kanbanPlanDate"];//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanPlanDate"])) ;
+				_item["actualDate"]=_sync["kanbanActualDate"] ? _sync["kanbanActualDate"]:_sync["kanbanPlanDate"] ;//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanActualDate"]));
+				
+				// v1 dates => store them too to track changes in v1 dates ;-) 
+				_item["v1plannedStart"]=_sync["PlannedStart"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedStart"])) :"";
+				_item["v1plannedEnd"]= _sync["PlannedEnd"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedEnd"])): "";
+				_item["v1launchDate"]=_sync["LaunchDate"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["LaunchDate"])): "";
+				
 				_item["progress"]=0;
 				_item["health"]=_sync["Health"] ? _sync["Health"].toLowerCase() :"";
 				
 				//strip out all HTML tags - http://stackoverflow.com/questions/822452/strip-html-from-text-javascript
 				_item["healthComment"]=_sync["HealthComment"] ? $("<p>"+_sync["HealthComment"]+"</p>").text() :"";
 				_item["status"]=_sync["Status"];
-				_item["state"]=_sync["kanbanState"];
-				_item["size"]=_sync["kanbanSize"];
+				
+				//default state = planned
+				_item["state"]=_sync["kanbanState"] ? _sync["kanbanState"] : "planned" ;
+				
+				// default size 7
+				_item["size"]=_sync["kanbanSize"] ? _sync["kanbanSize"] : 7;
 				_item["Type"]="item";
 				_item["cost"]=0;
 				_item["Swag"]=_sync["Swag"];
@@ -765,12 +740,8 @@ d3.select("#bsync").on("click", function(){
 				_item["DoR"]="";
 				_item["createDate"]=_sync["kanbanCreateDate"];
 				
-				
 				itemInsertList.push(_item);
 		}
-		
-		
-		
 		var _json = JSON.stringify(itemInsertList);
 		console.log("JSON.stringify tha shit..."+_json);
 		
@@ -790,144 +761,7 @@ d3.select("#bsync").on("click", function(){
 				alert(":  ajax SYNC success: ");
 			}
 		});
-		
 	});	
-
-
-
-
-
-
-
-
-/*
-
-
-function renderInitiativeGrid(){
-
-
-var columns = [
-
-        { id:"id", name: "id", field: "id",sortable:true },
-        { id:"ExtId", name: "ExtId", field: "ExtId",sortable:true },
-        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"},
-        { id: "name2", name: "name2",  field: "name2",width:150 },
-        { id: "Swag", name: "Swag", field: "Swag",width:50,editor:Slick.Editors.Integer },
-		{ id: "planDate", name: "planDate", field: "planDate", editor: Slick.Editors.Date,sortable:true },
-		{ id: "actualDate", name: "actualDate", field: "actualDate", editor: Slick.Editors.Date,sortable:true },
-	    { id: "state", name: "state",  field: "state" },
-        { id: "health", name: "health",  field: "health" },
-		{ id: "DoD", name: "DoD", field: "DoD", editor: Slick.Editors.LongText},
-        { id: "isCorporate", name: "isCorporate", field: "isCorporate",formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox},
-        { id: "bm", name: "businessmodel",  field: "bm" },
-        { id: "theme", name: "theme",  field: "theme" },
-        { id: "lane", name: "lane",  field: "lane" },
-        { id: "sublane", name: "sublane",  field: "sublane" },
-        { id: "productOwner", name: "productOwner",  field: "productOwner",width:150 },
-        { id: "type", name: "type",  field: "Type",editor: Slick.Editors.SelectOption,options: { 1: 'item', 2: 'innovation', 3: 'target' } }
-
-  ];
-
-  var options = {
-    editable: true,
-    enableAddRow: true,
-    enableCellNavigation: true,
-    asyncEditorLoading: false,
-    cellHighlightCssClass: "changed",
-    autoEdit: true,
-	dataItemColumnValueExtractor: function(item, columnDef) {
-		if(columnDef.editor == Slick.Editors.SelectOption){
-			return eval(columnDef.options)[item[columnDef.field]];
-		}else{
-			return item[columnDef.field];
-		}    
-	}
-}
-    itemgrid = new Slick.Grid("#itemGrid", initiativeData, columns, options);
-    
-     itemgrid.setSelectionModel(new Slick.CellSelectionModel());
-
-    itemgrid.onAddNewRow.subscribe(function (e, args) {
-      var item = args.item;
-      itemgrid.invalidateRow(data.length);
-      data.push(item);
-      itemgrid.updateRowCount();
-      itemgrid.render();
-    });
-}
-
-
-
-
-
-
-
-function renderTargetGrid(){
-
-
-var columns = [
-
-        { id:"id", name: "id", field: "id",sortable:true },
-        { id:"ranking", name: "ranking", field: "ranking",sortable:true },
-        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"},
-        { id: "name2", name: "name2",  field: "name2",width:150 },
-        { id: "Swag", name: "Swag", field: "Swag",width:50,editor:Slick.Editors.Integer },
-		{ id: "targetDate", name: "targetDate", field: "targetDate", editor: Slick.Editors.Date,sortable:true },
-		{ id: "description", name: "description", field: "description", editor: Slick.Editors.LongText },
-	    { id: "scope", name: "scope", field: "scope", editor: Slick.Editors.LongText },
-	    { id: "nonscope", name: "nonscope", field: "nonscope", editor: Slick.Editors.LongText },
-	    { id: "metrics", name: "metrics", field: "metrics", editor: Slick.Editors.LongText },
-	    { id: "risk", name: "risk", field: "risk", editor: Slick.Editors.LongText },
-	    { id: "status", name: "status",  field: "status" },
-        { id: "targetOwner", name: "targetOwner",  field: "targetOwner",width:150 },
-        { id: "syndicate", name: "syndicate",  field: "syndicate",width:150 },
-	    { id: "commercialScope", name: "commercialScope", field: "commercialScope", editor: Slick.Editors.LongText },
-	    { id: "remark", name: "remark", field: "remark", editor: Slick.Editors.LongText },
-	    { id: "initiatives", name: "initiatives", field: "initiatives"},
-        { id: "bm", name: "businessmodel",  field: "bm" },
-        { id: "theme", name: "theme",  field: "theme" },
-        { id: "lane", name: "lane",  field: "lane" },
-        { id: "sublane", name: "sublane",  field: "sublane" }
-
-
-  ];
-
-  var options = {
-    editable: true,
-    enableAddRow: true,
-    enableCellNavigation: true,
-    asyncEditorLoading: false,
-    cellHighlightCssClass: "changed",
-    autoEdit: true,
-	dataItemColumnValueExtractor: function(item, columnDef) {
-		if(columnDef.editor == Slick.Editors.SelectOption){
-			return eval(columnDef.options)[item[columnDef.field]];
-		}else{
-			return item[columnDef.field];
-		}    
-	}
-}
-
-
- 
-    targetgrid = new Slick.Grid("#targetGrid", targetData, columns, options);
-    
-     targetgrid.setSelectionModel(new Slick.CellSelectionModel());
-
-    targetgrid.onAddNewRow.subscribe(function (e, args) {
-      var item = args.item;
-      targetgrid.invalidateRow(data.length);
-      data.push(item);
-      targetgrid.updateRowCount();
-      targetgrid.render();
-    });
-}
-
-
-
-
-*/
-
 
  </script>
 </body>
