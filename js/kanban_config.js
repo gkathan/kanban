@@ -4,6 +4,7 @@ var host = window.location.host;
 var TRANSCODE_URL;
 var MONGO_GATEWAY_URL;
 var V1_DATA_URL = "http://knbnprxy.ea.bwinparty.corp/rest/epics";
+//var V1_DATA_URL = "data/json/epics.json";
 
 var DS ="MONGO";
 //var DS ="MYSQL";
