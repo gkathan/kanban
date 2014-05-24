@@ -359,7 +359,7 @@ function renderB2CGaming() {
 					drawCustomPostits();
 					initHandlers();
 					
-					hideNGR();
+					if (AUTH=="bpty") hideNGR();
 					
 				});
 	
@@ -1006,4 +1006,6 @@ var PACKAGE_VERSION="20140509_0906";
 	var PACKAGE_VERSION="20140509_1341";
 	var PACKAGE_VERSION="20140509_1632";
 	var PACKAGE_VERSION="20140509_1816";
+	
+var PACKAGE_VERSION="20140523_1817";
 	
