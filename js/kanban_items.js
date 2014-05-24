@@ -142,7 +142,8 @@ function drawTargets(){
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 
 			//prio
-			_drawText(d3.select(this),d.ranking,_itemXTarget,(_itemY+1.3),{"anchor":"middle","size":"4px","color":"white","weight":"normal"});
+			var _priofontsize = _size/1.25;
+			_drawText(d3.select(this),d.ranking,_itemXTarget,(_itemY+(_size/3.5)),{"anchor":"middle","size":_priofontsize+"px","color":"white","weight":"normal"});
 			
 			_drawItemName(d3.select(this),d,_itemXTarget,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
 			
