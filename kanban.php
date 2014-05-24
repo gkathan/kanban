@@ -15,6 +15,7 @@ else {
 	   header("Location: login.html");
 }
 else{
+	
 
 ?>
 
@@ -110,6 +111,7 @@ else{
 <script>
 	
 	
+	<?php echo "var AUTH=\"$auth\";";?>
 	
 	
 	WIDTH=1500;
@@ -212,7 +214,7 @@ else{
 
 
 	<div class="btn-group-xs">
-	  <button id="kanban_menu" type="button" class="btn btn-primary btn-xs">kanban menu</button>
+	  <button id="kanban_menu" type="button" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-off"></span> kanban menu</button>
 	</div>
 
 
@@ -279,7 +281,7 @@ function submit_download_form(output_format)
 	form["svg_height"].value = HEIGHT ;
 	//high res scale
 	form["png_scale"].value = 3 ;
-	console.log("*going to submit");
+	console.log("*going to submit to "+TRANSCODE_URL);
 	
 	form.submit();
 }
@@ -374,7 +376,7 @@ function submit_download_form(output_format)
 
 
 		<div class="btn-group-xs">
-			<span style="font-size:8px">metric filter:</span>	<select id="metricfilter" class="multiselect" multiple="multiple">
+			<span class="glyphicon glyphicon-filter"></span> <span style="font-size:8px">metric filter:</span>	<select id="metricfilter" class="multiselect" multiple="multiple">
 			  <option value="baseline">baseline</option>
 			  <option value="forecast1">forecast-1</option>
 			  <option value="forecast2" selected>forecast-2</option>
@@ -509,7 +511,17 @@ function submit_download_form(output_format)
 			  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
 			  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
 			  <button id="l4" type="button" class="btn btn-info">Backlog Orgchart</button>
-			  <button id="l5" type="button" class="btn btn-danger">V1 sync admin</button>
+			</div>
+
+			<div class="btn-group-xs">
+			  <button id="l5" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> V1 sync admin</button>
+			</div>
+
+			<div class="btn-group-xs">
+			  <button id="l6" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> item admin</button>
+			  <button id="l7" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> target admin</button>
+			  <button id="l8" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> metric admin</button>
+			  <button id="l9" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> lanetext admin</button>
 			</div>
 
 			  <div class="control-zoom">
@@ -524,11 +536,11 @@ function submit_download_form(output_format)
 	<!-- ########### The Export Section ####### -->
 	<div>
 			<button class="btn btn-primary btn-xs" id="save_as_svg" value="">
-				Save as SVG</button>
+				<span class="glyphicon glyphicon-export"></span> export SVG</button>
 			<button class="btn btn-primary btn-xs" id="save_as_pdf" value="">
-				Save as PDF</button>
+				<span class="glyphicon glyphicon-export"></span> export PDF</button>
 			<button class="btn btn-primary btn-xs" id="save_as_png" value="">
-				Save as PNG</button>
+				<span class="glyphicon glyphicon-export"></span> export PNG</button>
 
 <?php if ($auth =="admin"){ ?>
 			<div style="width:250px" class="input-group input-group-sm">
@@ -650,6 +662,11 @@ function initHandlers(){
 	redirect ("#l3","force.html");
 	redirect ("#l4","org.html");
 	redirect ("#l5","v1sync.php");
+	
+	redirect ("#l6","admin.php?type=initiatives");
+	redirect ("#l7","admin.php?type=targets");
+	redirect ("#l8","admin.php?type=metrics");
+	redirect ("#l9","admin.php?type=lanetext");
 
 	
 	d3.select("#bmetaphors").on("click",function(){
@@ -886,6 +903,13 @@ function initHandlers(){
 
 
 }
+
+
+function check(){
+	return "[OK]";
+}
+
+
     </script>
 
 <!--
@@ -896,9 +920,10 @@ function initHandlers(){
  </div>
 -->
  <?php
- 
+
 	}
 }
+
 ?>	
 
 </body>
