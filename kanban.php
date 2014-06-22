@@ -51,9 +51,13 @@ else{
 <script src="js/vkbeautify.0.99.00.beta.js"></script>
 <script src="js/bootstrap-multiselect.js"></script>
 
+<script src="js/bootstrap-notify.js"></script>
+
+<script src="js/mousetrap.min.js"></script>
 
 <script src="js/underscore-min.js"></script>
 <script src="js/underscore.nest.min.js"></script>
+
 
 <script src="js/flippant.min.js"></script>
 <script src="js/moment.min.js"></script>
@@ -97,8 +101,15 @@ else{
 <!--<link rel="stylesheet" type="text/css" href="css/pqgrid.min.css">-->
 
 <link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
- <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+<link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
 
+
+<!-- Notify CSS -->
+<link href="css/bootstrap-notify.css" rel="stylesheet">
+
+<!-- Custom Styles -->
+<link href="css/styles/alert-bangtidy.css" rel="stylesheet">
+<link href="css/styles/alert-blackgloss.css" rel="stylesheet">
  
 
 <!--g
@@ -289,7 +300,7 @@ function submit_download_form(output_format)
 
 </script>
 
-
+<div class='notifications top-left'></div>
 
 <div id="sidr" style="margin-left:10px;margin-top:10px">
 
