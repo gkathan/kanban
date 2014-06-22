@@ -250,6 +250,7 @@ function init(){
 }
 
 
+
 /** zoom experiments...
  */
 function redraw() {
@@ -263,6 +264,10 @@ function redraw() {
  * 
  */
 function render(svgFile){
+	
+	checkServices();
+	initShortcuts();
+	
 	d3.xml("data/"+svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
@@ -1008,4 +1013,15 @@ var PACKAGE_VERSION="20140509_0906";
 	var PACKAGE_VERSION="20140509_1816";
 	
 var PACKAGE_VERSION="20140523_1817";
+	
+var PACKAGE_VERSION="20140527_1309";
+	var PACKAGE_VERSION="20140527_1607";
+	var PACKAGE_VERSION="20140527_1649";
+	var PACKAGE_VERSION="20140527_1658";
+	var PACKAGE_VERSION="20140527_1821";
+	var PACKAGE_VERSION="20140527_1823";
+	var PACKAGE_VERSION="20140527_1824";
+	var PACKAGE_VERSION="20140528_1323";
+	
+var PACKAGE_VERSION="20140528_1811";
 	
