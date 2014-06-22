@@ -7,13 +7,13 @@ var orgData;
 var orgTree;
 
 
-
+var dd;
 
 
 // raster px configuration
 
 var WIDTH =1600;
-var HEIGHT = 1000;
+var HEIGHT = 1500;
 
 
 var margin;
@@ -34,8 +34,9 @@ var color;
 var pack;
 var nodes;
 
+var depth;
 
-var TRANSCODE_URL = "http://localhost:8080/transcode/";
+
 
 
 
@@ -55,7 +56,7 @@ function init(){
 	 setMargin();
 	 
 	 margin = 10,
-		outerDiameter = 1200,
+		outerDiameter = 1500,
 		innerDiameter = outerDiameter - margin - margin;
 
 	 x = d3.scale.linear()
@@ -111,10 +112,13 @@ function render(svgFile,orgTable){
 	
 	
 	//d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
-	d3.json("data/bpty_org.json",function(data){
+	//d3.tsv("data/sources/Assignment_Report_20130429.txt",function(data){
+	//d3.json("data/bpty_org_20130429.json",function(data){
+	d3.json(dataSourceFor("org"),function(data){
 	orgData = data;
+	
 
-
+/*
 	// and fill in missing values due to v1 export
 	var _length = data.length;
 	for (var i=0; i<_length; i++){
@@ -126,13 +130,27 @@ function render(svgFile,orgTable){
 			}
 		}
 	}
-
+*/
 
 	//root = _.nest(orgData,["l0","l1","l2","l3","l4","l5","l6"]);
 	
 	
 	//root = _.nest(orgData,["Vertical","Function","Location","Supervisor Full Name"]);
-	root = _.nest(orgData,["Cost Centre","Function","Location","Supervisor Full Name"]);
+	
+	
+	//root = _.nest(orgData,["Location","Cost Centre","Function","Supervisor Full Name"]);
+	//root = _.nest(orgData,["Cost Centre","Location","Function","Supervisor Full Name"]);
+	//root = _.nest(orgData,["Employing Legal Entity","Location","Function","Supervisor Full Name"]);
+	
+	root = _.nest(orgData,["Function","Scrum Team 1"]);
+	
+	depth = 4; //number of nest levels 
+	
+				 
+    //var root = findNorbert(makeTree(createList(data)));
+	count (root,0);
+
+	treeData = root;
 
  init();
  
@@ -156,8 +174,10 @@ function render(svgFile,orgTable){
       .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
       .style("fill-opacity", function(d) { return d.parent === root ? 1 : 0; })
       .style("display", function(d) { return d.parent === root ? null : "none"; })
-      .text(function(d) { return d.name; });
+      //.text(function(d) { if (d.children) return d.position+" ("+d.overallReports+")"; else return d.employee; });
+	  .text(function(d) { if (d.children && d.depth<=depth) {return d.name +" ("+d.overallReports+")";} else return d["Full Name"]});
 
+  
   d3.select(window)
       .on("click", function() { zoom(root); });
 
