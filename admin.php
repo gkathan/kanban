@@ -19,7 +19,7 @@ else{
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>corpkanban - v1 sync admin</title>
+  <title>corpkanban - admin</title>
  
  <script src="js/d3.v3.min.js"></script>
 <script src="js/SlickGrid-master/lib/jquery-1.7.min.js"></script>
@@ -27,6 +27,9 @@ else{
 <script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
 
 <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="js/bootstrap-notify.js"></script>
+
+<script src="js/mousetrap.min.js"></script>
 
 <script src="js/kanban_config.js"></script>
 
@@ -51,10 +54,18 @@ else{
   <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
 <script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
   
-  <link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="js/SlickGrid-master/examples.css" type="text/css"/>
-  <link rel="stylesheet" href="js/SlickGrid-master/controls/slick.columnpicker.css" type="text/css"/>
+<link rel="stylesheet" href="js/SlickGrid-master/slick.grid.css" type="text/css"/>
+<link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+<link rel="stylesheet" href="js/SlickGrid-master/examples.css" type="text/css"/>
+<link rel="stylesheet" href="js/SlickGrid-master/controls/slick.columnpicker.css" type="text/css"/>
+
+<!-- Notify CSS -->
+<link href="css/bootstrap-notify.css" rel="stylesheet">
+<!-- Custom Styles -->
+<link href="css/styles/alert-bangtidy.css" rel="stylesheet">
+<link href="css/styles/alert-blackgloss.css" rel="stylesheet">
+
+
 
   <style>
     .cell-title {
@@ -79,6 +90,14 @@ else{
 	background-color: #EAF4FC;
 	color: black;
 	font-style:italic;
+		
+	}
+	.onKanbanImmutable{
+	color: #999999;
+	font-weight:normal;
+	font-style:italic;
+	font-size:10px;
+		
 		
 	}
 	
@@ -122,15 +141,16 @@ box-sizing: content-box;
 </head>
 <body>
 
+
 	
 <div style="position:relative">
   <div style="width:5000px;">
 	
-   
+  <div class='notifications top-left'></div> 
   
   
   <div class="btn-group-xs">
-	  <a href="kanban.php"><img src="img/external_elements_bpty_kanban.png" height="70px"/>	</a>
+	  <a href="kanban.php"><img src="img/external_elements_bpty_kanban.png" height="70px"/>	</a> <span class="glyphicon glyphicon-indent-left" style="font-size:20px;color:#6896ba"></span> <span id="admintype" style="font-weight:bold;font-size:30px;color:#6896ba"></span>
 	  <br>
 	  <button id="bsave" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-floppy-save"></span> save selected</button>
 	  <button id="bremove" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> remove selected</button>
@@ -178,9 +198,11 @@ var admingrid;
   
   var _type=getUrlVars()["type"];
   var _filter=getUrlVars()["filter"];
+  var _id =getUrlVars()["_id"];
   
   //set link for excel download
   document.getElementById("lexcel").href=_excelExportURL+_type;
+  $("#admintype").text(_type);
   
   //url_query = url_query.replace("?", ''); // remove the ?
   
@@ -195,6 +217,9 @@ var admingrid;
 	 document.write("<br>kanban.excel.export: "+_excelExportURL);
   
 
+
+checkServices();
+initShortcuts();
 refresh();
 
 
@@ -272,25 +297,26 @@ function getInitiativeConfig(){
 	
 	var _initiative = [
 	
-		{ id:"id", name: "id", field: "id",sortable:true,width:50 },
-        { id:"ExtId", name: "ExtId", field: "ExtId",sortable:true },
+		{ id:"_id", name: "_id", field: "_id",sortable:true,width:150,cssClass:"onKanbanImmutable" },
+        { id:"id", name: "id", field: "id",sortable:true,width:40,cssClass:"onKanbanImmutable"},
+        { id:"ExtId", name: "ExtId", field: "ExtId",sortable:true,cssClass:"onKanbanImmutable",width:50 },
         { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:300, cssClass: "cell-title"},
         { id: "name2", name: "name2",  field: "name2",width:150 , editor: Slick.Editors.Text},
-        { id: "backlog", name: "backlog",  field: "backlog",width:200 },
-        { id: "startDate", name: "startDate", field: "startDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true },
-		{ id: "planDate", name: "planDate", field: "planDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true ,width:100},
-		{ id: "actualDate", name: "actualDate", field: "actualDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true,width:100 },
-	    { id: "v1plannedStart", name: "v1plannedStart", field: "v1plannedStart", sortable:true },
-		{ id: "v1plannedEnd", name: "v1plannedEnd", field: "v1plannedEnd", sortable:true },
-		{ id: "v1launchDate", name: "v1launchDate", field: "v1launchDate", sortable:true },
-	    { id: "state", name: "state",  field: "state" ,editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done"}},
+        { id: "backlog", name: "backlog",  field: "backlog",width:200, editor: Slick.Editors.Text  },
+        { id: "startDate", name: "initial.start", field: "startDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true },
+		{ id: "planDate", name: "initial.plan", field: "planDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true ,width:100},
+		{ id: "actualDate", name: "actual.plan", field: "actualDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true,width:100 },
+	    { id: "v1plannedStart", name: "v1.start", field: "v1plannedStart", sortable:true,cssClass:"onKanbanImmutable",width:80 },
+		{ id: "v1plannedEnd", name: "v1.end", field: "v1plannedEnd", sortable:true ,cssClass:"onKanbanImmutable",width:80},
+		{ id: "v1launchDate", name: "v1.launch", field: "v1launchDate", sortable:true ,cssClass:"onKanbanImmutable",width:80},
+	    { id: "state", name: "state",  field: "state" ,editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed"}},
         { id: "isCorporate", name: "isCorporate",  field: "isCorporate",width:50 },
         { id: "onKanban", name: "onKanban",  field: "onKanban",width:50,formatter: Slick.Formatters.Checkmark,editor:Slick.Editors.YesNoSelect },
         { id: "bm", name: "businessmodel",  field: "bm" , editor: Slick.Editors.Text},
-        { id: "theme", name: "theme",  field: "theme" , editor: Slick.Editors.Text},
-        { id: "lane", name: "lane",  field: "lane", editor: Slick.Editors.Text },
+        { id: "theme", name: "theme",  field: "theme" ,editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},},
+        { id: "lane", name: "lane",  field: "lane",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
         { id: "themesl", name: "themesl",  field: "themesl" , editor: Slick.Editors.Text},
-        { id: "sublane", name: "sublane",  field: "sublane" , editor: Slick.Editors.Text},
+        { id: "sublane", name: "sublane",  field: "sublane" ,editor: Slick.Editors.SelectCell,options:{"touch":"touch","click":"click","product":"product","market":"market","enabling":"enabling","CS":"CS","architecture":"architecture","agile":"agile","leanops":"leanops","devops":"devops","people":"people","entIT":"entIT","marketing":"marketing"},width:80},
         { id: "sublaneOffset", name: "sublaneOffset",  field: "sublaneOffset" ,editor: Slick.Editors.Text},
         { id: "progress", name: "progress",  field: "progress" ,width:50,editor:Slick.Editors.Integer},
         { id: "health", name: "health",  field: "health",formatter: Slick.Formatters.RAG,width:50 },
@@ -364,6 +390,7 @@ function getTargetConfig(){
         { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:200, cssClass: "cell-title"},
 //        { id: "name2", name: "name2",  field: "name2",width:150 },
 		{ id: "description", name: "description", field: "description", editor: Slick.Editors.LongText,width:200 },
+	    { id: "status", name: "status",  field: "status",editor: Slick.Editors.SelectCell,options:{"green":"green","amber":"amber","red":"red"},formatter: Slick.Formatters.RAG,width:30},
 	    { id: "scope", name: "scope", field: "scope", editor: Slick.Editors.LongText },
 	    { id: "nonScope", name: "nonScope", field: "nonScope", editor: Slick.Editors.LongText },
 	    { id: "metrics", name: "metrics", field: "metrics", editor: Slick.Editors.LongText },
@@ -373,7 +400,6 @@ function getTargetConfig(){
         { id: "syndicate", name: "syndicate",  field: "syndicate", editor: Slick.Editors.Text,width:150 },
         { id: "targetDate", name: "targetDate", field: "targetDate", editor: Slick.Editors.Date ,width:100,formatter: Slick.Formatters.SimpleDate, cssClass: "cell-title"},
         { id: "ExtId", name: "ExtId", field: "ExtId" ,width:50, cssClass: "cell-title"},
-	    { id: "status", name: "status",  field: "status", editor: Slick.Editors.Text },
 	    { id: "size", name: "size",  field: "size", editor: Slick.Editors.Text },
 	    { id: "Type", name: "Type", field: "Type", editor: Slick.Editors.Text },
         { id: "accuracy", name: "accuracy",  field: "accuracy" , editor: Slick.Editors.Text},
@@ -403,7 +429,7 @@ function renderAdminGrid(data,conf){
 
 	var options = {
 		editable: true,
-		enableAddRow: true,
+		enableAddRow: false,
 		enableCellNavigation: true,
 		asyncEditorLoading: false,
 		cellHighlightCssClass: "changed",
@@ -474,8 +500,8 @@ function renderAdminGrid(data,conf){
     
     
     //from query GET string
-    if (_filter){
-		//columnFilters["filter"] = _filter;
+    if (_id){
+		columnFilters["_id"] = _id;
 	}
     
 	
@@ -557,12 +583,12 @@ d3.select("#bremove").on("click", function(){
 		}
 	
 		var _json = JSON.stringify(syncList);
-		//console.log("JSON.stringify tha shit..."+_json);
+		console.log("JSON.stringify tha shit..."+_json);
 		
 		// and send to backend ! :-)
 		$.ajax({
 		type: "DELETE",
-		url: dataSourceFor("initiatives"),
+		url: dataSourceFor(_type),
 		
 		//type: "POST",
 		//url: "data/pdo.php",
@@ -574,7 +600,25 @@ d3.select("#bremove").on("click", function(){
 		success: function(msg)
 			{
 				refresh();
-				alert(":  ajax REMOVE success: ");
+				//alert(":  ajax REMOVE success: ");
+				 $('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly removed item [_id:"+syncList[0]._id+"]</div>" },
+						fadeOut: {enabled:true,delay:10000},
+						type: "success"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				  
+			},
+		error: function(msg)
+			{
+				refresh();
+				//alert(":  ajax SYNC success: ");
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+syncList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
+						fadeOut: {enabled:false},
+						type: "danger"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
 			}
 		});
 	
@@ -608,13 +652,36 @@ d3.select("#bsave").on("click", function(){
 		//async:false,
 		//contentType:"application/json",
 		dataType:"json",
-		success: function(msg){
+		success: function(msg)
+			{
 				refresh();
-				alert(":  ajax SAVE success: ");
+				//alert(":  ajax SYNC success: ");
+				var _items="";
+				for (var i in saveList){
+					_items+=saveList[i].name;
+					console.log("*****i: "+i+" - "+saveList[i].name);
+					if (i< saveList.length-1) _items+=", "
+				}
+				
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.save() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly saved "+_type+": "+_items+"]</div>" },
+						fadeOut: {enabled:true,delay:3000},
+						type: "success"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
 			},
-		error: function(msg){
+		error: function(msg)
+			{
 				refresh();
-				alert(":  ajax SAVE failed: "+msg);
+				//alert(":  ajax SYNC success: ");
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.save() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+saveList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
+						fadeOut: {enabled:false},
+						type: "danger"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
 			}
 		});
 		
