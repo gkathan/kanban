@@ -137,7 +137,7 @@ function drawTargets(){
 			
 			// ------------  targeticon & names & postits --------------
 			// if isCorporate flag is not set use "tactic" icon 
-			var _iconRef=d.Type;
+			var _iconRef=d.Type+"_"+d.status;
 			
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXTarget-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 
@@ -377,8 +377,12 @@ function drawItems(){
 				_iconRef = "tactic";
 			}
 			
-			if (d.state=="killed") _iconRef+="_killed";
-			if (!d.ExtId || d.status=="Understanding" || d.status=="New") _iconRef="item_notsynced";
+			if (!d.ExtId) _iconRef="item_notsynced";
+			if (d.status=="Understanding" || d.status=="New" || d.staus=="Conception") _iconRef="item_grey";
+			if (d.state=="done") _iconRef="item_green";
+			if (d.state=="planned" && new Date (d.planDate) < new Date(d.actualDate)) _iconRef="item_red";
+			if (d.state=="killed") _iconRef="item_killed";
+			
 			
 			var _diff = new Date()-new Date(d.createDate);
 			// 24 hours are NEW ...
@@ -386,7 +390,7 @@ function drawItems(){
 			
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXPlanned-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 			
-			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(6+(_size/5)*ITEM_FONTSCALE));
+			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(5+(_size/5)*ITEM_FONTSCALE));
 			
 			_drawPostit(d3.select(this),d);
 
@@ -447,7 +451,9 @@ function drawItems(){
 		// ----------------- startDate indicator ---------------------
 		if(d.startDate && new Date(d.startDate)>KANBAN_START){
 			console.log("____startDate: "+d.startDate);
-			_drawStartDateIndicator(dep,_itemXStart,_itemXPlanned,_itemY,_size);
+			var _start = d3.select("#dependencies").append("g").attr("id","startID_"+d.id).style("visibility","hidden");
+			_drawStartDateIndicator(_start,_itemXStart,_itemXPlanned,_itemY,_size);
+			
 		}
 		// ----------------- sizings --------------------------------
 
@@ -533,7 +539,7 @@ function _drawItemName(svg,d,x,y,scale,color){
 	var size = d.size*ITEM_SCALE*scale;
 	var _textWeight="bold";
 	var _textStyle="normal";
-	var _textSize = 5+(size/5)*ITEM_FONTSCALE;
+	var _textSize = 4.5+(size/8)*ITEM_FONTSCALE;
 	if (!d.isCorporate && !d.Type=="target") {
 		_textWeight = "normal";
 		_textStyle="italic";
@@ -558,7 +564,7 @@ function _drawItemName(svg,d,x,y,scale,color){
 	   .style("fill",function(d){
 								if ((d.actualDate>d.planDate && d.state!="done" &&d.state!="killed")) return "red"; 
 								else if (d.state=="done") return "green";
-								else if (d.state=="todo" || d.state=="killed") return "#aaaaaa"; 
+								else if (d.state=="todo" || d.state=="killed" ||!d.ExtId) return "#aaaaaa"; 
 								else if (d.Type=="target") return COLOR_TARGET; 
 								return"black";})
 	   .attr("x",x)
@@ -591,11 +597,11 @@ function _drawItemDelayLine(svg,x1,x2,y){
 function _drawStartDateIndicator(svg,x1,x2,y,size){
 	svg.append("rect")
 	.attr("x", x1)
-	.attr("y", y-size)
+	.attr("y", y-size/2)
 	.attr("width", (x2-x1)-size)
-	.attr("height", size*2)
-	.style("fill","url(#gradientWhite)")
-	.style("opacity",0.6);
+	.attr("height", size)
+	.style("fill","url(#gradientblack)")
+	.style("opacity",1);
 	
 	svg.append("circle")
 	.attr("cx", x1)
@@ -603,13 +609,13 @@ function _drawStartDateIndicator(svg,x1,x2,y,size){
 	.attr("r", size)
 	.style("stroke-width","0px")
 	.style("stroke","black")
-	.style("fill","#ffffff")
+	.style("fill","#bbbbbb")
 	.style("opacity",1);
 
 	svg.append("path").
-	attr("transform","translate("+(x1+1)+","+y+") rotate(90)")
+	attr("transform","translate("+(x1+1)+","+y+") rotate(90) scale(0.5)")
 	.attr("d",d3.svg.symbol().type("triangle-up"))
-	.style("fill","black");
+	.style("fill","white");
 }
 
 /**
@@ -722,6 +728,9 @@ function onTooltipOverHandler(d,tooltip){
 	
 	if (_dependingItems) _highlightItems(_dependingItems,filteredInitiativeData,"#item_");
 	
+	if (d.startDate) d3.select("#startID_"+d.id).style("visibility","visible");
+	
+	
 	if (_targets){
 		_highlightItems(_targets,targetData,"#target_");
 		// and connect 
@@ -762,11 +771,12 @@ function _itemTooltipHTML(d){
 	else if (d.health=="amber") _health ="gold";
 	else if (d.health=="red") _health ="red";
 	
-	var _v1Link = "http://v1.bwinparty.corp/V1-Production/Epic.mvc/Summary?oidToken=Epic%3A";
-	var _v1SyncLink= "v1sync.php?kanbanMongoId="+d._id;
+	var _v1Link = V1_PROD_URL+"Epic.mvc/Summary?oidToken=Epic%3A";
+	var _v1SyncLink= "v1sync.php?_id="+d._id;
+	var _adminLink = "admin.php?type=initiatives&_id="+d._id;
 						
 	
-	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\"><a href=\""+_v1SyncLink+"\" target=\"new\">[v1synch admin]</a></td><td style=\"font-size:4px;text-align:right\">";
+	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\"><a href=\""+_v1SyncLink+"\" target=\"new\">[v1synch]</a> <a href=\""+_adminLink+"\" target=\"new\">[admin]</a></td><td style=\"font-size:4px;text-align:right\">";
 	if (d.ExtId)
 		_htmlBase+=" <a href=\""+_v1Link+d.ExtId+"\" target=\"new\">[v1: "+d.ExtId+"]</a>";
 	_htmlBase+="</td></tr>";
@@ -853,7 +863,7 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		var _y = get_metrics(svg.node()).y-margin.top;
 		console.log("...x: "+_x+"  y: "+_y);
 		
-		d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
+		//d3.select("#item_"+d.id).append("text").attr("id","isolationtext").text("ISOLATION MODE").style("font-size","6px").style("fill","grey").attr("x",_x).attr("y",_y).style("text-anchor","middle");;
 
 		d3.select("#flip").on("click", function(){
 				var front = document.getElementById('tooltip');
@@ -981,6 +991,9 @@ function onTooltipOutHandler(d,tooltip){
 			}
 		} // end de- check depending items
 	}
+	
+	if (d.startDate) d3.select("#startID_"+d.id).style("visibility","hidden");
+	
 }
 
 
