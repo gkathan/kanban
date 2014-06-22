@@ -31,6 +31,8 @@ else{
 <script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
 
 <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="js/bootstrap-notify.js"></script>
+<script src="js/mousetrap.min.js"></script>
 
 <script src="js/kanban_config.js"></script>
 
@@ -59,6 +61,13 @@ else{
   <link rel="stylesheet" href="js/SlickGrid-master/css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="js/SlickGrid-master/examples.css" type="text/css"/>
   <link rel="stylesheet" href="js/SlickGrid-master/controls/slick.columnpicker.css" type="text/css"/>
+  
+  <!-- Notify CSS -->
+	<link href="css/bootstrap-notify.css" rel="stylesheet">
+
+	<!-- Custom Styles -->
+	<link href="css/styles/alert-bangtidy.css" rel="stylesheet">
+	<link href="css/styles/alert-blackgloss.css" rel="stylesheet">
 
   <style>
     .cell-title {
@@ -201,11 +210,11 @@ box-sizing: content-box;
 <div style="position:relative">
   <div style="width:5000px;">
 	
-   
+  <div class='notifications top-left'></div> 
   
   
   <div class="btn-group-xs">
-	  <img src="img/external_elements_v1_synch.png" height="70px"/>	
+	  <a href="kanban.php"><img src="img/external_elements_v1_synch.png" height="70px"/></a>
 	  <br>
 	  <button id="bsync" type="button" class="btn btn-primary">Sync Selected</button>
 	  <button id="bremove" type="button" class="btn btn-danger">Remove Selected</button>
@@ -239,6 +248,10 @@ box-sizing: content-box;
 var initiativeData;
 var epicData;
 
+// for now hardcoded context is enough => needed to prefill sync data
+// if we go further - this should be dynamic 
+var CONTEXT = "b2c gaming"
+
 // compare epic with initiative data 
 var comparedData;
 
@@ -255,6 +268,8 @@ _filterName=url_query.split("=")[0];
 _filterValue=url_query.split("=")[1];
   
 
+checkServices();
+initShortcuts();
 refresh();
 
 
@@ -321,7 +336,7 @@ function compareData(initiatives,epics){
 				epics[e]["kanbanHealth"]=_initiative.health;
 				
 				epics[e]["kanbanId"]=_initiative.id;
-				epics[e]["kanbanMongoId"]=_initiative._id;
+				epics[e]["_id"]=_initiative._id;
 				epics[e]["kanbanExtId"]=_initiative.ExtId;
 				
 				epics[e]["kanbanState"]=_initiative.state;
@@ -331,12 +346,27 @@ function compareData(initiatives,epics){
 				epics[e]["kanbanDescription"]=_initiative.DoD;
 				
 				epics[e]["kanbanSize"]=_initiative.size;
+				//check is in sync or changed 
+				epics[e]["isInSync"]=_checkInSync(epics[e],_initiative);
 			}
 			else epics[e]["isOnKanban"]=false;
 			
 			_compare.push(epics[e]);
 	}
 	return _compare;
+}
+
+function _checkInSync(epic,initiative){
+	// what to check against sync ?
+	// * Swag
+	// * v1Dates (3x)
+	// * name 
+	// ... ?
+	//[TODO ...]
+	if (epic.Swag==initiative.Swag && epic.Name==initiative.name ) return 1;
+	
+	return 0;
+	
 }
 
 function filterByNameValue(list,name,value){
@@ -394,16 +424,16 @@ var columns = [];
 	columns.push(checkboxSelector.getColumnDefinition());
 
 columns.push(
-        
+        { id:"isInSync", name: "sync", field: "isInSync",sortable:true,width:30,formatter:Slick.Formatters.CheckInSync, sorter:NumericSorter ,toolTip:"kanban and V1 data in sync "},
         { id:"id", name: "v1.id", field: "ID",sortable:true,width:70,formatter:Slick.Formatters.V1EpicURL,cssClass:"onV1", sorter:NumericSorter ,toolTip:"V1 internal OID"},
         { id:"number", name: "v1.number", field: "Number",sortable:true,cssClass:"onV1", sorter:NumericSorter},
         { id:"kanbanExtId", name: "kanban.ExtId", field: "kanbanExtId",sortable:true,cssClass:"onKanban", sorter:NumericSorter},
         { id:"kanbanId", name: "kanban.id", field: "kanbanId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},
-        { id:"kanbanMongoId", name: "kanban._id", field: "kanbanMongoId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},        
+        { id:"_id", name: "kanban._id", field: "_id",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},        
         { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark,sortable:true, sorter:NumericSorter,width:30},
         
         { id: "name", name: "v1.name", field: "Name",width:300, cssClass: "cell-title",cssClass:"onV1",sortable:true, sorter:NumericSorter},
-        { id: "kanbanName", name: "kanban.name", field: "kanbanName",editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
+        { id: "kanbanName", name: "kanban.name", field: "kanbanName",cssClass:"onKanban",width:200 },
         { id: "kanbanName2", name: "kanban.name2", field: "kanbanName2", editor: Slick.Editors.Text,cssClass:"onKanban",width:200 },
         { id: "plannedStart", name: "v1.plannedStart", field: "PlannedStart",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
         { id: "plannedEnd", name: "v1.plannedEnd", field: "PlannedEnd",cssClass:"onV1",formatter: Slick.Formatters.SimpleDate,sortable:true,width:80 },
@@ -414,7 +444,7 @@ columns.push(
         { id: "kanbanTheme", name: "kanban.theme",cssClass:"onKanban", field: "kanbanTheme",editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},width:80 },
         { id: "kanbanLane", name: "kanban.lane",field: "kanbanLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
         { id: "kanbanSubLane", name: "kanban.sublane", field: "kanbanSubLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"touch":"touch","click":"click","product":"product","market":"market","enabling":"enabling","CS":"CS","architecture":"architecture","agile":"agile","leanops":"leanops","devops":"devops","people":"people","entIT":"entIT","marketing":"marketing"},width:80 },
-        { id: "kanbanState", name: "kanban.state", field: "kanbanState",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done"},width:80 },
+        { id: "kanbanState", name: "kanban.state", field: "kanbanState",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed"},width:80 },
         { id: "swag", name: "v1.swag", field: "Swag",cssClass:"onV1",sortable:true, sorter:NumericSorter,width:50 },
         { id: "kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50 },
         { id: "categoryName", name: "v1.categoryName", field: "CategoryName",cssClass:"onV1",sortable:true ,sorter:NumericSorter},
@@ -666,11 +696,30 @@ d3.select("#bremove").on("click", function(){
 		success: function(msg)
 			{
 				refresh();
-				alert(":  ajax REMOVE success: ");
+				//alert(":  ajax REMOVE success: ");
+				 $('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> v1sync.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly removed item [_id:"+syncList[0]._id+"]</div>" },
+						fadeOut: {enabled:true,delay:10000},
+						type: "success"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				  
+			},
+		error: function(msg)
+			{
+				refresh();
+				//alert(":  ajax SYNC success: ");
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> v1sync.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+syncList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
+						fadeOut: {enabled:false},
+						type: "danger"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
 			}
+
 		});
 	
-	});
+});
 	
 	
 
@@ -690,7 +739,7 @@ d3.select("#bsync").on("click", function(){
 				
 				var _sync = syncList[i];
 				var _item = {};
-				//_item["_id"]=_sync["kanbanId"] ? _sync["kanbanId"] : null ;
+				if (_sync["_id"]) _item["_id"]=_sync["_id"];
 				_item["id"]=_sync["kanbanId"] ? _sync["kanbanId"] : null ;
 				_item["name"]=_sync["Name"];
 				_item["ExtId"]=_sync["ID"];
@@ -698,15 +747,16 @@ d3.select("#bsync").on("click", function(){
 				_item["isCorporate"]="x";
 				_item["onKanban"]=true;
 				_item["backlog"]=_sync["Scope"]
-				_item["bm"]=_sync["kanbanBM"];;
+				_item["bm"]=_sync["kanbanBM"] ? _sync["kanbanBM"] : CONTEXT;
 				_item["theme"]=_sync["kanbanTheme"];
 				_item["themesl"]="";
 				_item["lane"]=_sync["kanbanLane"];
 				_item["sublane"]=_sync["kanbanSubLane"];
 				_item["sublaneOffset"]=_sync["kanbanSublaneOffset"] ? _sync["kanbanSublaneOffset"] : "";
-				_item["startDate"]=_sync["kanbanStartDate"] ? _sync["kanbanStartDate"] : "";
-				_item["planDate"]=_sync["kanbanPlanDate"];//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanPlanDate"])) ;
-				_item["actualDate"]=_sync["kanbanActualDate"] ? _sync["kanbanActualDate"]:_sync["kanbanPlanDate"] ;//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanActualDate"]));
+				// if kanban start set - use this, if not check whether there is a v1 start date and use that - and if that also is empty - then ""
+				_item["startDate"]=_sync["kanbanStartDate"] ? _sync["kanbanStartDate"] : (_sync["PlannedStart"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedStart"])) : "");
+				_item["planDate"]=_sync["kanbanPlanDate"] ? _sync["kanbanPlanDate"] : (_sync["PlannedEnd"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedEnd"])) : "");//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanPlanDate"])) ;
+				_item["actualDate"]=_sync["kanbanActualDate"] ? _sync["kanbanActualDate"]: (_sync["kanbanPlanDate"] ? _sync["kanbanPlanDate"] : (_sync["PlannedEnd"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedEnd"])):"")) ;//d3.time.format("%Y-%m-%d")(new Date(_sync["kanbanActualDate"]));
 				
 				// v1 dates => store them too to track changes in v1 dates ;-) 
 				_item["v1plannedStart"]=_sync["PlannedStart"] ? d3.time.format("%Y-%m-%d")(new Date(_sync["PlannedStart"])) :"";
@@ -758,9 +808,38 @@ d3.select("#bsync").on("click", function(){
 		success: function(msg)
 			{
 				refresh();
-				alert(":  ajax SYNC success: ");
+				//alert(":  ajax SYNC success: ");
+				var _items="";
+				for (var i in itemInsertList){
+					_items+=itemInsertList[i].name;
+					console.log("*****i: "+i+" - "+itemInsertList[i].name);
+					if (i< itemInsertList.length-1) _items+=", "
+				}
+				
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> v1sync.synch() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly synced items: "+_items+"]</div>" },
+						fadeOut: {enabled:true,delay:3000},
+						type: "success"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
+			},
+		error: function(msg)
+			{
+				refresh();
+				//alert(":  ajax SYNC success: ");
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> v1sync.synch() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+syncList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
+						fadeOut: {enabled:false},
+						type: "danger"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
 			}
 		});
+		
+		
+		
 	});	
 
  </script>
