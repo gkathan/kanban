@@ -10,10 +10,18 @@ var CONTEXT="CONTEXT";
 var orgData;
 var orgTree;
 var orgLevels;
+var statLevels;
 
 var SIZE ;
 var MARGIN_LEFT = 800;
 var MARGIN_TOP = 150;
+
+
+//default is "hr" ... HR line superivisor
+// alternative is "bp" ...business process / functional superivisor
+var HIERARCHY_TYPE ="bp";
+
+var ROLE_TYPE="position";
 
 
 var MAX_DEPTH= 10;
@@ -22,7 +30,8 @@ var MAX_LEVEL;
 var MAX_COUNT;
 
 // set by multiselect box to switch data 
-var ORG_DATA="org";
+// default
+var ORG_DATA="org2014jul23";
 
 //fixed distance between depth levels
 var DEPTH_WIDTH = 200;
@@ -35,6 +44,7 @@ var LEAF_NODES = 0;
 
 var WIDTH =SIZE;
 var HEIGHT = SIZE;
+var HEIGHT_OVERRIDE;
 
 
 var duration=750;
@@ -72,26 +82,41 @@ function render(){
 			
 			
 			
-			//root = findAndreas(findNorbert(makeTree(createList(data))).children);
-			root = findNorbert(makeTree(createList(data)));
+			//root = findAndreas(findNorbert(makeTree(createList(data,"Employee Number","Supervisor Employee Number"))).children);
+			//root = findNorbert(makeTree(createList(data,"Employee Number","Supervisor Employee Number")));
+			
+			var _parent,_parentBase;
+			if (HIERARCHY_TYPE=="hr") _parent = "Supervisor Employee Number";
+			else if (HIERARCHY_TYPE=="bp") {
+				_parent = "Business Process Flow Manager Employee Number";
+				_parentBase = "Supervisor Employee Number";
+			}
+				
+			root = findNorbert(makeTree(createList(data,"Employee Number",_parent,_parentBase)));
+			
 			
 			//root = _.nest(orgData,["Location","Function"]);
 			
-			
+				orgTree = root;
 		
 			if (ROOT_NAME) root = searchBy(orgTree,"employee",ROOT_NAME);
-			orgTree = root;
+		
 				
 			console.log("***** before count");
 			MAX_COUNT=count(root,0);  
 			enrich(root);	
 			
-			calculateTreeStats(root);
+			statLevels = calculateTreeStats(root);
 			
 			SIZE=300+MAX_COUNT+(MAX_LEVEL*300);
 			console.log("***** MAX_LEVEL: "+MAX_LEVEL);
 			WIDTH=4000;
 			HEIGHT=SIZE;
+			
+			//set current size in orgmenu
+			if (!HEIGHT_OVERRIDE) document.getElementById("input_height").value=HEIGHT;
+			else HEIGHT = getInt(HEIGHT_OVERRIDE);
+			
 			_init();
 			_renderBackground(root);		
 			_render(root);
@@ -139,30 +164,44 @@ function _renderBackground(source){
 	var gBack = d3.select("svg").append("g").attr("id","background");
 	var _sum =0;
 	var _sumFemale=0;
-	
+	var _sumLeaf =0;
+	var _sumTermination = 0;
 	for (var i in levels){
 		
 		var _x = (i*DEPTH_WIDTH)+MARGIN_LEFT;
 		_drawLine(gBack,_x,MARGIN_TOP-50,_x,SIZE,"dashedLine");
-		_drawText(gBack,"N"+(MAX_LEVEL-i),_x,MARGIN_TOP-70,{"size":"24px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
 		
 		var _perLevel = levels[i].length;
 		var _percentage = Math.round((_perLevel/_total)*100);
 		var _female = getFemaleQuotient(levels[i]);
 		var _internal = getInternalQuotient(levels[i]);
+		var _children =0;
+		var _leaf =0;
+		var _terminationPercentage = 0;
+		
+		var _leafPercentage;
+		
+		_leaf = statLevels[i].leafOnly;
+		_leafPercentage = Math.round((_leaf/_perLevel)*100);
+		_terminationPercentage = Math.round((statLevels[i].termination/_perLevel)*100);
+		
+		_sumLeaf+=statLevels[i].leafOnly;
+		_sumTermination+=statLevels[i].termination;
 		_sum+=_perLevel;
 		_sumFemale+=_female;
-		
+
+		_drawText(gBack,"N"+(MAX_LEVEL-i),_x,MARGIN_TOP-70,{"size":"24px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
 		_drawText(gBack,"#"+levels[i].length,_x,MARGIN_TOP-53,{"size":"16px","color":"red","opacity":1,"anchor":"middle","weight":"bold"});
-		_drawText(gBack,"#: "+_percentage+"%"+" ,f: "+_female+"%"+" ,i: "+_internal+"%",_x,MARGIN_TOP-40,{"size":"12px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
+		_drawText(gBack,_percentage+"%"+"|f:"+_female+"%"+"|i:"+_internal+"%"+"|l:"+_leafPercentage+"%"+"|t:"+_terminationPercentage+"%",_x,MARGIN_TOP-40,{"size":"12px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
 		
 		console.log(levels[i].length+" - ");
 	}
 	
 	//sum
+	
 	_drawText(gBack,"SUM",MARGIN_LEFT-DEPTH_WIDTH,MARGIN_TOP-70,{"size":"24px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
 	_drawText(gBack,"#"+_sum,MARGIN_LEFT-DEPTH_WIDTH,MARGIN_TOP-53,{"size":"16px","color":"red","opacity":1,"anchor":"middle","weight":"bold"});
-	_drawText(gBack,"100%"+" ,f: "+getFemaleQuotient(orgData,"Gender")+"%"+" ,i: "+getInternalQuotient(orgData,"Contract Type")+"%",MARGIN_LEFT-DEPTH_WIDTH,MARGIN_TOP-40,{"size":"12px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
+	_drawText(gBack,"100%"+"|f:"+getFemaleQuotient(orgData,"Gender")+"%|i:"+getInternalQuotient(orgData,"Contract Type")+"%|l:"+Math.round((_sumLeaf/_sum)*100)+"%|t:"+Math.round((_sumTermination/_sum)*100)+"%",MARGIN_LEFT-DEPTH_WIDTH,MARGIN_TOP-40,{"size":"12px","color":"red","opacity":1,"anchor":"middle","weight":"normal"});
 	
 	
 	
@@ -244,7 +283,7 @@ function _render(source){
 		})
 	  .attr("text-anchor", function(d) { 
 		  return d.children || d._children ? "end" : "start"; })
-	  .text(function(d) { if (d.children) return d.position; else {if (!LEAF_NAMES) return ""; else return "";} })
+	  .text(function(d) { if (d.children) return d[ROLE_TYPE]; else {if (!LEAF_NAMES) return ""; else return "";} })
 	  .style("fill-opacity", 1)
 	  .style("font-weight", function(d){
 			if (d.children) return "bold";
@@ -252,7 +291,15 @@ function _render(source){
 		  })
 	  .style("font-size",function(d){ 
 		   return getSize(d,25,5)+"px";
+		})
+ 	  .style("fill",function(d){ 
+		   var _color ="black";
+		   if (d.terminationDate) _color="lightgrey";
+		   return _color;
 		});
+
+		
+	   
 		
 		
 	//***** EMPLOYEE ********
@@ -268,6 +315,11 @@ function _render(source){
 	  .style("font-weight", "normal")
 	  .style("font-size",function(d){ 
 		   return getSize(d,50,5)/1.2+"px";
+		})
+	  .style("fill",function(d){ 
+		   var _color ="black";
+		   if (d.terminationDate) _color="lightgrey";
+		   return _color;
 		});
 	  
 	
@@ -303,7 +355,7 @@ function _render(source){
 		})
 	  .attr("text-anchor", function(d) { 
 		  return d.children || d._children ? "end" : "start"; })
-	  .text(function(d) { return d.overallReports ? ("[d:"+d.directReports+",l:"+Math.round((d.leafOnly/d.directReports)*100)+"%,a:"+d.averageSubordinates+",s:"+(d.averageDeviation?d.averageDeviation:"-")+"]") :"" })
+	  .text(function(d) { return d.overallReports ? ("[d:"+d.directReports+",l:"+d.leafOnly+",a:"+d.averageSubordinates+",s:"+(d.averageDeviation?d.averageDeviation:"-")+"]") :"" })
 	  .style("fill-opacity", 1)
 	  .style("font-weight", "normal")
 	  .style("fill","red")
