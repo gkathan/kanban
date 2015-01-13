@@ -66,24 +66,37 @@ function getSize(data,tresholdMax,tresholdMin){
 
 */
 
-
-function createList(data){
+/**
+ * prepares the flat array for input into tree creation
+ * @param:name defines the mapping attribute for name 
+ * @param:parent defines the mapping attribute for parent 
+ * @param:parentBase: fallback if parent has no value
+ * */
+function createList(data,name,parent,parentBase){
 	var _list = new Array();
 	var i=0;
 	for (d in data){
 		var row ={};
-		row["name"]=data[d]["Employee Number"];
-		row["parent"]=data[d]["Supervisor Employee Number"];
+		row["name"]=data[d][name];
+		row["parent"]=data[d][parent]?data[d][parent]:data[d][parentBase];
 		
 		row["employee"]=data[d]["First Name"]+" "+data[d]["Last Name"];;//data[d]["Full Name"];
-		row["supervisor"]=data[d]["Supervisor Full Name"];
+		row["supervisor"]=data[d][parent];
 		
 		row["function"]=data[d]["Function"];
 		row["position"]=data[d]["Position"];
 		row["vertical"]=data[d]["Vertical"];
 		row["location"]=data[d]["Location"];
 		row["gender"]=data[d]["Gender"];
+		row["ageYears"]=((new Date() - new Date(data[d]["Date Of Birth"]))/(1000*60*60*24*365)).toFixed(1);
+		row["companyYears"]=((new Date() - new Date(data[d]["Date First Hired"]))/(1000*60*60*24*365)).toFixed(1);
+		row["terminationDate"]=data[d]["Actual Termination Date"];
+
 		row["jobTitle"]=data[d]["Corporate Job Title"];
+		row["jobTitleLocal"]=data[d]["Local Job Title"];
+		row["jobTitle"]=data[d]["Corporate Job Title"];
+		row["job"]=data[d]["Job"];
+		
 		row["scrum1"]=data[d]["Scrum Team 1"];
 		row["scrumMaster"]=data[d]["Scrum Master Name"];
 		row["contractType"]=data[d]["Contract Type"];
@@ -225,6 +238,18 @@ function enrich(tree,level){
 function calculateTreeStats(tree){
 	orgLevels = traverseBF(tree);
 	MAX_LEVEL=orgLevels.length;
+	var stats=new Array();
+	//only if tree consists of no children then we have already on top of tree a leaf node ;-)
+	if (tree.children) stats.push({leafOnly:0,termination:0});
+	for (var o in orgLevels){
+		var s = {leafOnly:0,termination:0};
+		for (var l in orgLevels[o]){
+			if (orgLevels[o][l].leafOnly) s.leafOnly+=orgLevels[o][l].leafOnly;
+			if (orgLevels[o][l].terminationDate) s.termination++;
+		}
+		stats.push(s)
+	}
+	return stats;
 }
 
 
