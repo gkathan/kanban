@@ -36,8 +36,18 @@ var LANE_LABELBOX_RIGHT_START;
 */
 function drawLanes(){
 	d3.select("#lanes").remove()
+	
+	var lanes = svg.append("g").attr("id","lanes");
 
-    var lanes = svg.append("g").attr("id","lanes");
+
+
+//experiment
+	var drag_item = _registerDragDrop();
+//experiment
+	
+	
+    
+
 
 	var lanesLeft = lanes.append("g").attr("id","lanesLeft");
 	var lanesRight = lanes.append("g").attr("id","lanesRight");	
@@ -69,27 +79,25 @@ function drawLanes(){
 		var _y_offset = 4;
 		var _laneOpacity;
 		var _metrics;
-
-	
 		//left box
-		_metrics = _drawLaneBox(lanesLeft,-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
+		
+		var _leftBox = lanesLeft.append("g").attr("id",_lane);
+		var _rightBox = lanesRight.append("g").attr("id",_lane);
+		
+		
+		_metrics = _drawLaneBox(_leftBox,-LANE_LABELBOX_LEFT_WIDTH,_y,LANE_LABELBOX_LEFT_WIDTH,_height,_lane,"left");
 
 		var _yTextOffset = 10;
 		if (_metrics) _yTextOffset+=_metrics.height;
-		
-
 		//baseline box text
-		_drawLaneText(lanesLeft,_lane,"baseline",_yTextOffset);
-		
+		_drawLaneText(_leftBox,_lane,"baseline",_yTextOffset);
 		// lane area
 		_drawLaneArea(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END)+LANE_LABELBOX_RIGHT_WIDTH+280,_height,i)
-
 		//target box	
-		_metrics =_drawLaneBox(lanesRight,_xRightStart,_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
-		
+		_metrics =_drawLaneBox(_rightBox,_xRightStart,_y,LANE_LABELBOX_RIGHT_WIDTH,_height,_lane,"right");
 		//target box text
-		_drawLaneText(lanesRight,_lane,"target",_yTextOffset);
-
+		_drawLaneText(_rightBox,_lane,"target",_yTextOffset);
+		
 		// laneside descriptors
 		if (_.last(CONTEXT.split("."))=="drill-in"){
 			var _laneName = _.last(_lane.split("."))
@@ -97,7 +105,6 @@ function drawLanes(){
 		}
 		//sublane descriptors
 		var _sublanes = getSublanesNEW(_lane);
-		
 		for (var s in _sublanes){
 			var _y = y(_sublanes[s].yt1);
 			var _h = y(_sublanes[s].yt2-_sublanes[s].yt1); 
@@ -105,19 +112,22 @@ function drawLanes(){
 			// strip only the sublane name if name is fully qualified like "topline.bwin.touch"
 			var _sublane = _.last((_sublanes[s].name).split("."))
 			
-			_drawLaneSideText(lanesLeft,_sublane,1,_y+_h/2,"4px","middle");
+			_drawLaneSideText(_leftBox,_sublane,1,_y+_h/2,"4px","middle");
 		
 			//no lines for first and last sublane
 			if (s>0 && s<_sublanes.length){
 				_drawLine(d3.select(this),x(KANBAN_START),_y,x(KANBAN_END),_y,"sublaneLine");
 				}
 			}
+		//experiment
+		_leftBox.data([ {"x":0, "y":0, "lane":_lane} ]).call(drag_item);
 		
 		_drawThemeDemarcation(d3.select(this),"themeLine");
-		
-		
 		i++;
+	
 	});
+	
+	
 	// -------------------------------------- drivers WHERE HOW STUFF -----------------------------------
 	var _pillarColumns = [{"name":"ACCESS"},{"name":"APPEAL"},{"name":"USP"}];
 
@@ -269,7 +279,7 @@ function _drawLaneText(svg,lane,side,logoHeight){
 			// if it comes in FQ format 
 			lane = _.last(lane.split("."));
 
-			svg.append("rect")
+			var _lanebox=svg.append("rect")
 			.attr("x",x)
 			.attr("y",y)
 			.attr("width",width)
@@ -277,8 +287,8 @@ function _drawLaneText(svg,lane,side,logoHeight){
 			.style("cursor","pointer")		
 			.style("stroke","white")
 			.style("stroke-width",WIDTH_WHITESTROKE)
-			.attr("class","lanebox "+lane)
-				.on("click",function(d){window.location.href="kanban_"+lane+".html";});
+			.attr("class","lanebox "+lane);
+			//.on("click",function(d){window.location.href="kanban_"+lane+".html";});
 			
 			// only append logo if we have declared on in external.svg
 			if (document.getElementById(lane)){
