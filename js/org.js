@@ -114,7 +114,7 @@ function render(svgFile,orgTable){
 	//d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
 	//d3.tsv("data/sources/Assignment_Report_20130429.txt",function(data){
 	//d3.json("data/bpty_org_20130429.json",function(data){
-	d3.json(dataSourceFor("org"),function(data){
+	d3.json(dataSourceFor("scrumteams"),function(data){
 	orgData = data;
 	
 
@@ -139,10 +139,10 @@ function render(svgFile,orgTable){
 	
 	
 	//root = _.nest(orgData,["Location","Cost Centre","Function","Supervisor Full Name"]);
-	//root = _.nest(orgData,["Cost Centre","Location","Function","Supervisor Full Name"]);
+	root = _.nest(orgData,["Vertical","Location"]);
 	//root = _.nest(orgData,["Employing Legal Entity","Location","Function","Supervisor Full Name"]);
 	
-	root = _.nest(orgData,["Function","Scrum Team 1"]);
+	//root = _.nest(orgData,["Function","Scrum Team 1"]);
 	
 	depth = 4; //number of nest levels 
 	
