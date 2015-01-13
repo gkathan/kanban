@@ -20,16 +20,16 @@
 /**
 	 -------------------- HOWTO HIDE elements of a lane ----------------------------
 	
-	 d3.select("#initiatives").selectAll("g").filter(function(d){return d.lane=="bwin"}).style("visibility","hidden")
+	 d3.select("#items").selectAll("g").filter(function(d){return d.lane=="bwin"}).style("visibility","hidden")
 	
-	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((d.sublane=="touch")&&(d.lane=="bwin"))}).style("visibility","visible")
+	 d3.select("#items").selectAll("g").filter(function(d){return ((d.sublane=="touch")&&(d.lane=="bwin"))}).style("visibility","visible")
 	
-	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((d.theme=="topline"))}).style("visibility","hidden")
-	 d3.select("#initiatives").selectAll("g").filter(function(d){return ((true))}).style("visibility","hidden")
+	 d3.select("#items").selectAll("g").filter(function(d){return ((d.theme=="topline"))}).style("visibility","hidden")
+	 d3.select("#items").selectAll("g").filter(function(d){return ((true))}).style("visibility","hidden")
 	
 	 -------------------- HOWTO HIDE elements of a column ----------------------------
 	
-	 d3.select("#initiatives").selectAll("g").filter(function(d){return (new Date(d.planDate)>WIP_END)}).style("visibility","hidden")
+	 d3.select("#items").selectAll("g").filter(function(d){return (new Date(d.planDate)>WIP_END)}).style("visibility","hidden")
 
 
 	---------------------- power of css3 selectors
@@ -140,12 +140,12 @@ var WIP_END;
 setWIP();
 
 // equals 1377993600000 in ticks (date.getTime()
-var KANBAN_START = new Date("2014-01-01");
-var KANBAN_START_DEFAULT = new Date("2013-12-31");
+var KANBAN_START = new Date("2014-03-01");
+var KANBAN_START_DEFAULT = new Date("2014-03-01");
 
 // equals 1422662400000 in ticks
-var KANBAN_END = new Date("2015-01-31");
-var KANBAN_END_DEFAULT = new Date("2015-01-31");
+var KANBAN_END = new Date("2015-06-31");
+var KANBAN_END_DEFAULT = new Date("2015-06-31");
 
 // diff = 44.668.800.000
 // 1 pixel (WIDTH = 1500) would be 29.779.200 units
@@ -333,7 +333,7 @@ function renderB2CGaming() {
 	
 	HEIGHT=1100;
 	WIDTH=1600;
-	ITEM_SCALE=0.8;
+	ITEM_SCALE=0.6;
 	LANE_LABELBOX_RIGHT_WIDTH =200;
 	
 	setKanbanDefaultDates();
@@ -347,6 +347,8 @@ function renderB2CGaming() {
 	CONTEXT=ITEMDATA_FILTER[0].value;
     loadPostits();
 
+	/* not needed as initiativeData is already loaded 
+	 * 
 	$.when(	//$.getJSON("http://localhost:9999/initiatives"))
 			//$.getJSON("/data/data.php?type=initiatives"))
 	  		  $.getJSON(dataSourceFor("initiatives")))
@@ -354,8 +356,9 @@ function renderB2CGaming() {
 			.done(function(initiatives){
 					initiativeData=initiatives;
 					// do not show sensitive data
+	
 					//safeMetrics();
-					
+	*/			
 					
 					// default view for Q1 review exercise
 					q1_2014_reviewMetrics();
@@ -366,7 +369,7 @@ function renderB2CGaming() {
 					
 					if (AUTH=="bpty") hideNGR();
 					
-				});
+		//		});
 	
 }
 
@@ -652,7 +655,6 @@ function drawInitiatives(){
 	drawLanes();
 	drawQueues();
 	drawWC2014();
-	
 	drawItems();
 	
 }
@@ -702,17 +704,20 @@ function drawAll(){
   
 	//????????????strange => does only work when called twice ????????????????????				
 	
-	
+	// ITEMDATA_NEST= ["theme","lane","sublane"]; => defined in kanpan.php
 	var _context = {"yMin":Y_MIN,"yMax":Y_MAX,"name":CONTEXT};
 	itemTree = createLaneHierarchy(initiativeData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	targetTree = createLaneHierarchy(targetData,ITEMDATA_FILTER,ITEMDATA_NEST,_context);
 	
 	
 	
+	// kanban_items.js
 	drawInitiatives();
+	// kanban_items.js
 	drawTargets();
 	drawOverviewMetaphors(svg);
 	drawMetrics();
+	// kanban_grid.gs
 	drawVision();
 	drawReleases();
 	drawVersion();
@@ -813,7 +818,7 @@ function drawOverviewMetaphors(svg){
  */
 function drawWC2014(){
 	
-	if (KANBAN_END > new Date("2014-07-13")){
+	if (KANBAN_END > new Date("2014-07-13") && KANBAN_START < new Date("2014-05-13")){
 	
 		var gEvents = svg.append("g").attr("id","events");
 		var _x1 = x(new Date("2014-06-13"));
@@ -1024,4 +1029,8 @@ var PACKAGE_VERSION="20140527_1309";
 	var PACKAGE_VERSION="20140528_1323";
 	
 var PACKAGE_VERSION="20140528_1811";
+	var PACKAGE_VERSION="20140624_0935";
+	
+var PACKAGE_VERSION="20150113_0808";
+	var PACKAGE_VERSION="20150113_0827";
 	
