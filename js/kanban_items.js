@@ -56,6 +56,8 @@ var itemDataConfig;
 
 
 // scaling of graphical elements (itemblock,circle, circle icon)	
+
+// => differs per view /context => currently hacked in kanban.js e.g. drawBC()
 var ITEM_SCALE=0.8;
 var ITEM_FONTSCALE=1.5;
 // when to wrap name of item
@@ -71,6 +73,10 @@ var TACTIC_SCALE=0.9;
 var POSTIT_SCALE=1;
 var CUSTUM_POSTIT_SCALE=1;
 
+// PLAN or ACTUAL => defines whether text is below circle or icon
+var ITEM_TEXT_POSITION ="PLAN"
+
+//	var ITEM_TEXT_POSITION ="ACTUAL"
 
 
 //on item doubleclick
@@ -296,18 +302,30 @@ function drawItems(){
 	.each(function(d){
 		var _size = d.size*ITEM_SCALE;
 		if (!d.isCorporate) _size = _size * TACTIC_SCALE;
-		var _itemXPlanned = x(new Date(d.planDate));
-		var _itemXActual = x(new Date(d.actualDate));
-		var _itemXStart = x(new Date(d.startDate));
-		var _itemX;
-		if (!d.actualDate) _itemX =_itemXPlanned; 
-		else _itemX = _itemXActual
+
 		
-		if (d.state!="done" && new Date(d.actualDate)<=TODAY){
+
+		var _itemXPlanned; 
+		var _itemXActual; 
+		var _itemXStart; 
+		var _itemX;
+
+		if (d.state=="planned" && new Date(d.actualDate)<=TODAY){
 			_itemX = x(TODAY);
+			//_itemXActual = x(TODAY);
 			//d.state="delayed";
 			d.actualDate = yearFormat(TODAY);
 		}
+
+
+		_itemXPlanned = x(new Date(d.planDate));
+		_itemXActual = x(new Date(d.actualDate));
+		_itemXStart = x(new Date(d.startDate));
+		
+		
+		if (!d.actualDate) _itemX =_itemXPlanned; 
+		else _itemX = _itemXActual
+		
 		var _yOffset = getSublaneCenterOffset(getFQName(d));
 		var _sublane = getSublaneByNameNEW(getFQName(d));
 		var _sublaneHeigth = _sublane.yt2-_sublane.yt1;
@@ -337,7 +355,7 @@ function drawItems(){
 			 _startActualBeyond=true;
 		}
 		
-		if (d.state !="killed"){
+		if (d.state =="done" || d.state =="planned"){
 			if (d.actualDate>d.planDate) _drawItemDelayLine(d3.select(this),_lineX1,_lineX2,_itemY);
 			// ------------  line if before plan--------------
 			else if (d.actualDate<d.planDate) _drawItemDelayLine(d3.select(this),_itemX,(_itemXPlanned-_size-(_size/2)),_itemY);
@@ -356,7 +374,7 @@ function drawItems(){
 							.attr("cy",_itemY)
 							.attr("r",_size)
 							.attr("class",function(d){
-							if (d.actualDate>d.planDate &&d.state!="done") {return "delayed"} 
+							if (d.actualDate>d.planDate &&d.state=="planned") {return "delayed"} 
 							else if (new Date(d.actualDate)>WIP_END) {return "future";} 
 							else {return d.state}});
 					// ----------- circle icons -------------
@@ -378,7 +396,9 @@ function drawItems(){
 			}
 			
 			if (!d.ExtId) _iconRef="item_notsynced";
-			if (d.status=="Understanding" || d.status=="New" || d.staus=="Conception") _iconRef="item_grey";
+			if (d.status=="Understanding" || d.status=="New" || d.status=="Conception") _iconRef="item_grey";
+			if (d.state=="onhold") _iconRef="item_grey";
+			
 			if (d.state=="done") _iconRef="item_green";
 			if (d.state=="planned" && new Date (d.planDate) < new Date(d.actualDate)) _iconRef="item_red";
 			if (d.state=="killed") _iconRef="item_killed";
@@ -390,13 +410,19 @@ function drawItems(){
 			
 			_drawXlink(d3.select(this),"#"+_iconRef,(_itemXPlanned-(1.2*_size)),(_itemY-(1.2*_size)),{"scale":_size/10});
 			
-			_drawItemName(d3.select(this),d,_itemXPlanned,(_itemY)+ parseInt(_size)+(5+(_size/5)*ITEM_FONTSCALE));
+			// positioning of itemtext
+			var _textX =_itemXPlanned;
+			if (ITEM_TEXT_POSITION=="ACTUAL" && (d.state=="planned" || d.state=="done"))_textX=_itemXActual;
+			if (ITEM_TEXT_POSITION=="PLAN") _textX=_itemXPlanned;
+			_drawItemName(d3.select(this),d,_textX,(_itemY)+ parseInt(_size)+(5+(_size/5)*ITEM_FONTSCALE));
+
+
 			
 			_drawPostit(d3.select(this),d);
 
 		} // end KANBAN_START check
 		// if plandate is beyon KANBAN_START - we have to draw the name below the circle (a bit smaller)
-		else if (new Date(d.actualDate)>KANBAN_START){
+		else if (new Date(d.actualDate)>KANBAN_START && (d.state =="done" || d.state =="planned")){
 			_drawItemName(d3.select(this),d,_itemXActual,(_itemY+_size+3),0.1);
 		}
 		// transparent circle on top for the event listener 
@@ -467,8 +493,12 @@ function drawItems(){
 			.attr("class","sizings "+d.lane)
 			.style("opacity",0.4);
 		}
-		// drag test	
-		d3.select(this).data([ {"x":0, "y":0, "lane":d.lane} ]).call(drag_item);
+		// drag test	==>  HUHUUUUU - this overrides the itemdata binding !
+		//d3.select(this).data([ {"x":0, "y":0, "lane":d.lane,"id":d._id} ]).call(drag_item);
+		//for drag&drop
+		d.x=0;
+		d.y=0;
+		d3.select(this).call(drag_item);
 	}) //end each()
 } //end drawItems
 
@@ -562,9 +592,9 @@ function _drawItemName(svg,d,x,y,scale,color){
 	   //google font
 	   .style("font-family","arial, sans-serif")
 	   .style("fill",function(d){
-								if ((d.actualDate>d.planDate && d.state!="done" &&d.state!="killed")) return "red"; 
+								if ((d.actualDate>d.planDate && d.state!="done" &&d.state!="killed"&&d.state!="onhold")) return "red"; 
 								else if (d.state=="done") return "green";
-								else if (d.state=="todo" || d.state=="killed" ||!d.ExtId) return "#aaaaaa"; 
+								else if (d.state=="todo" || d.state=="killed" || d.state=="onhold" ||!d.ExtId) return "#aaaaaa"; 
 								else if (d.Type=="target") return COLOR_TARGET; 
 								return"black";})
 	   .attr("x",x)
@@ -584,22 +614,35 @@ function _drawItemDelayLine(svg,x1,x2,y){
 	.attr("x2", x2)
 	.attr("y2", y)
 	.attr("class", function(d){
-		if (d.actualDate>d.planDate &&d.state!="done") {return "delayLine"} 
+		if (d.actualDate>d.planDate &&(d.state=="planned" ||d.state=="todo") ) return "delayLine"; 
+		else if (d.actualDate>d.planDate &&d.state=="onhold") return "delayLineOnhold";
+		
+		
 		else {return "delayLineDone"}})
 
 	.attr("marker-end", function(d){
-		if (d.actualDate>d.planDate &&d.state!="done") {return "url(#arrow_red)"} 
+		if (d.actualDate>d.planDate &&(d.state=="planned"||d.state=="todo")) return "url(#arrow_red)";
+		else if (d.actualDate>d.planDate &&d.state=="onhold") return "url(#arrow_grey)";
+		 
 		else {return "url(#arrow_green)"}});
 }
 
 /**
  */
 function _drawStartDateIndicator(svg,x1,x2,y,size){
+	
+	var _width = (x2-x1)-size;
+	if (_width<0) _width = 0;
+	
+	var _height = size;
+	if (_height<0) _height = 0;
+	
+	
 	svg.append("rect")
 	.attr("x", x1)
 	.attr("y", y-size/2)
-	.attr("width", (x2-x1)-size)
-	.attr("height", size)
+	.attr("width", _width)
+	.attr("height", _height)
 	.style("fill","url(#gradientblack)")
 	.style("opacity",1);
 	
@@ -762,7 +805,9 @@ function _highlightItems(items,data,type){
 function _itemTooltipHTML(d){
 	//[TODO] fix the indicator dynmic color bar  and overall table mess here ;-)	
 	var _indicator;
-	if (d.actualDate>d.planDate &&d.state!="done") _indicator="red";
+	if (d.actualDate>d.planDate &&d.state=="planned") _indicator="red";
+	else if (d.actualDate>d.planDate &&d.state=="onhold") _indicator="grey";
+	
 	else if (d.state=="done") _indicator ="green";
 	else if (d.state=="planned") _indicator ="gold";
 	
@@ -875,8 +920,6 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 						
 						_diff_trail=initiatives_diff_trail;
 						//else throw new Exception("error loading diff_trail")
-						
-						
 						var back_content="change trail:";
 						
 						var _diff="";
@@ -888,8 +931,6 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 									_diff+="<div style=\"font-size:6px\">"+_diff_trail[d].timestamp+"<br><b>* "+c+": "+JSON.stringify(_diff_trail[d].diff[c])+"</b></div>";
 							}
 						}
-						
-						
 						back_content += _diff+"<br><a id=\"flip_close\" class=\"small\" style=\"text-align:left\" >[flip back]</a>"; // Generate or pull any HTML you want for the back.
 						console.log("...flip...");
 						// when the correct action happens, call flip!
@@ -898,14 +939,9 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 						d3.select("#flip_close").on("click", function(){
 							back.close();
 						});
-								
-						
-						
 					}));
 
 				// -- experiment with diff_trail from initiatives
-				
-				
 				
 			});
 	}
