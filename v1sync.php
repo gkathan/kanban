@@ -221,7 +221,7 @@ box-sizing: content-box;
   </div>
   
    
-    <div id="v1Grid" style="position:absolutewidth:100%;height:1000px;"></div>
+    <div id="v1Grid" style="position:absolutewidth:100%;height:4000px"></div>
 
   </div>
  <script>
@@ -356,6 +356,9 @@ function compareData(initiatives,epics){
 	return _compare;
 }
 
+
+/** 
+*/
 function _checkInSync(epic,initiative){
 	// what to check against sync ?
 	// * Swag
@@ -363,7 +366,22 @@ function _checkInSync(epic,initiative){
 	// * name 
 	// ... ?
 	//[TODO ...]
-	if (epic.Swag==initiative.Swag && epic.Name==initiative.name ) return 1;
+	
+	var _healthEpic = epic.Health;
+	if (_healthEpic === undefined) _healthEpic ="";
+	
+	var _healthInitiative = initiative.health;
+	if (_healthInitiative === undefined) _healthInitiative ="";
+	
+	
+	
+	
+	if (epic.Swag==initiative.Swag && 
+		epic.Name==initiative.name && 
+		epic.Status==initiative.status && 
+		_healthEpic.toLowerCase() == _healthInitiative.toLowerCase())
+		
+		return 1;
 	
 	return 0;
 	
@@ -444,7 +462,7 @@ columns.push(
         { id: "kanbanTheme", name: "kanban.theme",cssClass:"onKanban", field: "kanbanTheme",editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},width:80 },
         { id: "kanbanLane", name: "kanban.lane",field: "kanbanLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
         { id: "kanbanSubLane", name: "kanban.sublane", field: "kanbanSubLane",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"touch":"touch","click":"click","product":"product","market":"market","enabling":"enabling","CS":"CS","architecture":"architecture","agile":"agile","leanops":"leanops","devops":"devops","people":"people","entIT":"entIT","marketing":"marketing"},width:80 },
-        { id: "kanbanState", name: "kanban.state", field: "kanbanState",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed"},width:80 },
+        { id: "kanbanState", name: "kanban.state", field: "kanbanState",cssClass:"onKanban",editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed","onhold":"onhold"},width:80 },
         { id: "swag", name: "v1.swag", field: "Swag",cssClass:"onV1",sortable:true, sorter:NumericSorter,width:50 },
         { id: "kanbanSwag", name: "kanban.Swag", field: "kanbanSwag",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50 },
         { id: "categoryName", name: "v1.categoryName", field: "CategoryName",cssClass:"onV1",sortable:true ,sorter:NumericSorter},
@@ -771,7 +789,17 @@ d3.select("#bsync").on("click", function(){
 				_item["status"]=_sync["Status"];
 				
 				//default state = planned
-				_item["state"]=_sync["kanbanState"] ? _sync["kanbanState"] : "planned" ;
+				//  * "done" => "Monitoring", "Done"
+				//  * "killed" => "On Hold"
+				// 	* "planned" => "Implementation" "Conception" "New"
+				var _v1Status = _sync["Status"];
+				var _kanbanState = "planned";
+				if (_v1Status =="Done" || _v1Status=="Monitoring") _kanbanState="done";
+				if (_v1Status =="On hold" ) _kanbanState="killed";
+				if (_v1Status =="New" || _v1Status=="Conception" || _v1Status =="Understanding" || _v1Status=="Implementation") _kanbanState="planned";
+				_item["state"]=_kanbanState;
+				
+				
 				
 				// default size 7
 				_item["size"]=_sync["kanbanSize"] ? _sync["kanbanSize"] : 7;
