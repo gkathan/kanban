@@ -120,6 +120,16 @@ server.get({path : PATH_BM , version : '0.0.1'} , findAllByName);
 server.get({path : PATH_BM +'/:id' , version : '0.0.1'} , findByName);
 
 
+var PATH_ORG14JUN26 = '/org2014jun26';
+server.get({path : PATH_ORG14JUN26 , version : '0.0.1'} , findAllByName);
+
+
+var PATH_ORG14JUL18 = '/org2014jul18';
+server.get({path : PATH_ORG14JUL18 , version : '0.0.1'} , findAllByName);
+
+var PATH_ORG14JUL23 = '/org2014jul23';
+server.get({path : PATH_ORG14JUL23 , version : '0.0.1'} , findAllByName);
+
 var PATH_ORG14 = '/org';
 server.get({path : PATH_ORG14 , version : '0.0.1'} , findAllByName);
 
@@ -137,11 +147,16 @@ server.get({path : PATH_ORG12 , version : '0.0.1'} , findAllByName);
 var PATH_ORG11 = '/org2011april';
 server.get({path : PATH_ORG11 , version : '0.0.1'} , findAllByName);
 
+
+// ---------------------------scrum teams --------------------------------------------
+
+
+
 // --------------------------- EXCEL EXPOR TARGETS --------------------------------------------
 
 
-var PATH_TARGETS = '/excel/targets'
-server.get({path : PATH_TARGETS , version : '0.0.1'} , excelTargets);
+var PATH_SCRUMTEAMS = '/scrumteams'
+server.get({path : PATH_SCRUMTEAMS , version : '0.0.1'} , findAllByName);
 
 var PATH_METRICS = '/excel/metrics'
 server.get({path : PATH_METRICS , version : '0.0.1'} , excelMetrics);
@@ -151,6 +166,12 @@ server.get({path : PATH_INITIATIVES , version : '0.0.1'} , excelInitiatives);
 
 var PATH_LANETEXT = '/excel/lanetext'
 server.get({path : PATH_LANETEXT , version : '0.0.1'} , excelLanetext);
+
+
+//var PATH_V1PROXY = '/excel/v1proxy'
+//server.get({path : PATH_V1PROXY , version : '0.0.1'} , excelv1proxy);
+
+
 
 
 // --------------------------- EXCEL EXPORT TARGETS --------------------------------------------
@@ -231,6 +252,9 @@ function findTrailByNameForId(req, res , next){
 /**
  * async pattern to handle a list of items to be processed
  * inspired by http://book.mixu.net/node/ch7.html (chapter 7.2.1)
+ * 
+ * 
+ * todo: think about using async module: https://github.com/caolan/async
  */
 function save(req, res , next){
     res.setHeader('Access-Control-Allow-Origin','*');
