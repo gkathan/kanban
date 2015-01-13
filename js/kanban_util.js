@@ -506,7 +506,12 @@ function _registerDragDrop(){
 			}			
 			
 			d3.select(this).style("opacity",1);
+			
+			// and here we could persist the y coordinate as sublaneOffset
+			var _item = getItemByKey(initiativeData,"_id",d._id);
 		
+			console.log("[OK] lets persist the change in y drag movement ....[id] = "+JSON.stringify(_item));
+			
 		});
 	return drag_item;	
 	//test end
