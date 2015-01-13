@@ -16,7 +16,8 @@ var metricData;
 var METRIC_CONTEXT;
 
 //name of metric view (default)
-var METRIC_VIEW="REVIEW_Q1_2014";
+//var METRIC_VIEW="REVIEW_Q1_2014";
+var METRIC_VIEW="FORECAST_2015";
 
 
 // y coord of marker / dates 
