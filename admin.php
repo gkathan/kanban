@@ -32,6 +32,7 @@ else{
 <script src="js/mousetrap.min.js"></script>
 
 <script src="js/kanban_config.js"></script>
+<script src="js/kanban_util.js"></script>
 
 
 <script src="js/SlickGrid-master/slick.dataview.js"></script>
@@ -160,7 +161,7 @@ box-sizing: content-box;
   </div>
   
    
-    <div id="adminGrid" style="position:absolutewidth:100%;height:1000px;"></div>
+    <div id="adminGrid" style="height:2000px;"></div>
 
   </div>
  
@@ -183,6 +184,7 @@ var initiativeData;
 var targetData;
 var metricData;
 var lanetextData;
+var teamData;
 
 var _excelExportURL = MONGO_GATEWAY_URL+"excel/";
 
@@ -214,6 +216,7 @@ var admingrid;
 	 document.write("<br>kanban.targets.link: <a href=\""+dataSourceFor("targets")+"\"target=\"_new\"> "+dataSourceFor("targets")+"</a>");
 	 document.write("<br>kanban.metrics.link: <a href=\""+dataSourceFor("metrics")+"\"target=\"_new\"> "+dataSourceFor("metrics")+"</a>");
 	 document.write("<br>kanban.lanetext.link: <a href=\""+dataSourceFor("lanetext")+"\"target=\"_new\"> "+dataSourceFor("lanetext")+"</a>");
+	  document.write("<br>kanban.scrumteams.link: <a href=\""+dataSourceFor("scrumteams")+"\"target=\"_new\"> "+dataSourceFor("scrumteams")+"</a>");
 	 document.write("<br>kanban.excel.export: "+_excelExportURL);
   
 
@@ -244,10 +247,11 @@ function refresh(){
 				$.getJSON(dataSourceFor("initiatives")),
 				$.getJSON(dataSourceFor("targets")),
 				$.getJSON(dataSourceFor("metrics")),
-				$.getJSON(dataSourceFor("lanetext")))
+				$.getJSON(dataSourceFor("lanetext")),
+				$.getJSON(dataSourceFor("scrumteams")))
 
 				
-			.done(function(initiatives,targets,metrics,lanetext){
+			.done(function(initiatives,targets,metrics,lanetext,scrumteams){
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
 					else throw new Exception("error loading initiatives");
 					if (targets[1]=="success") targetData=targets[0];
@@ -256,6 +260,8 @@ function refresh(){
 					else throw new Exception("error loading epics");
 					if (lanetext[1]=="success")  lanetextData=lanetext[0];
 					else throw new Exception("error loading epics");
+					if (scrumteams[1]=="success")  teamData=scrumteams[0];
+					else throw new Exception("error loading scrumteams");
 					
 					
 					if (_type=="targets")
@@ -266,6 +272,8 @@ function refresh(){
 						renderAdminGrid(metricData,getMetricConfig());
 					else if (_type=="initiatives")
 						renderAdminGrid(initiativeData,getInitiativeConfig());
+					else if (_type=="scrumteams")
+						renderAdminGrid(teamData,getTeamConfig());
 					
 				});
 }
@@ -309,7 +317,7 @@ function getInitiativeConfig(){
 	    { id: "v1plannedStart", name: "v1.start", field: "v1plannedStart", sortable:true,cssClass:"onKanbanImmutable",width:80 },
 		{ id: "v1plannedEnd", name: "v1.end", field: "v1plannedEnd", sortable:true ,cssClass:"onKanbanImmutable",width:80},
 		{ id: "v1launchDate", name: "v1.launch", field: "v1launchDate", sortable:true ,cssClass:"onKanbanImmutable",width:80},
-	    { id: "state", name: "state",  field: "state" ,editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed"}},
+	    { id: "state", name: "state",  field: "state" ,editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed","onhold":"onhold"}},
         { id: "isCorporate", name: "isCorporate",  field: "isCorporate",width:50 },
         { id: "onKanban", name: "onKanban",  field: "onKanban",width:50,formatter: Slick.Formatters.Checkmark,editor:Slick.Editors.YesNoSelect },
         { id: "bm", name: "businessmodel",  field: "bm" , editor: Slick.Editors.Text},
@@ -412,6 +420,31 @@ function getTargetConfig(){
 	return _target;
 }
 
+function getTeamConfig(){
+		//scrumteams
+	var _teams =[
+        { id:"id", name: "id", field: "_id",sortable:true,width:30 },
+        { id:"teamname", name: "teamname", field: "Teamname",sortable:true,width:150, editor: Slick.Editors.Text,cssClass: "cell-title" },
+        { id: "vertical", name: "vertical", field: "Vertical", editor: Slick.Editors.Text ,width:150, cssClass: "cell-title",sortable:true},
+        { id: "product", name: "product",  field: "Product",width:150 ,sortable:true},
+		{ id: "subproduct", name: "subproduct", field: "SubProduct", editor: Slick.Editors.Text,width:150,sortable:true },
+	    { id: "productowner", name: "productowner",  field: "ProductOwner",editor: Slick.Editors.Text,width:150},
+	    { id: "apo", name: "apo", field: "APO", editor: Slick.Editors.Text,width:150 },
+	    { id: "workingmode", name: "workingmode", field: "Workingmode", editor: Slick.Editors.Text },
+	    { id: "teamcreationdate", name: "teamcreationdate", field: "TeamCreateDate", editor: Slick.Editors.SimpleDate },
+	    { id: "skills", name: "skills", field: "Skills", editor: Slick.Editors.Text },
+	    { id: "location", name: "location", field: "Location", editor: Slick.Editors.Text},
+        { id: "technologies", name: "technologies",  field: "Technologies", editor: Slick.Editors.Text,width:150 },
+        { id: "scope", name: "scope",  field: "Scope", editor: Slick.Editors.Text,width:150 },
+        { id: "teamsize", name: "teamsize", field: "Teamsize", editor: Slick.Editors.Number ,width:100, cssClass: "cell-title"},
+        { id: "scrummaster", name: "scrummaster", field: "Scrum Master" ,width:150, cssClass: "cell-title"},
+	    { id: "podmaster", name: "podMaster",  field: "Podmaster", editor: Slick.Editors.Text },
+	    { id: "iscrosscomponent", name: "iscrosscomponent", field: "IsCrosscomponent", editor: Slick.Editors.Text },
+        { id: "selfformation", name: "selfformation",  field: "Self-formation?" , editor: Slick.Editors.Text}];
+       
+	return _teams;
+}
+
 
 function renderAdminGrid(data,conf){
 
@@ -442,7 +475,7 @@ function renderAdminGrid(data,conf){
  
 	var dataView = new Slick.Data.DataView();
 	//dataView.setItems(targetData,"id");
-	dataView.setItems(data,"id");
+	dataView.setItems(data,"_id");
 
     admingrid = new Slick.Grid("#adminGrid", dataView, columns, options);
 	
@@ -574,53 +607,16 @@ var itemInsertList;
 d3.select("#bremove").on("click", function(){
 		console.log("REMOVE selected rows: "+admingrid.getSelectedRows());
 		
-		syncList = new Array();
-		itemInsertList = new Array();
+		
+		deleteList = new Array();
 		
 		var _sel = admingrid.getSelectedRows();
 		for (var s in _sel){
-				syncList.push(admingrid.getData().getItem(_sel[s]));
+				deleteList.push(admingrid.getData().getItem(_sel[s]));
 		}
 	
-		var _json = JSON.stringify(syncList);
-		console.log("JSON.stringify tha shit..."+_json);
+		ajaxCall("DELETE","remove",deleteList,_type,refresh);
 		
-		// and send to backend ! :-)
-		$.ajax({
-		type: "DELETE",
-		url: dataSourceFor(_type),
-		
-		//type: "POST",
-		//url: "data/pdo.php",
-		//data: { 'itemJson': _json, 'action':'remove' },
-		
-		data: { 'itemJson': _json, 'action':'remove' },
-		dataType:"json",
-		cache: false,
-		success: function(msg)
-			{
-				refresh();
-				//alert(":  ajax REMOVE success: ");
-				 $('.top-left').notify({
-						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly removed item [_id:"+syncList[0]._id+"]</div>" },
-						fadeOut: {enabled:true,delay:10000},
-						type: "success"
-					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
-				  
-			},
-		error: function(msg)
-			{
-				refresh();
-				//alert(":  ajax SYNC success: ");
-				$('.top-left').notify({
-						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.remove() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+syncList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
-						fadeOut: {enabled:false},
-						type: "danger"
-					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
-				
-				
-			}
-		});
 	
 	});
 	
@@ -638,60 +634,9 @@ d3.select("#bsave").on("click", function(){
 		}
 		
 		
-		
-		var _json = JSON.stringify(saveList);
-		console.log("JSON.stringify tha shit..."+_json);
-		
-		// and send to backend ! :-)
-		$.ajax({
-		type: "POST",
-		//url: "data/pdo.php",
-		url: dataSourceFor(_type),
-		data: { 'itemJson': _json, 'action':'save' },
-		cache: false,
-		//async:false,
-		//contentType:"application/json",
-		dataType:"json",
-		success: function(msg)
-			{
-				refresh();
-				//alert(":  ajax SYNC success: ");
-				var _items="";
-				for (var i in saveList){
-					_items+=saveList[i].name;
-					console.log("*****i: "+i+" - "+saveList[i].name);
-					if (i< saveList.length-1) _items+=", "
-				}
-				
-				$('.top-left').notify({
-						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.save() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly saved "+_type+": "+_items+"]</div>" },
-						fadeOut: {enabled:true,delay:3000},
-						type: "success"
-					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
-				
-				
-			},
-		error: function(msg)
-			{
-				refresh();
-				//alert(":  ajax SYNC success: ");
-				$('.top-left').notify({
-						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> admin.save() says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+saveList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
-						fadeOut: {enabled:false},
-						type: "danger"
-					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
-				
-				
-			}
-		});
+		ajaxCall("POST","save",saveList,_type,refresh);
 		
 	});	
-
-
-
-
-
-
 
 
 
