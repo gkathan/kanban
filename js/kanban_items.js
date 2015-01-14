@@ -74,9 +74,9 @@ var POSTIT_SCALE=1;
 var CUSTUM_POSTIT_SCALE=1;
 
 // PLAN or ACTUAL => defines whether text is below circle or icon
-var ITEM_TEXT_POSITION ="PLAN"
+//var ITEM_TEXT_POSITION ="PLAN"
 
-//	var ITEM_TEXT_POSITION ="ACTUAL"
+	var ITEM_TEXT_POSITION ="ACTUAL"
 
 
 //on item doubleclick
@@ -166,6 +166,9 @@ function drawTargets(){
 					.on("mouseover", function(d){onTooltipOverHandler(d,tooltip);}) 
 						
 					.on("mousemove", function(d){onTooltipMoveHandler(tooltip);})
+					
+					.on("click",	function(d){console.log("CLICK");return;})
+					
 					.on("dblclick",	function(d){onTooltipDoubleClickHandler(tooltip,d3.select(this),d);})
 					.on("mouseout", function(d){onTooltipOutHandler(d,tooltip);})
 
@@ -496,9 +499,10 @@ function drawItems(){
 		// drag test	==>  HUHUUUUU - this overrides the itemdata binding !
 		//d3.select(this).data([ {"x":0, "y":0, "lane":d.lane,"id":d._id} ]).call(drag_item);
 		//for drag&drop
-		d.x=0;
-		d.y=0;
-		d3.select(this).call(drag_item);
+			d.x=0;
+			d.y=0;
+			d3.select(this).call(drag_item);
+		
 	}) //end each()
 } //end drawItems
 
@@ -894,6 +898,8 @@ function onTooltipMoveHandler(tooltip){
  * handler for tooltip doubleclick handling 
  */
 function onTooltipDoubleClickHandler(tooltip,svg,d){
+	
+	
 	console.log("doubleclick: "+d3.select(this)+" svg: "+svg);
 	if (!ITEM_ISOLATION_MODE){
 		d3.selectAll("#items,#targets").selectAll("g").selectAll("circle").on("mousemove",null);
@@ -1031,6 +1037,151 @@ function onTooltipOutHandler(d,tooltip){
 	if (d.startDate) d3.select("#startID_"+d.id).style("visibility","hidden");
 	
 }
+
+/** drag drop handler for items...
+ * 
+ */
+function _registerDragDrop(){
+	// test drag item start
+	var baseY;
+	
+	
+		var drag_item = d3.behavior.drag()
+			.on("dragstart", function(d,i) {
+			   
+				if(ITEM_ISOLATION_MODE){
+					d3.select(this).style("opacity",0.4);
+					movedX=0;
+					movedY=0;
+					baseY = get_metrics(d3.select(this).node()).y;
+					console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y+" metrics:"+baseY);
+					d3.select(this).attr("transform", function(d,i){
+						return "translate(" + [ d.x,d.y ] + ")"
+					})
+				}
+			})	
+
+			.on("drag", function(d,i) {
+				if(ITEM_ISOLATION_MODE){
+				
+					//d.x += d3.event.dx
+					d.y += d3.event.dy
+					
+					movedX += d3.event.dx
+					movedY += d3.event.dy
+					
+					//item
+					d3.select(this).attr("transform", function(d,i){
+						return "translate(" + [ d.x,d.y ] + ")"
+					})
+					
+					// and the tooltip
+					var _y =tooltip.style("top").split("px")[0];
+					var _ymoved = getInt(_y)+getInt(d3.event.dy);
+					
+					tooltip.style("visibility","hidden");
+					tooltip.style("top",_ymoved+"px");
+					
+				}
+			})
+				
+			.on("dragend",function(d,i){
+				if(ITEM_ISOLATION_MODE){
+				
+					console.log("dragend event: x="+d.x+", y="+d.y+"..."+d.lane);
+					tooltip.style("visibility","visible");
+					
+					// check y drop coordinates whetrher they are within lane spectrum
+					var _lane = getLaneByNameNEW(d.lane);
+					var _m =get_metrics(d3.select(this).node());
+					var _y1 = y(_lane.yt1)+margin.top;
+					var _y2 = y(_lane.yt2)+margin.top;
+					
+					console.log("m.Y: "+_m.y+" lane Y1:" +_y1+" Y2: "+_y2);
+					var _y = _m.y-250;
+					console.log("...ok meaning i am now from a board perspective on y: "+_y);
+					
+					
+					var _item = getItemByKey(initiativeData,"_id",d._id);
+					
+					
+					// and it would be interesting to derive the lane we are in after dragend
+					// currently have to iterate over lanes and according sublanes
+					// have to use the y() function on the .yt1 and .yt2 cordinates (d3 domain functions)
+					
+					var _sublaneOld=_item.lane+"."+_item.sublane;
+					var _sublaneNew;
+					
+					var _sublane;
+					var _lane;//= getLaneByY(_y);
+					var _lanes = getLanesNEW();
+					var _sublanes = getSublanesNEW();
+					for (var l in _lanes){
+						if (_y >= y(_lanes[l].yt1) && _y <= y(_lanes[l].yt2)) {
+							_lane =_lanes[l];
+							console.log("************** MATCH LANE*****************"+_lane.name);
+							
+							for (var sl in _sublanes){
+								console.log("_y: "+_y+" sublane.yt1: "+_sublanes[sl].yt1+ " sublane.yt2: "+_sublanes[sl].yt2); 
+								if (_y >= y(_sublanes[sl].yt1) && _y <= y(_sublanes[sl].yt2)) {
+									
+									_sublane = _sublanes[sl];
+									console.log("************** MATCH SUBLANE*****************"+_sublane.name+" old sublane: "+_sublaneOld);
+									
+									_item.lane=_.last(_lane.name.split("."));;
+									_item.sublane = _.last(_sublane.name.split("."));
+									_sublaneNew = _item.lane+"."+_item.sublane;
+								}
+							}
+					}
+					}
+					
+					
+					
+					
+					
+					if (_m.y < 0 || _m.y>y(100)){
+						//put back to initial dragstart coords
+					 d3.select(this).attr("transform","translate(0,0)");
+					 d.x=0;
+					 d.y=0;
+						console.log("***** nope");
+					}			
+					
+					d3.select(this).style("opacity",1);
+					
+					// and here we could persist the y coordinate as sublaneOffset
+					
+					console.log("before: sublaneOffset = "+_item.sublaneOffset);
+					
+					console.log("oldsublane: "+_sublaneOld);
+					console.log("newsublane: "+_sublaneNew);
+					
+					// only if we stay in the same sublane we can change the offset !!!
+					// offset is ONLY valid within same sublane
+					if (_sublaneOld == _sublaneNew){
+						_item.sublaneOffset =(parseInt(_item.sublaneOffset) ||0)  +parseInt(d.y);
+					}
+					else {
+						_item.sublaneOffset = 0;
+						
+					}
+					
+					console.log("after: sublaneOffset = "+_item.sublaneOffset);
+					
+					
+					
+					
+					if (movedY!=0) ajaxCall("POST","save",new Array(_item),"initiatives");
+				
+					console.log("[OK] lets persist the change in y drag movement ....[id] = "+JSON.stringify(_item));
+				}
+			});
+		return drag_item;	
+		//test end
+
+}
+
 
 
 
