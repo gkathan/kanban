@@ -5,14 +5,14 @@ session_start();
 
 
 if( !isset($_SESSION['auth']) ) {
-     header("Location: login.html");
+     header("Location: login.html?page=kanban.php");
 }
 else {
 	
 	$auth=$_SESSION['auth'];
 	if ($auth!="bpty" && $auth!="exec" && $auth!="admin")
 	{
-	   header("Location: login.html");
+	   header("Location: login.html?page=kanban.php");
 }
 else{
 	
@@ -134,10 +134,15 @@ else{
 	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 
 	
+	/*
 	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
 	CONTEXT=ITEMDATA_FILTER.value;
+	*/
 
+	CONTEXT = "b2c gaming";
 
+	
+	// the whole ITEMDATACONFIG is NOT NEEDED => it is only addon-formatting override !
 	//percentages is for override => if not specified it uses mode to auto layout
 	itemDataConfig = [	
 						{"level":"bm", "mode": "auto","percentages":
@@ -211,8 +216,9 @@ else{
 						];		
 
 
+// **********  ENTRY POINT ********************//	
+// => kanban.js.render()
 	
-
 	render("external.svg");
 	
 	
@@ -521,7 +527,8 @@ function submit_download_form(output_format)
 			  <button id="l1" type="button" class="btn btn-info">Backlog Treemap</button>
 			  <button id="l2" type="button" class="btn btn-info">Backlog Tree</button>
 			  <button id="l3" type="button" class="btn btn-info">Backlog ForceMap</button>
-			  <button id="l4" type="button" class="btn btn-info">Backlog Orgchart</button>
+			  <button id="l4" type="button" class="btn btn-info">Orgchart Circle Contain</button>
+			  <button id="l44" type="button" class="btn btn-info">Orgchart Linear Tree</button>
 			</div>
 
 			<div class="btn-group-xs">
@@ -533,6 +540,8 @@ function submit_download_form(output_format)
 			  <button id="l7" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> target admin</button>
 			  <button id="l8" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> metric admin</button>
 			  <button id="l9" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> lanetext admin</button>
+			  <button id="l10" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-wrench"></span> scrumteams admin</button>
+			
 			</div>
 
 			  <div class="control-zoom">
@@ -672,12 +681,15 @@ function initHandlers(){
 	redirect ("#l2","tree.html");
 	redirect ("#l3","force.html");
 	redirect ("#l4","org.html");
+	redirect ("#l44","org_tree.php");
 	redirect ("#l5","v1sync.php");
 	
 	redirect ("#l6","admin.php?type=initiatives");
 	redirect ("#l7","admin.php?type=targets");
 	redirect ("#l8","admin.php?type=metrics");
 	redirect ("#l9","admin.php?type=lanetext");
+	redirect ("#l10","admin.php?type=scrumteams");
+
 
 	
 	d3.select("#bmetaphors").on("click",function(){
