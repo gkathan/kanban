@@ -458,62 +458,71 @@ function get_metrics(el) {
 
 
 
-function _registerDragDrop(){
-	// test drag item start
-	var baseY;
-	var drag_item = d3.behavior.drag()
-		.on("dragstart", function(d,i) {
-		   d3.select(this).style("opacity",0.4);
-			movedX=0;
-			movedY=0;
-			baseY = get_metrics(d3.select(this).node()).y;
-			console.log("dragstart= d.x: "+d.x+" - d.y: "+d.y+" metrics:"+baseY);
-			d3.select(this).attr("transform", function(d,i){
-				return "translate(" + [ d.x,d.y ] + ")"
-			})
-		})	
 
-		.on("drag", function(d,i) {
-			
-			//d.x += d3.event.dx
-			d.y += d3.event.dy
-			
-			movedX += d3.event.dx
-			movedY += d3.event.dy
-			
-			
-			d3.select(this).attr("transform", function(d,i){
-				return "translate(" + [ d.x,d.y ] + ")"
-			})
-		})	
-		.on("dragend",function(d,i){
-			console.log("dragend event: x="+d.x+", y="+d.y+"..."+d.lane);
-			
-			// check y drop coordinates whetrher they are within lane spectrum
-			var _lane = getLaneByNameNEW(d.lane);
-			var _m =get_metrics(d3.select(this).node());
-			var _y1 = y(_lane.yt1)+margin.top;
-			var _y2 = y(_lane.yt2)+margin.top;
-			
-			console.log("m.Y: "+_m.y+" lane Y1:" +_y1+" Y2: "+_y2);
-			
-			if (_m.y <_y1 || _m.y>_y2){
-				//put back to initial dragstart coords
-			 d3.select(this).attr("transform","translate(0,0)");
-			 d.x=0;
-			 d.y=0;
-				console.log("***** nope");
-			}			
-			
-			d3.select(this).style("opacity",1);
-			
-			// and here we could persist the y coordinate as sublaneOffset
-			var _item = getItemByKey(initiativeData,"_id",d._id);
+
+
+
+
+// ********************* ajax helpers **********************************
+
+
+/**
+* helper class for ajax calls
+*  verb: "POST", "DELETE",...
+*  action = what to do 
+* _type = type of object (e.g. initiatives)
+* 
+* referenced from admin.php
+*/
+function ajaxCall(verb,action,itemList,_type,afterHandlerCallback){
+	
+		var _json = JSON.stringify(itemList);
+		console.log("JSON.stringify tha shit..."+_json);
 		
-			console.log("[OK] lets persist the change in y drag movement ....[id] = "+JSON.stringify(_item));
-			
+		// and send to backend ! :-)
+		$.ajax({
+		type: verb,
+		//url: "data/pdo.php",
+		url: dataSourceFor(_type),
+		data: { 'itemJson': _json, 'action':action },
+		cache: false,
+		//async:false,
+		//contentType:"application/json",
+		dataType:"json",
+		success: function(msg)
+			{
+				if (afterHandlerCallback !=undefined) afterHandlerCallback();
+				var _items="";
+				for (var i in itemList){
+					_items+=itemList[i].name;
+					console.log("*****i: "+i+" - "+itemList[i].name);
+					if (i< itemList.length-1) _items+=", "
+				}
+				
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-ok\"></span><span style=\"font-size:10px;font-weight:bold\"> ajaxCall.("+action+") says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* successfuly saved "+_type+": "+_items+"]</div>" },
+						fadeOut: {enabled:true,delay:3000},
+						type: "success"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
+			},
+		error: function(msg)
+			{
+				if (afterHandlerCallback !=undefined)
+				$('.top-left').notify({
+						message: { html: "<span class=\"glyphicon glyphicon-fire\"></span><span style=\"font-size:10px;font-weight:bold\"> ajaxCall.("+action+") says:</span> <br/><div style=\"font-size:10px;font-weight:normal;margin-left:20px\">* synced item [_id:"+itemList[0]._id+"] #failed<br>"+JSON.stringify(msg)+"</div>" },
+						fadeOut: {enabled:false},
+						type: "danger"
+					  }).show(); // for the ones that aren't closable and don't fade out there is a .hide() function.
+				
+				
+			}
 		});
-	return drag_item;	
-	//test end
+		
 }
+
+
+
+
 
