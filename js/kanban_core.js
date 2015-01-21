@@ -20,15 +20,36 @@
  */
 function createLaneHierarchy(data,dataFilter,nestConfig,context){
 	// create hierarchical base data from list
-	var _level = nestConfig.length;
 	
-	var _hierarchy = _.nest(data.filter(function(d){
-		if (dataFilter){
-				//return eval("d."+dataFilter.name+dataFilter.operator+"\""+dataFilter.value+"\"");
-				return eval(_buildFilter(dataFilter));
-		}
-		else return true;
-	}),nestConfig);
+	
+	// ----- legacy 
+	
+	if (RUNMODE =="LEGACY"){
+		var _level = nestConfig.length;
+		
+		var _hierarchy = _.nest(data.filter(function(d){
+			if (dataFilter){
+					return eval(_buildFilter(dataFilter));
+			}
+			else return true;
+		}),nestConfig);
+	
+	// legacy 
+	}
+	else if (RUNMODE=="NG"){
+		// ----- NEW 
+		
+		// number of max levels in the lanePath 
+		var _level =3;
+		
+		
+		var items = initiativeData.map(function(d) { return d.lanePath.split('/'); });
+
+		// emulate legacy behavior to get the first level below the "bm"="b2c gaming" node ...
+		var _hierarchy = buildTreeFromPathArray(items)[0];
+		
+		// ----- NEW 
+	}		
 	
 	_hierarchy = createRelativeCoordinates(_hierarchy,0,_level,context);
 	
@@ -61,6 +82,7 @@ function _buildFilter(filter){
  * 
  */
 function createRelativeCoordinates(_itemData,_start,_stop,_context){
+	
 	// root
 	if (_start==0){
 		_itemData.y1 = _context.yMin;
@@ -80,8 +102,9 @@ function createRelativeCoordinates(_itemData,_start,_stop,_context){
 		//calculate sum end
 		for (i in _itemData.children){
 			_itemData.children[i].depth=_start;
-			_itemData.children[i].name=_itemData.name+"."+_itemData.children[i].name;
-			_itemData.children[i].level=ITEMDATA_NEST[_start-1];
+			_itemData.children[i].name=_itemData.name+FQ_DELIMITER+_itemData.children[i].name;
+			//_itemData.children[i].level=ITEMDATA_NEST[_start-1];
+			_itemData.children[i].level=_start;
 
 			if (_itemData.children[i].children && _stop >_start){
 				//recurse deeper
@@ -98,9 +121,14 @@ function createRelativeCoordinates(_itemData,_start,_stop,_context){
 			else {
 				_y1 = parseFloat(_itemData.children[parseInt(i-1)].y2);
 			}	
+			
 			//default mode ="auto"
-			_y2 = _context.yMax*(_itemData.children[i].children.length/_itemData.childsum);
+			if (_itemData.childsum == 0){
+				_y2 = _context.yMax/_itemData.children.length;
+			}
+			else _y2 = _context.yMax*(_itemData.children[i].children.length/_itemData.childsum);
 
+			
 			//check if mode is set to "equal"
 			if (getConfigModeByLevel(_itemData.children[i].level)=="equal"){
 				_y2 = _context.yMax/_itemData.children.length;
@@ -127,6 +155,7 @@ function createRelativeCoordinates(_itemData,_start,_stop,_context){
 				//_y2= _config;
 			}
 			// end override check 
+			
 			_y2 = _y2+_y1;
 			
 			_itemData.children[i].y1=_y1;
