@@ -42,7 +42,7 @@ function drawLanes(){
 
 
 //experiment
-	var drag_item = _registerDragDrop();
+	//var drag_item = _registerDragDrop();
 //experiment
 	
 	
@@ -56,7 +56,7 @@ function drawLanes(){
 	 * this would be level-0 in a generic view
 	 * in this concrete view this would be the "businessmodel=b2c gaming" umbrell box
 	 * */
-	_drawLaneContext(lanes,CONTEXT,-margin.left,0,LANE_LABELBOX_LEFT_WIDTH/6,height,"treemap.html")
+	_drawLaneContext(lanes,CONTEXT,-margin.left,0,LANE_LABELBOX_LEFT_WIDTH/4,height,"treemap.html")
 	
 	var i=0;
 	var _xRightStart = x(KANBAN_END)+TARGETS_COL_WIDTH;
@@ -99,8 +99,8 @@ function drawLanes(){
 		_drawLaneText(_rightBox,_lane,"target",_yTextOffset);
 		
 		// laneside descriptors
-		if (_.last(CONTEXT.split("."))=="drill-in"){
-			var _laneName = _.last(_lane.split("."))
+		if (_.last(CONTEXT.split(FQ_DELIMITER))=="drill-in"){
+			var _laneName = _.last(_lane.split(FQ_DELIMITER))
 			_drawLaneSideText(lanesLeft,_laneName,-LANE_LABELBOX_LEFT_WIDTH-2,_y+3,"5px","start");
 		}
 		//sublane descriptors
@@ -110,7 +110,7 @@ function drawLanes(){
 			var _h = y(_sublanes[s].yt2-_sublanes[s].yt1); 
 			
 			// strip only the sublane name if name is fully qualified like "topline.bwin.touch"
-			var _sublane = _.last((_sublanes[s].name).split("."))
+			var _sublane = _.last((_sublanes[s].name).split(FQ_DELIMITER))
 			
 			_drawLaneSideText(_leftBox,_sublane,1,_y+_h/2,"4px","middle");
 		
@@ -120,7 +120,7 @@ function drawLanes(){
 				}
 			}
 		//experiment
-		_leftBox.data([ {"x":0, "y":0, "lane":_lane} ]).call(drag_item);
+		//_leftBox.data([ {"x":0, "y":0, "lane":_lane} ]).call(drag_item);
 		
 		_drawThemeDemarcation(d3.select(this),"themeLine");
 		i++;
@@ -139,7 +139,24 @@ function drawLanes(){
 		  _drawPillarColumns(lanesRight,_pillarColumns,_xBase,_yBase,_width);
 		  _drawHowPillars(lanesRight,pillarData,_xBase,_yBase,_width);							
 	}
+	
+	_drawThemeBoxes(svg);
 }	
+
+
+function _drawThemeBoxes(svg,css){
+	var _y;
+	for (t in getThemesNEW()){
+		var _theme = getThemesNEW()[t];
+		var _t1 = y(_theme.yt1);
+		var _t2 = y(_theme.yt2);
+		var _height = _t2-_t1;
+		var _name = _.last(_theme.name.split("/"));
+		
+		_drawLaneContext(svg,_name,-margin.left+30,_t1,140,_height,"","themebox")
+		
+		}
+	}
 
 function _drawThemeDemarcation(svg,css){
 	//check for demarcation between topline and enabling
@@ -147,13 +164,17 @@ function _drawThemeDemarcation(svg,css){
 	// HAHAAAA :-)) [20140104] did it !!!!
 	var _y;
 	for (t in getThemesNEW()){
-		var _t = y(getThemesNEW()[t].yt2);
+		var _theme = getThemesNEW()[t];
+		var _t1 = y(_theme.yt1);
+		var _t2 = y(_theme.yt2);
+		var _height = _t2-_t1;
+		var _name = _.last(_theme.name.split("/"));
 		
 		// no demarcation line in the end ;-)
 		if (t<getThemesNEW().length-1){
-			_drawLine(svg,x(KANBAN_START)-margin.left,_t,x(KANBAN_END)+margin.right+margin.left,_t,css);
-			//_drawLaneSideText(d3.select(this),getThemesNEW()[t].name,-LANE_LABELBOX_LEFT_WIDTH-10,_t,"5px","middle");
-			_y=_t
+			_drawLine(svg,x(KANBAN_START)-margin.left,_t2,x(KANBAN_END)+margin.right+margin.left,_t2,css);
+			
+			_y=_t2
 		}
 	}
 	
@@ -231,7 +252,7 @@ function _drawLaneText(svg,lane,side,logoHeight){
 	var _yBase = y((getLaneByNameNEW(lane).yt1))+logoHeight+5;
 	
 	// just get the last element in a FQN
-	lane = _.last(lane.split("."))
+	lane = _.last(lane.split(FQ_DELIMITER))
 	if (lane=="bwin" || lane=="premium") _color="white";
 
 	var _xBase;
@@ -250,15 +271,32 @@ function _drawLaneText(svg,lane,side,logoHeight){
 	}
 }
 
+		function highlightLane(svg,lane){
+
+			var _highlight = svg.append("rect")
+				.attr("x",-5)
+				.attr("y",y(lane.yt1))
+				.attr("width",1000)
+				.attr("height",y(lane.yt2-lane.yt1))
+				.style("fill","red")
+				.style("opacity",0.1);
+
+			_highlight.attr("id","highlightlane");
+			return _highlight;
+		}
+
+
 /* ------------------------------------------------- drawLanes() helper functions ----------------------------------------------------------- */
 		/**
 		 
 		 */
-		function _drawLaneContext(svg,context,x,y,width,height,link){
-			var _textOffsetX = 7;
+		function _drawLaneContext(svg,context,x,y,width,height,link,css){
+			var _textOffsetX = 25;
 			var _textOffsetY = 5;
 			
-			_drawText(svg,"CONTEXT= "+context,(x+_textOffsetX),(y+_textOffsetY),{"size":"7px","color":"#dddddd","weight":"bold","mode":"tb"});
+			if (!css) var css ="contextbox";
+			
+			_drawText(svg,context,(x+_textOffsetX),(y+_textOffsetY),{"size":"14px","color":"#dddddd","weight":"bold","mode":"tb"});
 			
 			svg.append("rect")
 			.attr("x",x)
@@ -266,7 +304,7 @@ function _drawLaneText(svg,lane,side,logoHeight){
 			.attr("width",width)
 			.attr("height",height)
 				.on("click",function(d){window.location.href=link;})
-			.attr("class","contextbox");
+			.attr("class",css);
 		}
 
 		/**
@@ -277,7 +315,7 @@ function _drawLaneText(svg,lane,side,logoHeight){
 			var _y_offset=4;
 			var _metrics;
 			// if it comes in FQ format 
-			lane = _.last(lane.split("."));
+			lane = _.last(lane.split(FQ_DELIMITER));
 
 			var _lanebox=svg.append("rect")
 			.attr("x",x)
@@ -328,6 +366,9 @@ function _drawLaneText(svg,lane,side,logoHeight){
 		function _drawLaneSideText(svg,text,x,y,size,anchor){
 			_drawText(svg,text,x,y,{"size":size,"color":"grey","weight":"normal","mode":"tb","anchor":anchor});
 		}
+
+		
+
 /* ------------------------------------------------- END drawLanes() helper functions ----------------------------------------------------------- */
 
 
