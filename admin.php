@@ -226,18 +226,6 @@ initShortcuts();
 refresh();
 
 
-function getUrlVars()
-{
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++)
-    {
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-    return vars;
-}
 
 
 function refresh(){
@@ -308,7 +296,8 @@ function getInitiativeConfig(){
 		{ id:"_id", name: "_id", field: "_id",sortable:true,width:150,cssClass:"onKanbanImmutable" },
         { id:"id", name: "id", field: "id",sortable:true,width:40,cssClass:"onKanbanImmutable"},
         { id:"ExtId", name: "ExtId", field: "ExtId",sortable:true,cssClass:"onKanbanImmutable",width:50 },
-        { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:300, cssClass: "cell-title"},
+		{ id:"ExtNumber", name: "v1.number", field: "ExtNumber",sortable:true,cssClass:"onV1"},
+         { id: "name", name: "name", field: "name", editor: Slick.Editors.Text ,width:300, cssClass: "cell-title"},
         { id: "name2", name: "name2",  field: "name2",width:150 , editor: Slick.Editors.Text},
         { id: "backlog", name: "backlog",  field: "backlog",width:200, editor: Slick.Editors.Text  },
         { id: "startDate", name: "initial.start", field: "startDate", editor: Slick.Editors.Date,formatter: Slick.Formatters.SimpleDate,sortable:true },
@@ -320,6 +309,7 @@ function getInitiativeConfig(){
 	    { id: "state", name: "state",  field: "state" ,editor: Slick.Editors.SelectCell,options:{"planned":"planned","todo":"todo","done":"done","killed":"killed","onhold":"onhold"}},
         { id: "isCorporate", name: "isCorporate",  field: "isCorporate",width:50 },
         { id: "onKanban", name: "onKanban",  field: "onKanban",width:50,formatter: Slick.Formatters.Checkmark,editor:Slick.Editors.YesNoSelect },
+        { id: "lanePath", name: "lanePath",  field: "lanePath" , editor: Slick.Editors.Text},
         { id: "bm", name: "businessmodel",  field: "bm" , editor: Slick.Editors.Text},
         { id: "theme", name: "theme",  field: "theme" ,editor: Slick.Editors.SelectCell,options:{"topline":"topline","enabling":"enabling"},},
         { id: "lane", name: "lane",  field: "lane",editor: Slick.Editors.SelectCell,options:{"bwin":"bwin","pp":"pp","foxy":"foxy","premium":"premium","casino":"casino","techdebt":"techdebt","shared":"shared"},sortable:true, sorter:NumericSorter,width:80 },
