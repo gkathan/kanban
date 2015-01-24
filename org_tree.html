@@ -1,3 +1,24 @@
+<?php
+
+session_start();
+
+
+
+if( !isset($_SESSION['auth']) ) {
+     header("Location: login.html");
+}
+else {
+	
+	$auth=$_SESSION['auth'];
+	if ($auth!="bpty" && $auth!="exec" && $auth!="admin")
+	{
+	   header("Location: login.html");
+}
+else{
+	
+
+?>
+
 <!DOCTYPE html>
 <meta charset="utf-8">
 
@@ -27,7 +48,7 @@
 <script src="js/kanban_config.js"></script>
 <script src="js/kanban_util.js"></script>
 <script src="js/org_util.js"></script>
-<script src="js/org_tree2.js"></script>
+<script src="js/org_tree.js"></script>
 
 
 <link rel="stylesheet" type="text/css" href="bootstrap/dist/css/bootstrap.min.css">
@@ -168,7 +189,7 @@ function submit_download_form(output_format)
 	 </div><!-- /input-group -->
 
 	<div style="width:120px" class="input-group input-group-sm">
-			  <input id="b3" type="checkbox" class="form-control input-sm"> leaf nodes
+			  <input id="b3" type="checkbox" class="form-control input-sm"> <span style="font-size:8px">show leaf nodes</span>
 	  </div><!-- /input-group -->
 
 	<div class="btn-group-xs">
@@ -179,7 +200,28 @@ function submit_download_form(output_format)
 			  <option value="org2012april">2012 APRIL</option>
 			  <option value="org2011april">2011 APRIL</option>
 			</select>
-		</div>	
+	</div>	
+
+	<br/>
+
+	<div class="btn-group-xs">
+			<span style="font-size:8px">hierarchy tape</span>	<select id="hierarchy" class="multiselect" >
+			  <option value="bp" selected>business process supervisor</option>
+			   <option value="hr">HR line supervisor</option>
+			</select>
+	</div>	
+
+
+	<br/>
+
+	<div class="btn-group-xs">
+			<span style="font-size:8px">role type</span>	<select id="roletype" class="multiselect" >
+			  <option value="position" selected>position</option>
+			  <option value="jobTitle">corporate job title</option>
+			  <option value="job">job title</option>
+			  <option value="function">function</option>
+			</select>
+	</div>	
 
 
 
@@ -198,6 +240,37 @@ function submit_download_form(output_format)
 					
 					var _val = $(element).val()
 					ORG_DATA = _val;
+					d3.select("svg").remove();
+					render();
+
+				}
+			});
+		  });
+		  
+		   $(document).ready(function() {
+			  $('#hierarchy').multiselect({
+				buttonClass: 'btn-primary btn-sm',
+				onChange: function(element,checked){
+					console.log("element: "+_val+" checked: "+checked);
+					
+					var _val = $(element).val()
+					HIERARCHY_TYPE = _val;
+					d3.select("svg").remove();
+					render();
+
+				}
+			});
+		  });
+	
+	
+		$(document).ready(function() {
+			  $('#roletype').multiselect({
+				buttonClass: 'btn-primary btn-sm',
+				onChange: function(element,checked){
+					console.log("element: "+_val+" checked: "+checked);
+					
+					var _val = $(element).val()
+					ROLE_TYPE = _val;
 					d3.select("svg").remove();
 					render();
 
@@ -239,5 +312,15 @@ function initHandlers(){
 		
 }
 </script>
+
+<?php
+
+	}
+}
+
+?>	
 </body>
 </html>
+
+
+

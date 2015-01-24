@@ -16,9 +16,9 @@
  * 
  */
 function getConfigByLevel(level){
-	for (var i in itemDataConfig){
-		if (itemDataConfig[i].level==level) return itemDataConfig[i];
-	}
+		for (var i in itemDataConfig){
+			if (itemDataConfig[i].level==level) return itemDataConfig[i];
+		}
 	return null;
 }
 
@@ -96,7 +96,8 @@ function getItemsBySublane(sublane){
 /** return object array of lanes
 */
 function getLanesNEW(){
-	return getElementsByDepth(1+ITEMDATA_NEST.indexOf("lane"));
+	if (RUNMODE=="LEGACY") return getElementsByDepth(1+ITEMDATA_NEST.indexOf("lane"));
+	else if (RUNMODE=="NG") return getElementsByDepth(2);
 }
 
 /** returns lane object by name
@@ -110,11 +111,14 @@ function getLaneByNameNEW(name){
 }
 
 
+
 function getSublanesNEW(lane){
 	if (lane) 
 		return getLaneByNameNEW(lane).children;
-	else
-		return getElementsByDepth(1+ITEMDATA_NEST.indexOf("sublane"));
+	else{
+			if (RUNMODE=="LEGACY") return getElementsByDepth(1+ITEMDATA_NEST.indexOf("sublane"));
+			else if (RUNMODE=="NG") return getElementsByDepth(3);
+	}
 }
 
 function getSublaneByNameNEW(name){
@@ -126,7 +130,9 @@ function getSublaneByNameNEW(name){
 }
 
 function getThemesNEW(){
-	return getElementsByDepth(1+ITEMDATA_NEST.indexOf("theme"));
+	if (RUNMODE=="LEGACY") return getElementsByDepth(1+ITEMDATA_NEST.indexOf("theme"));
+	else if (RUNMODE=="NG") return getElementsByDepth(0);
+	
 }
 
 function getElementsByDepth(depth){
@@ -134,6 +140,10 @@ function getElementsByDepth(depth){
 	traverse(itemTree,0,depth,_elements);
 	return _elements;
 }
+
+
+
+
 
 
 /** start=0, stop=1 should give me the 2 top elements in hierarchy 
@@ -198,15 +208,65 @@ function timeFormat(formats) {
  */
 function getFQName(d){
 	if (d){
+		
+		if (RUNMODE=="LEGACY"){
 			//root node.name
 			var _fq= CONTEXT;//NEST_ROOT;
 			for (var i=0;i<ITEMDATA_NEST.length;i++){
 				_fq=_fq+"."+d[ITEMDATA_NEST[i]];
 			}
 			return _fq;
+		}
+		else if (RUNMODE=="NG"){
+			return d.lanePath;	
+		}
+		
 	}
 }
 
+
+// "NG" REFACTORING STARTED
+
+/**
+* taken from http://stackoverflow.com/questions/17140711/how-to-show-a-list-or-array-into-a-tree-structure-in-javascript
+* 
+* path array has to have an item named path="/bb/aa/.."
+* 
+*/
+function buildTreeFromPathArray(paths){
+
+	// needs to be called on the input string array
+	//paths = paths.map(function(d) { return d.split('/'); });
+	
+	var items = [];
+	for(var i = 0, l = paths.length; i < l; i++) {
+		var path = paths[i];
+		var name = path[0];
+		var rest = path.slice(1);
+		var item = null;
+		for(var j = 0, m = items.length; j < m; j++) {
+			if(items[j].name === name) {
+				item = items[j];
+				break;
+			}
+		}
+		if(item === null) {
+			item = {name: name, children: []};
+			items.push(item);
+		}
+		if(rest.length > 0) {
+			item.children.push(rest);
+		}
+	}
+	
+	
+	for(i = 0, l = items.length; i < l; i++) {
+		item = items[i];
+		item.children = buildTreeFromPathArray(item.children);
+	}
+	
+	return items;
+}
 
 
 
@@ -461,6 +521,18 @@ function get_metrics(el) {
 
 
 
+function getUrlVars()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
 
 
 // ********************* ajax helpers **********************************

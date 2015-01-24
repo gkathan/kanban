@@ -100,7 +100,13 @@ var CONTEXT="CONTEXT";
 var releaseData;
 
 
+var boardsData;
+// the current "CONTEXT"
+var BOARD;
 
+// AUTH ROLE set by php script
+// current roles: bpty, exec, admin
+var AUTH;
 
 
 // raster px configuration
@@ -139,13 +145,20 @@ var WIP_END;
 
 setWIP();
 
-// equals 1377993600000 in ticks (date.getTime()
-var KANBAN_START = new Date("2014-03-01");
-var KANBAN_START_DEFAULT = new Date("2014-03-01");
+var KANBAN_START;
+var KANBAN_END;
 
-// equals 1422662400000 in ticks
-var KANBAN_END = new Date("2015-06-31");
-var KANBAN_END_DEFAULT = new Date("2015-06-31");
+if (RUNMODE=="LEGACY"){
+	// equals 1377993600000 in ticks (date.getTime()
+	KANBAN_START = new Date("2014-03-01");
+	var KANBAN_START_DEFAULT = new Date("2014-03-01");
+
+	// equals 1422662400000 in ticks
+	KANBAN_END = new Date("2015-06-31");
+	var KANBAN_END_DEFAULT = new Date("2015-06-31");
+}
+// in NG this comes from the db.boards 
+
 
 // diff = 44.668.800.000
 // 1 pixel (WIDTH = 1500) would be 29.779.200 units
@@ -219,6 +232,8 @@ function init(){
 		.domain([Y_MAX,Y_MIN])
 		.range([height, 0]);
 
+	console.log(">>>>>>>>>>>>>>>>>>>> KANBAN_START: "+KANBAN_START);
+	
 	x = d3.time.scale()
 		.domain([KANBAN_START, KANBAN_END])
 		.range([0, width]);
@@ -268,7 +283,7 @@ function render(svgFile){
 	checkServices();
 	initShortcuts();
 	
-	d3.xml("data/"+svgFile, function(xml) {
+	d3.xml(svgFile, function(xml) {
 		document.body.appendChild(document.importNode(xml.documentElement, true));
 	
 	/*
@@ -288,12 +303,13 @@ function render(svgFile){
 				$.getJSON(dataSourceFor("metrics")),
 				$.getJSON(dataSourceFor("releases")),
 				$.getJSON(dataSourceFor("postits")),
+				$.getJSON(dataSourceFor("boards")),
 				$.getJSON(dataSourceFor("targets")),
 				$.getJSON(dataSourceFor("lanes")),
 				$.getJSON("/data/laneTextTargetPillars.json"))
 
 
-			.done(function(lanetext,initiatives,metrics,releases,postits,targets,lanes,pillars){
+			.done(function(lanetext,initiatives,metrics,releases,postits,boards,targets,lanes,pillars){
 					if (lanetext[1]=="success") laneTextData=lanetext[0];
 					else throw new Exception("error loading lanetext");
 					if (initiatives[1]=="success") initiativeData=initiatives[0];
@@ -303,6 +319,8 @@ function render(svgFile){
 					if (releases[1]=="success") releaseData=releases[0];
 					else throw new Exception("error loading releases");
 					if (postits[1]=="success") postitData=postits[0];
+					else throw new Exception("error loading postits");
+					if (boards[1]=="success") boardsData=boards[0];
 					else throw new Exception("error loading postits");
 					if (targets[1]=="success") targetData=targets[0];
 					else throw new Exception("error loading targets");
@@ -325,26 +343,81 @@ function setKanbanDefaultDates(){
 }
 
 
+function joinBoard2Initiatives(board,initiatives){
+		var _items = board.items;
+		
+		var _join = [];
+		
+		for (var i in _items){
+			var _initiative = getItemByKey(initiatives,"_id",_items[i].itemRef);
+			if (_initiative){
+				
+				for (ii in _items[i].itemView){
+						var _view = _items[i].itemView[ii];
+						_initiative[ii]=_view;
+				}
+				_join.push(_initiative);
+			}
+		}
+		//set global 
+		initiativeData = _join;
+		return _join;
 
+}
+
+/**generic render method for NG board handling
+ */
+function renderBoard(board){
+
+		if (RUNMODE=="NG"){
+		
+		HEIGHT= board.height;
+		WIDTH = board.width;
+		ITEM_SCALE = board.itemScale;
+		LANE_LABELBOX_RIGHT_WIDTH = board.laneboxRightWidth;
+
+		KANBAN_START= new Date(board.startDate);
+		KANBAN_END= new Date(board.endDate);
+		
+		BOARD = board;
+		CONTEXT = board.name;
+		// we have to now join boardsData and initiative Data
+		boardItems =joinBoard2Initiatives(board,initiativeData);
+		
+		// with drawAll() refresh without postback possible ;-)
+	}
+} 
 
 
 function renderB2CGaming() {
+
 	hideWhiteboard();
-	
 	HEIGHT=1100;
 	WIDTH=1600;
 	ITEM_SCALE=0.6;
 	LANE_LABELBOX_RIGHT_WIDTH =200;
-	
 	setKanbanDefaultDates();
+	
+	
+	if (RUNMODE=="NG"){
+		var _boardId;
+		//var _boardId="54bba57720f4764e7e797849";
+		if (_.last(window.location.href.split("/"))=="kanban.php") _boardId="54ba3fb649a5650c86adf99b"; 
+		else _boardId = _.last(window.location.href.split("/"));
+		
+		renderBoard(getItemByKey(boardsData,"_id",_boardId));
+		
+	}
+	
 	
 	enableAllMetrics();
 	
-		
-	
-	ITEMDATA_NEST= ["theme","lane","sublane"];
-	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
-	CONTEXT=ITEMDATA_FILTER[0].value;
+	if (RUNMODE=="LEGACY"){	
+		ITEMDATA_NEST= ["theme","lane","sublane"];
+		ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
+		CONTEXT=ITEMDATA_FILTER[0].value;
+	}
+    
     loadPostits();
 
 	/* not needed as initiativeData is already loaded 
@@ -655,6 +728,7 @@ function drawInitiatives(){
 	drawLanes();
 	drawQueues();
 	drawWC2014();
+	
 	drawItems();
 	
 }
@@ -666,15 +740,30 @@ function drawInitiatives(){
  * to get sorting information into each initiative item
  */
 function joinInitiatives2LanesSort(){
-	for (var i in initiativeData){
-			var _lane = getItemByKey(laneData,"name",initiativeData[i].lane);
-			if (_lane){
-				 initiativeData[i]["laneSort"]=_lane.sort;
-				if (_lane.sublanes){
-					var _sublane = getItemByKey(_lane.sublanes,"name",initiativeData[i].sublane);
-					if (_sublane) initiativeData[i]["sublaneSort"]=_sublane.sort;
+	if (RUNMODE=="LEGACY"){
+		for (var i in initiativeData){
+				var _lane = getItemByKey(laneData,"name",initiativeData[i].lane);
+				if (_lane){
+					 initiativeData[i]["laneSort"]=_lane.sort;
+					if (_lane.sublanes){
+						var _sublane = getItemByKey(_lane.sublanes,"name",initiativeData[i].sublane);
+						if (_sublane) initiativeData[i]["sublaneSort"]=_sublane.sort;
+					}
 				}
-			}
+		}
+	}
+	else if (RUNMODE=="NG"){
+		for (var i in initiativeData){
+				var _lane = getItemByKey(laneData,"path",_.initial(initiativeData[i].lanePath.split(FQ_DELIMITER)).join([separator="/"]));
+				if (_lane){
+					 initiativeData[i]["laneSort"]=_lane.sort;
+					if (_lane.sublanes){
+						var _sublane = getItemByKey(_lane.sublanes,"name",initiativeData[i].lanePath);
+						if (_sublane) initiativeData[i]["sublaneSort"]=_sublane.sort;
+					}
+				}
+		}
+	
 	}
 }
 /* ------------------------ EXPERIMENT -----------------------*/
@@ -716,6 +805,7 @@ function drawAll(){
 	// kanban_items.js
 	drawTargets();
 	drawOverviewMetaphors(svg);
+	
 	drawMetrics();
 	// kanban_grid.gs
 	drawVision();
@@ -777,7 +867,7 @@ function drawOverviewMetaphors(svg){
 	var gMetaphors = svg.append("g").attr("id","metaphors").style("visibility","hidden");
 	
 	// demarcation line between themes
-	var _y2 = y(getSublaneByNameNEW("shared").yt1);
+	var _y2 = 0;//y(getSublaneByNameNEW("shared").yt1);
 	_drawLine(gMetaphors,0,_y2,x(KANBAN_END)-80,_y2,"metaphorDemarcationLine");
 	
 	
@@ -836,6 +926,70 @@ function drawWC2014(){
 
 	}
 }
+
+
+function drawVision(){
+	d3.select("#vision").remove()
+
+	var gVision= svg.append("g")
+		.attr("id","vision");
+	
+	// ----- vision statement ------
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
+	var _y = -200;
+	
+
+	_drawXlink(gVision,"#world",(_x-175),(_y+27),{"scale":1});
+	
+	_drawText(gVision,BOARD.vision,(_x-160),(_y-15),{"size":"32px","color":COLOR_BPTY,"weight":"bold"});
+	_drawText(gVision,BOARD.subvision,(_x-160),(_y+10),{"size":"14px","color":COLOR_BPTY,"weight":"bold"});
+	
+	//_drawXlink(gVision,"#vision_statement",(_x-160),(_y-30),{"scale":2});
+	
+	// --- mission strategy stuff ------
+	_drawBracket(gVision,"blue","bottom",_x-160,_y+90,3.3,.8,"triangle",1);
+	
+	
+	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-100;
+	//var _x = 460;
+
+	
+	var _mission = gVision.append("text")
+		.attr("x",_x)
+		.attr("y",_y+40)
+		.style("fill",COLOR_BPTY)
+		.style("text-anchor","start")
+		.style("font-style","normal")
+		.style("font-weight","bold")
+		.style("font-size","10px")
+	
+	textarea(_mission,BOARD.mission,_x,_y+40,100,8);
+	
+	/*
+	gVision.append("text")
+		.text("::focus in BWIN via agressive sports mobile aquisition in europe")
+		.attr("x",_x)
+		.attr("y",_y+40)
+		.style("fill",COLOR_BPTY)
+		.style("text-anchor","start")
+		.style("font-style","normal")
+		.style("font-weight","bold")
+		.style("font-size","8px")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::position partypoker and our b2b services as leading online gaming biz in US")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::establish lean engineering culture to  build \"right\" software solution and IP")
+		.append("tspan")
+		.attr("dy",12)
+		.attr("x",_x)
+		.text("::re-establish entrepreneurial thinking & leadership (ownership)");
+	*/
+}
+
 
 
 function drawReleases(){	
@@ -1033,4 +1187,10 @@ var PACKAGE_VERSION="20140528_1811";
 	
 var PACKAGE_VERSION="20150113_0808";
 	var PACKAGE_VERSION="20150113_0827";
+	
+var PACKAGE_VERSION="20150114_1457";
+	
+var PACKAGE_VERSION="20150115_0947";
+	var PACKAGE_VERSION="20150115_1617";
+	var PACKAGE_VERSION="20150116_1312";
 	

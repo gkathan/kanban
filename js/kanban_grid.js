@@ -208,51 +208,6 @@ function hideVision(){
 
 
 
-function drawVision(){
-	d3.select("#vision").remove()
-
-	var gVision= svg.append("g")
-		.attr("id","vision");
-	
-	// ----- vision statement ------
-	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2);
-	var _y = -200;
-	
-
-	_drawXlink(gVision,"#world",(_x-175),(_y+27),{"scale":1});
-	_drawXlink(gVision,"#vision_statement",(_x-160),(_y-30),{"scale":2});
-	
-	// --- mission strategy stuff ------
-	_drawBracket(gVision,"blue","bottom",_x-160,_y+90,3.3,.8,"triangle",1);
-	
-	
-	var _x = x(KANBAN_START.getTime()+(KANBAN_END.getTime()-KANBAN_START.getTime())/2)-100;
-	//var _x = 460;
-	gVision.append("text")
-		.text("::focus in BWIN via agressive sports mobile aquisition in europe")
-		.attr("x",_x)
-		.attr("y",_y+40)
-		.style("fill",COLOR_BPTY)
-		.style("text-anchor","start")
-		.style("font-style","normal")
-		.style("font-weight","bold")
-		.style("font-size","8px")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::position partypoker and our b2b services as leading online gaming biz in US")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::establish lean engineering culture to  build \"right\" software solution and IP")
-		.append("tspan")
-		.attr("dy",12)
-		.attr("x",_x)
-		.text("::re-establish entrepreneurial thinking & leadership (ownership)");
-
-}
-
-
 function drawVersion(){
 	d3.select("#version").remove()
 	console.log("####removed #version");

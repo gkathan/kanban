@@ -103,7 +103,7 @@ TRANSCODE_URL = "http://localhost:8080/transcode/";
 
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
     width = 2000 - margin.right - margin.left,
-    height = 2500 - margin.top - margin.bottom;
+    height = 7000 - margin.top - margin.bottom;
     
 var i = 0,
     duration = 750,
@@ -132,7 +132,10 @@ var svg = d3.select("body").append("svg")
 
 //d3.tsv("data/backlog.csv",function(data){
 //d3.tsv("data/initiatives_v20.csv",function(data){
-d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
+
+//d3.tsv("data/backlog/v1_Business_Backlogs_20140320_1740.txt",function(data){
+d3.tsv("data/backlog/v1_Business_Backlogs_20140528_1440.txt",function(data){
+
 //	d3.json("/data/data.php?type=initiatives",function(data){
 
 
@@ -161,6 +164,7 @@ root = _.nest(data,["l1","l2","l3","l4","l5"]);
   root.y0 = 0;
   root.name="backlog";
 
+/*
   function collapse(d) {
     if (d.children) {
       d._children = d.children;
@@ -168,6 +172,7 @@ root = _.nest(data,["l1","l2","l3","l4","l5"]);
       d.children = null;
     }
   }
+*/
 
 //  root.children.forEach(collapse);
   update(root);

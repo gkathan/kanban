@@ -339,6 +339,8 @@ function compareData(initiatives,epics){
 				epics[e]["_id"]=_initiative._id;
 				epics[e]["kanbanExtId"]=_initiative.ExtId;
 				
+				epics[e]["kanbanExtNumber"]=_initiative.ExtNumber;
+				
 				epics[e]["kanbanState"]=_initiative.state;
 				epics[e]["kanbanCreateDate"]=_initiative.createDate;
 				epics[e]["kanbanChangeDate"]=_initiative.changeDate;
@@ -358,6 +360,9 @@ function compareData(initiatives,epics){
 
 
 /** 
+* 1.... green
+* 0.... yellow
+* undefined....frey
 */
 function _checkInSync(epic,initiative){
 	// what to check against sync ?
@@ -379,13 +384,33 @@ function _checkInSync(epic,initiative){
 	if (epic.Swag==initiative.Swag && 
 		epic.Name==initiative.name && 
 		epic.Status==initiative.status && 
-		_healthEpic.toLowerCase() == _healthInitiative.toLowerCase())
+		_healthEpic.toLowerCase() == _healthInitiative.toLowerCase() &&
+		_checkInSyncState(epic,initiative))
 		
 		return 1;
 	
 	return 0;
 	
 }
+
+
+/** sub function to check whether kanban state matches to v1 states 
+* kanban.done = v1.Monitoring, Done
+* kanban.planned = v1.Implementation, Understanding, Conception
+* kanban.todo = v1.New 
+* kanban.killed = v1. On hold
+*/
+function _checkInSyncState(epic, initiative){
+	if (epic.Status=="On hold" && initiative.state=="killed") return 1;
+	if ((epic.Status=="Monitoring" || epic.Status=="Done") && initiative.state=="done") return 1;
+	if ((epic.Status=="Implementation" || epic.Status=="Understanding" || epic.Status=="Conception") && initiative.state=="planned") return 1;
+	if ((epic.Status=="New" || epic.Status==undefined) && initiative.state=="todo") return 1;
+	
+	return 0;
+}
+
+
+
 
 function filterByNameValue(list,name,value){
 	var _filtererdList = new Array();
@@ -445,7 +470,9 @@ columns.push(
         { id:"isInSync", name: "sync", field: "isInSync",sortable:true,width:30,formatter:Slick.Formatters.CheckInSync, sorter:NumericSorter ,toolTip:"kanban and V1 data in sync "},
         { id:"id", name: "v1.id", field: "ID",sortable:true,width:70,formatter:Slick.Formatters.V1EpicURL,cssClass:"onV1", sorter:NumericSorter ,toolTip:"V1 internal OID"},
         { id:"number", name: "v1.number", field: "Number",sortable:true,cssClass:"onV1", sorter:NumericSorter},
-        { id:"kanbanExtId", name: "kanban.ExtId", field: "kanbanExtId",sortable:true,cssClass:"onKanban", sorter:NumericSorter},
+        
+        { id:"kanbanExtNumber", name: "kanban.number", field: "kanbanExtNumber",sortable:true,cssClass:"onKanban", sorter:NumericSorter},
+        
         { id:"kanbanId", name: "kanban.id", field: "kanbanId",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},
         { id:"_id", name: "kanban._id", field: "_id",cssClass:"onKanban",sortable:true, sorter:NumericSorter,width:50},        
         { id:"isOnKanban", name: "isOnKanban", field: "isOnKanban",formatter: Slick.Formatters.Checkmark,sortable:true, sorter:NumericSorter,width:30},
@@ -758,6 +785,9 @@ d3.select("#bsync").on("click", function(){
 				var _sync = syncList[i];
 				var _item = {};
 				if (_sync["_id"]) _item["_id"]=_sync["_id"];
+				
+				if (_sync["Number"]) _item["ExtNumber"]=_sync["Number"];
+				
 				_item["id"]=_sync["kanbanId"] ? _sync["kanbanId"] : null ;
 				_item["name"]=_sync["Name"];
 				_item["ExtId"]=_sync["ID"];
@@ -796,9 +826,12 @@ d3.select("#bsync").on("click", function(){
 				var _kanbanState = "planned";
 				if (_v1Status =="Done" || _v1Status=="Monitoring") _kanbanState="done";
 				if (_v1Status =="On hold" ) _kanbanState="killed";
-				if (_v1Status =="New" || _v1Status=="Conception" || _v1Status =="Understanding" || _v1Status=="Implementation") _kanbanState="planned";
+				if (_v1Status=="Conception" || _v1Status =="Understanding" || _v1Status=="Implementation") _kanbanState="planned";
+				if (_v1Status =="New" ||_v1Status==undefined) _kanbanState="todo";
 				_item["state"]=_kanbanState;
 				
+				console.log("**********: "+_v1Status);
+				console.log("kanbanstate**********: "+_kanbanState);
 				
 				
 				// default size 7

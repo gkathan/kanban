@@ -60,12 +60,25 @@ var connection_string = '127.0.0.1:27017/kanban';
 var db = mongojs(connection_string, ['kanban']);
 
 
-
 var PATH_INITIATIVES = '/initiatives'
 server.get({path : PATH_INITIATIVES , version : '0.0.1'} , findAllByName);
 server.get({path : PATH_INITIATIVES +'/:id' , version : '0.0.1'} , findByName);
 server.post({path : PATH_INITIATIVES, version : '0.0.1'} , save);
 server.del({path : PATH_INITIATIVES, version : '0.0.1'} , remove);
+
+var PATH_INITIATIVESOLD = '/initiativesOLD'
+server.get({path : PATH_INITIATIVESOLD , version : '0.0.1'} , findAllByName);
+server.get({path : PATH_INITIATIVESOLD +'/:id' , version : '0.0.1'} , findByName);
+server.post({path : PATH_INITIATIVESOLD, version : '0.0.1'} , save);
+server.del({path : PATH_INITIATIVESOLD, version : '0.0.1'} , remove);
+
+
+var PATH_BOARDS = '/boards'
+server.get({path : PATH_BOARDS , version : '0.0.1'} , findAllByName);
+server.get({path : PATH_BOARDS +'/:id' , version : '0.0.1'} , findByName);
+server.post({path : PATH_BOARDS, version : '0.0.1'} , save);
+server.del({path : PATH_BOARDS, version : '0.0.1'} , remove);
+
 
 var PATH_INITIATIVES_DIFF_TRAIL = '/initiatives_diff_trail'
 //server.get({path : PATH_INITIATIVES_DIFF_TRAIL , version : '0.0.1'} , findAllByName);
@@ -119,6 +132,10 @@ var PATH_BM = '/bm';
 server.get({path : PATH_BM , version : '0.0.1'} , findAllByName);
 server.get({path : PATH_BM +'/:id' , version : '0.0.1'} , findByName);
 
+
+
+var PATH_ORG15JAN15 = '/org2015jan15';
+server.get({path : PATH_ORG15JAN15 , version : '0.0.1'} , findAllByName);
 
 var PATH_ORG14JUN26 = '/org2014jun26';
 server.get({path : PATH_ORG14JUN26 , version : '0.0.1'} , findAllByName);
@@ -218,6 +235,9 @@ function findAllByName(req, res , next){
  
 function findByName(req, res , next){
     res.setHeader('Access-Control-Allow-Origin','*');
+    
+        console.log(req.path().split("/")[1]+ "id: "+req.params.id);
+    
     db.collection(req.path().split("/")[1]).findOne({id:req.params.id} , function(err , success){
         console.log('Response success '+success);
         console.log('Response error '+err);
@@ -377,7 +397,9 @@ function save(req, res , next){
     
 }
 
-
+/**
+ * right now only supports single item 
+ */
 function remove(req, res , next){
     res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Access-Control-Allow-Methods','OPTIONS,DELETE');
@@ -604,6 +626,7 @@ function excelInitiatives(req, res , next){
  		{caption:'_id',type:'string',width:20,captionStyleIndex:2,beforeCellWrite:_formatCell},
 		{caption:'id',type:'number',width:5,captionStyleIndex:2,beforeCellWrite:_formatCell},
 		{caption:'ExtId',type:'string',width:10,captionStyleIndex:2,beforeCellWrite:_formatCell},
+		{caption:'ExtNumber',type:'string',width:10,captionStyleIndex:2,beforeCellWrite:_formatCell},
 		{caption:'name',type:'string',width:40,captionStyleIndex:2,beforeCellWrite:_formatCell},
 		{caption:'name2',type:'string',width:8,captionStyleIndex:2,beforeCellWrite:_formatCell},
 		{caption:'isCorporate',type:'string',width:5,captionStyleIndex:2,beforeCellWrite:_formatCell},

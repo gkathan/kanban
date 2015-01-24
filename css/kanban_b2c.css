@@ -13,6 +13,14 @@
 	
 }
 
+.lanebox.studios{
+	fill:#174D75;
+	stroke: white;
+	opacity:0.3;
+	stroke-width: 5px;
+	
+}
+
 .lanebox.pp{
 	fill:orange;
 	stroke:white;

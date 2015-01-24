@@ -14,11 +14,21 @@ var DS ="MONGO";
 
 var COLOR_BPTY="#174D75";
 
+
+// LEGACY OR NG
+	var RUNMODE ="NG";
+//	var RUNMODE ="LEGACY";
+
+var FQ_DELIMITER=".";
+	if (RUNMODE=="NG") FQ_DELIMITER="/"; 
+	
+
+
 if (host=="portfolio.ea.bwinparty.corp") {
 	MONGO_GATEWAY_URL = "http://portfolio.ea.bwinparty.corp/nodejs/";
 	TRANSCODE_URL = "http://tomcat.ea.bwinparty.corp/transcode/";
 }
-else if (host=="localhost"){
+else if (host.split(":")[0]=="localhost"){
 	MONGO_GATEWAY_URL = "http://localhost:9999/";
 	TRANSCODE_URL = "http://localhost:8080/transcode/";
 }

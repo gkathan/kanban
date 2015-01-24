@@ -66,16 +66,7 @@ else{
 <!--<script src="js/pqgrid.min.js"></script>-->
 
 
-<!-- slick grid-->
-<script src="js/SlickGrid-master/lib/jquery.event.drag-2.2.js"></script>
 
-<script src="js/SlickGrid-master/slick.core.js"></script>
-<script src="js/SlickGrid-master/slick.grid.js"></script>
-<script src="js/SlickGrid-master/plugins/slick.cellrangedecorator.js"></script>
-<script src="js/SlickGrid-master/plugins/slick.cellrangeselector.js"></script>
-<script src="js/SlickGrid-master/plugins/slick.cellselectionmodel.js"></script>
-<script src="js/SlickGrid-master/slick.formatters.js"></script>
-<script src="js/SlickGrid-master/slick.editors.js"></script>
 <script src="js/wiki2html.js"></script>
 
 <script src="js/d3_util.js"></script>
@@ -123,103 +114,86 @@ else{
 	
 	
 	<?php echo "var AUTH=\"$auth\";";?>
-	
-	
-	WIDTH=1500;
-	HEIGHT = 1100;
 
-	ITEM_SCALE=0.8;
-	ITEMDATA_NEST= ["theme","lane","sublane"];
-	//ITEMDATA_NEST= ["bm","theme","lane","themesl","sublane"];
-	//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 
+
+	if (RUNMODE=="LEGACY"){
 	
-	/*
-	ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
-	CONTEXT=ITEMDATA_FILTER.value;
-	*/
+		WIDTH=1500;
+		HEIGHT = 1100;
 
-	CONTEXT = "b2c gaming";
+		ITEM_SCALE=0.8;
+		//ITEMDATA_NEST= ["bm","theme","lane","themesl","sublane"];
+		//ITEMDATA_NEST = ["bm","theme","lane","sublane"];
 
-	
-	// the whole ITEMDATACONFIG is NOT NEEDED => it is only addon-formatting override !
-	//percentages is for override => if not specified it uses mode to auto layout
-	itemDataConfig = [	
-						{"level":"bm", "mode": "auto","percentages":
-								[
-									{"context":"holding","name":"b2c gaming","value"	:80},
-									{"context":"holding","name":"new biz","value"		:20}
+		ITEMDATA_NEST= ["theme","lane","sublane"];
+		
+		/*
+		ITEMDATA_FILTER = [{"name":"bm", "operator":"==", "value":"b2c gaming"}];
+		CONTEXT=ITEMDATA_FILTER.value;
+		*/
+
+		CONTEXT = "b2c gaming";
+
+	}	
+		// the whole ITEMDATACONFIG is NOT NEEDED => it is only addon-formatting override !
+		//percentages is for override => if not specified it uses mode to auto layout
+		itemDataConfig = [	
+							{"level":"0", "mode": "auto","percentages":
+									[
+										{"context":"holding","name":"b2c gaming","value"	:80},
+										{"context":"holding","name":"new biz","value"		:20}
+										
+									]
+							},
+							{"level":"1", "mode": "auto","percentages":
+									[
+										{"context":"b2c gaming", "name":"topline","value"	:60},
+										{"context":"b2c gaming","name":"enabling","value"	:40},
+										{"context":"holding", "name":"b2c gaming"+FQ_DELIMITER+"topline","value"	:65},
+										{"context":"holding","name":"b2c gaming"+FQ_DELIMITER+"enabling","value"	:35},
+										{"context":"new biz","name":"topline","value"		:100},
+										{"context":"new biz","name":"enabling","value"		:0}
+										
+									]
+							},
+							{"level":"2","mode": "auto","percentages":
 									
-								]
-						},
-						{"level":"theme", "mode": "auto","percentages":
-								[
-									{"context":"b2c gaming", "name":"topline","value"	:60},
-									{"context":"b2c gaming","name":"enabling","value"	:40},
-									{"context":"holding", "name":"b2c gaming.topline","value"	:65},
-									{"context":"holding","name":"b2c gaming.enabling","value"	:35},
-									{"context":"new biz","name":"topline","value"		:100},
-									{"context":"new biz","name":"enabling","value"		:0}
-									
-								]
-						},
-						{"level":"lane","mode": "auto","percentages":
-								
-								[
-									{"context":"*","name":"topline.bwin","value"		:28},
-									{"context":"*","name":"topline.pp","value"		:20},
-									{"context":"*","name":"topline.foxy","value"		:18},
-									{"context":"*","name":"topline.premium","value"	:16},
-									{"context":"*","name":"topline.casino","value"	:18},
-									{"context":"*","name":"enabling.techdebt","value"	:40},
-									{"context":"*","name":"enabling.shared","value"	:60},
-									{"context":"*","name":"topline.kalixa","value"	:50},
-									{"context":"*","name":"topline.wincom","value"	:35},
-									{"context":"*","name":"topline.conspo","value"	:15}
+									[
+										{"context":"*","name":"topline"+FQ_DELIMITER+"bwin","value"		:32},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"pp","value"		:22},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"foxy","value"		:18},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"premium","value"	:12},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"casino","value"	:18},
+										{"context":"*","name":"enabling"+FQ_DELIMITER+"techdebt","value"	:50},
+										{"context":"*","name":"enabling"+FQ_DELIMITER+"shared","value"	:50},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"kalixa","value"	:50},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"wincom","value"	:35},
+										{"context":"*","name":"topline"+FQ_DELIMITER+"conspo","value"	:15}
 
-								]
-									
-						},
-						// selective override only for one sublane works too ;-)
-						{"level":"sublane","mode":"equal","percentages":
-								[
-									{"context":"*","name":"bwin.touch","value"	:20},
-									{"context":"*","name":"bwin.click","value"	:20},
-									{"context":"*","name":"bwin.market","value"	:20},
-									{"context":"*","name":"bwin.product","value"	:20},
-									{"context":"*","name":"bwin.enabling","value":20}
-								]
-						},
-						
-						// selective override only for one sublane works too ;-)
-						{"level":"themesl","mode":"equal","percentages":
-								[
-									{"context":"bwin.drill-in","name":"Markets","value"	:25},
-									{"context":"bwin.drill-in","name":"Product","value"	:25},
-									{"context":"bwin.drill-in","name":"Customer","value"	:15},
-									{"context":"bwin.drill-in","name":"Enabling","value"	:10},
-									{"context":"bwin.drill-in","name":"Supplier","value"	:10},
-									{"context":"bwin.drill-in","name":"Poker","value"	:5},
-									{"context":"bwin.drill-in","name":"Casino/Games","value"	:5},
-									{"context":"bwin.drill-in","name":"Cross - selling","value":5}
-								]
-						},
-						
-						{"level":"sublane","mode":"equal","percentages":
-								[
-									{"context":"bwin.drill-in","name":"regulated","value"	:60},
-									{"context":"bwin.drill-in","name":"com","value"	:40}
-								]
-						}
-						
-						
-						];		
-
-
+									]
+										
+							},
+							// selective override only for one sublane works too ;-)
+							{"level":"3","mode":"equal","percentages":
+									[
+										{"context":"*","name":"bwin"+FQ_DELIMITER+"touch","value"	:30},
+										{"context":"*","name":"bwin"+FQ_DELIMITER+"click","value"	:10},
+										{"context":"*","name":"bwin"+FQ_DELIMITER+"market","value"	:20},
+										{"context":"*","name":"bwin"+FQ_DELIMITER+"product","value"	:20},
+										{"context":"*","name":"bwin"+FQ_DELIMITER+"enabling","value":20}
+									]
+							}
+							
+							
+							
+							
+							];		
+	
 // **********  ENTRY POINT ********************//	
 // => kanban.js.render()
 	
-	render("external.svg");
+	render("data/external.svg");
 	
 	
 </script>

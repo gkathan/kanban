@@ -266,8 +266,7 @@ function drawItems(){
 	
 	d3.selectAll("#initiatives,#dependencies,#sizings").remove();
 	
-	var drag_item = _registerDragDrop();
-
+	
 	tooltip.attr("class","itemTooltip");
 	
 	svg.append("g").attr("id","dependencies");
@@ -283,17 +282,30 @@ function drawItems(){
 		.attr("id","labels")
 		.style("opacity",0);
 	
-	filteredInitiativeData = initiativeData.filter(function(d){
+	
+	if (RUNMODE=="LEGACY"){
+		filteredInitiativeData = initiativeData.filter(function(d){
+			var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
+			var _filterEnd=new Date(d.planDate)<=KANBAN_END;
+			//var _filterTargets = (d.Type !="target");
+			var _filterOnKanban = (d.onKanban ==1);
+			
+			if (ITEMDATA_FILTER){
+				return _filterStart && _filterEnd &&  _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
+			}
+			return _filterStart && _filterEnd;
+		});
+	}
+	else if (RUNMODE=="NG"){
+		//filteredInitiativeData = initiativeData;
+		
+		filteredInitiativeData = initiativeData.filter(function(d){
 		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
 		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
-		//var _filterTargets = (d.Type !="target");
-		var _filterOnKanban = (d.onKanban ==1);
-		
-		if (ITEMDATA_FILTER){
-			return _filterStart && _filterEnd &&  _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
-		}
 		return _filterStart && _filterEnd;
-	});
+		});
+
+	}
 	
 	var groups = gItems.selectAll("items")
 	// filter data if ITEMDATA_FILTER is set
@@ -306,7 +318,7 @@ function drawItems(){
 		var _size = d.size*ITEM_SCALE;
 		if (!d.isCorporate) _size = _size * TACTIC_SCALE;
 
-		
+		console.log("** item: id="+d.id+"."+d.name+" FQName(): "+getFQName(d));
 
 		var _itemXPlanned; 
 		var _itemXActual; 
@@ -480,7 +492,7 @@ function drawItems(){
 		// ----------------- startDate indicator ---------------------
 		if(d.startDate && new Date(d.startDate)>KANBAN_START){
 			console.log("____startDate: "+d.startDate);
-			var _start = d3.select("#dependencies").append("g").attr("id","startID_"+d.id).style("visibility","hidden");
+			var _start = d3.select(this).append("g").attr("id","startID_"+d.id).style("visibility","hidden");
 			_drawStartDateIndicator(_start,_itemXStart,_itemXPlanned,_itemY,_size);
 			
 		}
@@ -496,12 +508,16 @@ function drawItems(){
 			.attr("class","sizings "+d.lane)
 			.style("opacity",0.4);
 		}
-		// drag test	==>  HUHUUUUU - this overrides the itemdata binding !
+		// drag & drop  test	==>  HUHUUUUU - this overrides the itemdata binding !
 		//d3.select(this).data([ {"x":0, "y":0, "lane":d.lane,"id":d._id} ]).call(drag_item);
 		//for drag&drop
+
+		if (AUTH=="admin"){
+			var drag_item = _registerDragDrop();
 			d.x=0;
 			d.y=0;
 			d3.select(this).call(drag_item);
+		}
 		
 	}) //end each()
 } //end drawItems
@@ -731,6 +747,13 @@ function onTooltipOverHandler(d,tooltip){
 		.delay(100)            
 		.duration(500)
 	.style("opacity",1);
+	
+	d3.select("#startID_"+d.id)
+		.transition()            
+		.delay(100)            
+		.duration(500)
+	.style("opacity",1);
+	
 		
 	console.log("highlight"+highlight+d.id);
 		
@@ -824,13 +847,17 @@ function _itemTooltipHTML(d){
 	var _v1SyncLink= "v1sync.php?_id="+d._id;
 	var _adminLink = "admin.php?type=initiatives&_id="+d._id;
 						
+	var _lanepath;
+	if (RUNMODE=="LEGACY") _lanepath = d.lane+"."+d.sublane;
+	else if (RUNMODE=="NG")  _lanepath = d.lanePath;
+	
 	
 	var _htmlBase ="<table><col width=\"30\"/><col width=\"85\"/><tr><td style=\"font-size:4px;text-align:left\"><a href=\""+_v1SyncLink+"\" target=\"new\">[v1synch]</a> <a href=\""+_adminLink+"\" target=\"new\">[admin]</a></td><td style=\"font-size:4px;text-align:right\">";
 	if (d.ExtId)
 		_htmlBase+=" <a href=\""+_v1Link+d.ExtId+"\" target=\"new\">[v1: "+d.ExtId+"]</a>";
 	_htmlBase+="</td></tr>";
 	_htmlBase+="<tr class=\"header\" style=\"height:4px\"/><td colspan=\"2\"><div class=\"indicator\" style=\"background-color:"+_indicator+"\">&nbsp;</div><b style=\"padding-left:4px;font-size:7px\">"+d.name +"</b></td></tr>"+(d.name2 ? "<tr><td class=\"tiny\">title2:</td><td  style=\"font-weight:bold\">"+d.name2+"</td></tr>" :"");
-	_htmlBase+="<tr><td class=\"tiny\"style=\"width:20%\">lane:</td><td><b>"+d.lane+"."+d.sublane+"</b></td></tr>";
+	_htmlBase+="<tr><td class=\"tiny\"style=\"width:20%\">lane:</td><td><b>"+_lanepath+"</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">owner:</td><td><b>"+d.productOwner+"</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">Swag:</td><td><b>"+d.Swag+" PD</b></td></tr>";
 	_htmlBase+="<tr><td class=\"tiny\">started:</td><td><b>"+d.startDate+"</b></td></tr>";
@@ -962,6 +989,7 @@ function onTooltipDoubleClickHandler(tooltip,svg,d){
 		ITEM_ISOLATION_MODE=false;	
 		d3.selectAll("#metrics,#queues,#lanes,#version,#axes").style("opacity",1);
 		d3.select("#isolationtext").remove();
+		d3.selectAll("#highlightlane").remove();
 	}
 }
 
@@ -1046,6 +1074,7 @@ function _registerDragDrop(){
 	var baseY;
 	
 	
+	
 		var drag_item = d3.behavior.drag()
 			.on("dragstart", function(d,i) {
 			   
@@ -1058,7 +1087,24 @@ function _registerDragDrop(){
 					d3.select(this).attr("transform", function(d,i){
 						return "translate(" + [ d.x,d.y ] + ")"
 					})
+					
+					// and highlight the sublane we are in
+					var _item = getItemByKey(initiativeData,"_id",d._id);
+					
+					var _sublane;
+					
+					if (RUNMODE=="LEGACY") _sublane= getSublaneByNameNEW(_item.lane+FQ_DELIMITER+_item.sublane);
+					else if (RUNMODE=="NG") _sublane = getSublaneByNameNEW(_item.lanePath);
+					
+					console.log(">>>> highlight sublane: "+_sublane.name);
+					
+					highlightLane(d3.select("#lanes"),_sublane);
+						
 				}
+				
+				
+				
+				
 			})	
 
 			.on("drag", function(d,i) {
@@ -1075,6 +1121,7 @@ function _registerDragDrop(){
 						return "translate(" + [ d.x,d.y ] + ")"
 					})
 					
+										
 					// and the tooltip
 					var _y =tooltip.style("top").split("px")[0];
 					var _ymoved = getInt(_y)+getInt(d3.event.dy);
@@ -1082,17 +1129,35 @@ function _registerDragDrop(){
 					tooltip.style("visibility","hidden");
 					tooltip.style("top",_ymoved+"px");
 					
+					// watch sublane change
+					var _item = getItemByKey(initiativeData,"_id",d._id);
+					
+					
 				}
 			})
 				
 			.on("dragend",function(d,i){
 				if(ITEM_ISOLATION_MODE){
 				
+					d3.selectAll("#highlightlane").remove();
 					console.log("dragend event: x="+d.x+", y="+d.y+"..."+d.lane);
 					tooltip.style("visibility","visible");
 					
 					// check y drop coordinates whetrher they are within lane spectrum
-					var _lane = getLaneByNameNEW(d.lane);
+					var _lane;
+					if (RUNMODE=="LEGACY") _lane = getLaneByNameNEW(d.lane);
+					else if (RUNMODE=="NG"){
+						// currently lane is the one layer on top of sublane
+						// d.lanepath = theme/lane/sublane
+						// => so we just cut one level from bottom
+						// _.initial returns array without last element
+						// join flattens back to string 
+						var _lanePath = _.initial(d.lanePath.split(FQ_DELIMITER)).join([separator="/"]);;
+						
+						 _lane= getLaneByNameNEW(_lanePath);
+						console.log("lanePath: "+_lane.name);
+					}
+					
 					var _m =get_metrics(d3.select(this).node());
 					var _y1 = y(_lane.yt1)+margin.top;
 					var _y2 = y(_lane.yt2)+margin.top;
@@ -1100,20 +1165,35 @@ function _registerDragDrop(){
 					console.log("m.Y: "+_m.y+" lane Y1:" +_y1+" Y2: "+_y2);
 					var _y = _m.y-250;
 					console.log("...ok meaning i am now from a board perspective on y: "+_y);
-					
-					
-					var _item = getItemByKey(initiativeData,"_id",d._id);
-					
+						
+					var _item;	
+					if (RUNMODE=="LEGACY"){
+						_item = getItemByKey(initiativeData,"_id",d._id);
+					}
+					else if (RUNMODE=="NG"){
+						_item = getItemByKey(BOARD.items,"itemRef",d._id).itemView;	
+						console.log("d._id: "+d._id);
+						console.log("NG: on board: "+BOARD.name+" "+BOARD._id);
+						console.log("BOARD.items: "+BOARD.items.length);
+						console.log("NG: itemView: "+JSON.stringify(_item));
+						
+					}
 					
 					// and it would be interesting to derive the lane we are in after dragend
 					// currently have to iterate over lanes and according sublanes
 					// have to use the y() function on the .yt1 and .yt2 cordinates (d3 domain functions)
 					
-					var _sublaneOld=_item.lane+"."+_item.sublane;
+					var _sublaneOld;
+					if (RUNMODE=="LEGACY")_sublaneOld =_item.theme+FQ_DELIMITER+_item.lane+FQ_DELIMITER+_item.sublane;
+					else if (RUNMODE=="NG"){
+							_sublaneOld =_item.lanePath;
+					}
 					var _sublaneNew;
 					
 					var _sublane;
 					var _lane;//= getLaneByY(_y);
+					
+					var _themes = getThemesNEW();
 					var _lanes = getLanesNEW();
 					var _sublanes = getSublanesNEW();
 					for (var l in _lanes){
@@ -1128,23 +1208,40 @@ function _registerDragDrop(){
 									_sublane = _sublanes[sl];
 									console.log("************** MATCH SUBLANE*****************"+_sublane.name+" old sublane: "+_sublaneOld);
 									
-									_item.lane=_.last(_lane.name.split("."));;
-									_item.sublane = _.last(_sublane.name.split("."));
-									_sublaneNew = _item.lane+"."+_item.sublane;
+									
+									
+									if (RUNMODE=="LEGACY"){
+										var _split = _sublane.name.split(FQ_DELIMITER);
+									
+										_item.theme = _split[_split.length-3];
+										_item.lane=_split[_split.length-2];
+										_item.sublane = _split[_split.length-1];
+										
+										console.log("THEME = "+_item.theme);
+										console.log("LANE = "+_item.lane);
+										console.log("SUBLANE = "+_item.sublane);
+										
+										_sublaneNew = _item.theme+FQ_DELIMITER+_item.lane+FQ_DELIMITER+_item.sublane;
+									}
+									else if (RUNMODE=="NG"){
+										_item.lanePath = _sublane.name;
+										console.log("SUBLANE = "+_item.lanePath);
+										_sublaneNew = _item.lanePath;
+									}
+									
 								}
 							}
+						}
 					}
-					}
 					
 					
 					
-					
-					
-					if (_m.y < 0 || _m.y>y(100)){
+						
+					if (_m.y-250 < 0 || _m.y-250>y(100)){
 						//put back to initial dragstart coords
-					 d3.select(this).attr("transform","translate(0,0)");
-					 d.x=0;
-					 d.y=0;
+						 d3.select(this).attr("transform","translate(0,0)");
+						 d.x=0;
+						 d.y=0;
 						console.log("***** nope");
 					}			
 					
@@ -1171,10 +1268,34 @@ function _registerDragDrop(){
 					
 					
 					
-					
-					if (movedY!=0) ajaxCall("POST","save",new Array(_item),"initiatives");
-				
+					if (RUNMODE=="LEGACY"){
+						if (movedY!=0) ajaxCall("POST","save",new Array(_item),"initiatives");
+					}
+					else if (RUNMODE=="NG"){
+						
+						if (movedY!=0) ajaxCall("POST","save",new Array(BOARD),"boards");
+						// and refresh the transient initiativeData
+						joinBoard2Initiatives(BOARD,initiativeData);
+						
+					}
 					console.log("[OK] lets persist the change in y drag movement ....[id] = "+JSON.stringify(_item));
+					
+					
+					
+					// and highlight the sublane we are in
+					var _item = getItemByKey(initiativeData,"_id",d._id);
+					
+					var _sublane;
+					
+					if (RUNMODE=="LEGACY") _sublane= getSublaneByNameNEW(_item.lane+FQ_DELIMITER+_item.sublane);
+					else if (RUNMODE=="NG") _sublane = getSublaneByNameNEW(_item.lanePath);
+					
+					
+					console.log(">>>> highlight sublane: "+_sublane.name);
+					
+					highlightLane(d3.select("#lanes"),_sublane);
+						
+					
 				}
 			});
 		return drag_item;	

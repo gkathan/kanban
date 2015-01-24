@@ -215,18 +215,23 @@ function calculateQueueMetrics(){
 		});
 	*/
 	
-	var _filteredItems = initiativeData.filter(function(d){
-		var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
-		var _filterEnd=new Date(d.planDate)<=KANBAN_END;
-		var _filterTargets = (d.Type !="target");
-		var _filterOnKanban = (d.onKanban ==1);
-		
-		if (ITEMDATA_FILTER){
-			//return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
-			return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
-		}
-		return _filterStart && _filterEnd;
-	});
+	if (RUNMODE=="LEGACY"){
+		var _filteredItems = initiativeData.filter(function(d){
+			var _filterStart=(new Date(d.planDate)>=KANBAN_START ||new Date(d.actualDate)>=KANBAN_START);
+			var _filterEnd=new Date(d.planDate)<=KANBAN_END;
+			var _filterTargets = (d.Type !="target");
+			var _filterOnKanban = (d.onKanban ==1);
+			
+			if (ITEMDATA_FILTER){
+				//return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval("d."+ITEMDATA_FILTER.name+ITEMDATA_FILTER.operator+"\""+ITEMDATA_FILTER.value+"\"");
+				return _filterStart && _filterEnd && _filterTargets && _filterOnKanban && eval(_buildFilter(ITEMDATA_FILTER));
+			}
+			return _filterStart && _filterEnd;
+		});
+	}
+	else if (RUNMODE=="NG"){
+		_filteredItems = initiativeData;
+	}
 	
 	for(_d in _filteredItems){	
 		_item = _filteredItems[_d];
@@ -238,19 +243,19 @@ function calculateQueueMetrics(){
 		var _delay = diffDays(_item.planDate,_item.actualDate);
 				
 		if (!isNaN(_sizingPD)) SIZING_TOTAL+=_sizingPD;
-		if (new Date(_planDate)<WIP_START && new Date(_planDate)>KANBAN_START){
-			ITEMS_PLANNED_TOBEDONE++;
+		if (new Date(_date)<WIP_START){
+			if (new Date(_planDate)> KANBAN_START) ITEMS_PLANNED_TOBEDONE++;
 			if (_item.state=="done" ){
 				ITEMS_DONE++;
 				if (!isNaN(_sizingPD)) SIZING_DONE+=_sizingPD;
 				
-				if (new Date(_planDate)<WIP_START && new Date(_planDate)>KANBAN_START){
+				if (new Date(_date)<WIP_START && new Date(_planDate)>KANBAN_START){
 					ITEMS_INRANGE_DONE++;
 				}
-		}
+			}
 			
 		}
-		else if(new Date(_date)>WIP_START && new Date(_date)<WIP_END && new Date(_date)<KANBAN_END) {
+		else if(new Date(_date)>KANBAN_START && new Date(_date)<WIP_END && new Date(_date)<KANBAN_END ) {
 			ITEMS_WIP++;
  			if (!isNaN(_sizingPD)) SIZING_WIP+=_sizingPD;
 

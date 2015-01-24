@@ -65,6 +65,7 @@ html,body{
     border-radius: 100%;
     border: 2px solid #aaa;
     background-size: cover;
+
 }
 
 .form-box input{
@@ -156,6 +157,7 @@ html,body{
 <form id="loginform" method="post" action="login.php">
  <input type="hidden" id="uid" name="uid" value="">
  <input type="hidden" id="pwd" name="pwd" value="">
+ <input name ="page" type="hidden" id="page">
 </form>
 
 
@@ -167,34 +169,43 @@ html,body{
                 <form action="" method="">
                     <input name="user" type="text" placeholder="username">
                     <input name ="password" type="password" placeholder="password">
+                    
+                    
                     <button class="btn btn-info btn-block login" type="submit">Login</button>
                 </form>
             </div>
-         <span style="font-size:8px;font-family:arial"><b>disclaimer:</b> all data you see here is confidential and ..... [TODO] add approved text to tell about PLC, insider information etc ....</span>
+         <br><br><span style="font-size:8px;font-family:arial"><b>Disclaimer:</b> Distribution of this information without authorisation is a breach of the Bwin.Party Code of Conduct and disciplinary action may be taken against you. Please contact <a href="mailto:joachim.baca@bwinparty.com">joachim baca</a> if you have any questions about this.</span>
         </div>
-     
+      
 </div>
 
 
 
 <script>
 
-function submit_login_form(uid,pwd)
+function submit_login_form(uid,pwd,page)
 {
 	
 	var form = document.getElementById("loginform");
 	form.action="login.php";
 	form["uid"].value = uid;
 	form["pwd"].value = pwd ;
+	form["page"].value = page ;
 	
 	form.submit();
 }
 
 
+var page = getUrlParam("page");
+
+var icon="img/external_elements_bpty_kanban.png";
+
+if (page=="org_tree.php") icon = "img/external_elements_bpty_orgtree.png";
+
 $(function(){
 			
 			 $(".avatar").css({
-                        "background-image": "url('img/external_elements_bpty_kanban.png') ",
+                        "background-image": "url("+icon+") ",
                         "background-size": "98%",
                         "background-repeat": "no-repeat",
                        
@@ -204,14 +215,18 @@ $(function(){
 			var uid = $("input[name=user]");
 			var pwd = $("input[name=password]");
 
+			
+			
+			
+
             $('button[type="submit"]').click(function(e) {
-                console.log("submit clicked: "+uid.val()+" "+pwd.val());
+                console.log("submit clicked: "+uid.val()+" "+pwd.val()+ "page:"+page);
                 
                 e.preventDefault();
                 //little validation just to check username
                 if (uid.val() != "" && pwd.val() != "") {
                     
-                    submit_login_form(uid.val(),pwd.val());
+                    submit_login_form(uid.val(),pwd.val(),page);
                     					
                    /*
                     //$("body").scrollTo("#output");
@@ -246,6 +261,19 @@ $(function(){
 
             });
 });
+
+function getUrlParam(name){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    console.log("window.location.href: "+window.location.href);
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        if (hash[0]==name) return hash[1];
+        
+    }
+    
+}
 
 
 </script>

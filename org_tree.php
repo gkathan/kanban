@@ -88,6 +88,7 @@ $(document).ready(function() {
 </form>
 <script>
 
+
 checkServices();
 render();
 
@@ -190,12 +191,27 @@ function submit_download_form(output_format)
 	 </div><!-- /input-group -->
 
 	<div style="width:120px" class="input-group input-group-sm">
+			  <input id="input_height" type="text" class="form-control input-sm">
+			  <span class="input-group-btn">
+				<button id="b5" class="btn btn-default input-sm" type="button">HEIGHT</button>
+			  </span>
+	 </div><!-- /input-group -->
+
+
+	<div style="width:120px" class="input-group input-group-sm">
 			  <input id="b3" type="checkbox" class="form-control input-sm"> <span style="font-size:8px">show leaf nodes</span>
 	  </div><!-- /input-group -->
 
 	<div class="btn-group-xs">
 			<span style="font-size:8px">PI data snapshot</span>	<select id="pi_date" class="multiselect" >
-			  <option value="org" selected>2014 JUNE</option>
+			
+			<option value="org2015jan15" selected>2015 JANUARY 15</option>	
+			  <option value="org2014jul23" >2014 JULY 23</option>
+			   <option value="org2014jul18" >2014 JULY 18</option>
+			   
+			  <option value="org2014jun26">2014 JUNE 26</option>
+			  
+			  <option value="org">2014 JUNE 10</option>
 			   <option value="org2014april">2014 APRIL</option>
 			  <option value="org2013april">2013 APRIL</option>
 			  <option value="org2012april">2012 APRIL</option>
@@ -294,7 +310,7 @@ function switchVisibility(button,ref){
 	
 }		
 function initHandlers(){	
-	console.log("button handling..");
+	console.log("button handling..HEIGHT="+SIZE);
 	
 	$("#show_svg_code").click(function() { show_svg_code(); });
 	$("#save_as_svg").click(function() { submit_download_form("svg"); });
@@ -310,6 +326,8 @@ function initHandlers(){
 	document.getElementById("input_depth").value=MAX_DEPTH;
 	$("#b1").click(function() { MAX_DEPTH = document.getElementById("input_depth").value; d3.select("svg").remove();render();});
 	$("#b3").click(function() { console.log("* checkbox !");LEAF_NODES = document.getElementById("b3").checked; d3.select("svg").remove();render();});
+	document.getElementById("input_height").value=HEIGHT_OVERRIDE;
+	$("#b5").click(function() { HEIGHT_OVERRIDE = document.getElementById("input_height").value; d3.select("svg").remove();render();});
 		
 }
 </script>
